@@ -1,0 +1,1100 @@
+{
+    "metadata": {
+        "total_cves": 83,
+        "classification_date": "2025-11-17T16:38:22.857694",
+        "model_used": "gpt-3.5-turbo",
+        "provider": "local",
+        "categories": [
+            "Linux Kernel",
+            "RISC-V CPU/SoC",
+            "Simulator",
+            "RISC-V Development Tools",
+            "Other"
+        ],
+        "config_file": "llm_config.yaml"
+    },
+    "statistics": {
+        "total_processed": 83,
+        "successful": 83,
+        "failed": 0,
+        "new_categories_created": 0,
+        "by_category": {
+            "RISC-V CPU/SoC": 9,
+            "Other": 9,
+            "Linux Kernel": 64,
+            "RISC-V Development Tools": 1
+        }
+    },
+    "classified_cves": [
+        {
+            "cve_id": "CVE-2020-29561",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.846275"
+        },
+        {
+            "cve_id": "CVE-2021-1104",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.846439"
+        },
+        {
+            "cve_id": "CVE-2021-46957",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.846599"
+        },
+        {
+            "cve_id": "CVE-2021-47134",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.846775"
+        },
+        {
+            "cve_id": "CVE-2021-47414",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.846914"
+        },
+        {
+            "cve_id": "CVE-2021-47486",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847062"
+        },
+        {
+            "cve_id": "CVE-2022-26296",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847170"
+        },
+        {
+            "cve_id": "CVE-2022-34636",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847285"
+        },
+        {
+            "cve_id": "CVE-2022-34641",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847394"
+        },
+        {
+            "cve_id": "CVE-2022-34642",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847504"
+        },
+        {
+            "cve_id": "CVE-2022-34643",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847613"
+        },
+        {
+            "cve_id": "CVE-2022-48922",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847748"
+        },
+        {
+            "cve_id": "CVE-2022-49001",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847867"
+        },
+        {
+            "cve_id": "CVE-2022-49004",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.847992"
+        },
+        {
+            "cve_id": "CVE-2022-49851",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.848312"
+        },
+        {
+            "cve_id": "CVE-2022-49852",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.848433"
+        },
+        {
+            "cve_id": "CVE-2022-50225",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.848552"
+        },
+        {
+            "cve_id": "CVE-2023-27386",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.848795"
+        },
+        {
+            "cve_id": "CVE-2023-52677",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.848937"
+        },
+        {
+            "cve_id": "CVE-2023-52761",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849074"
+        },
+        {
+            "cve_id": "CVE-2023-52797",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849198"
+        },
+        {
+            "cve_id": "CVE-2023-52839",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849335"
+        },
+        {
+            "cve_id": "CVE-2023-52934",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849460"
+        },
+        {
+            "cve_id": "CVE-2023-52978",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849591"
+        },
+        {
+            "cve_id": "CVE-2023-52995",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849705"
+        },
+        {
+            "cve_id": "CVE-2023-53135",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849849"
+        },
+        {
+            "cve_id": "CVE-2023-53583",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.849973"
+        },
+        {
+            "cve_id": "CVE-2023-53694",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.850087"
+        },
+        {
+            "cve_id": "CVE-2023-53699",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.850219"
+        },
+        {
+            "cve_id": "CVE-2024-11263",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.850340"
+        },
+        {
+            "cve_id": "CVE-2024-21875",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.850471"
+        },
+        {
+            "cve_id": "CVE-2024-26619",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.850597"
+        },
+        {
+            "cve_id": "CVE-2024-26795",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.850802"
+        },
+        {
+            "cve_id": "CVE-2024-26796",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.850944"
+        },
+        {
+            "cve_id": "CVE-2024-26843",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851081"
+        },
+        {
+            "cve_id": "CVE-2024-26902",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851207"
+        },
+        {
+            "cve_id": "CVE-2024-35871",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851351"
+        },
+        {
+            "cve_id": "CVE-2024-35873",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851488"
+        },
+        {
+            "cve_id": "CVE-2024-35987",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851609"
+        },
+        {
+            "cve_id": "CVE-2024-35988",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851741"
+        },
+        {
+            "cve_id": "CVE-2024-38667",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851865"
+        },
+        {
+            "cve_id": "CVE-2024-40915",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.851996"
+        },
+        {
+            "cve_id": "CVE-2024-42140",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.852136"
+        },
+        {
+            "cve_id": "CVE-2024-42267",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.852294"
+        },
+        {
+            "cve_id": "CVE-2024-43843",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.852407"
+        },
+        {
+            "cve_id": "CVE-2024-43868",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.852526"
+        },
+        {
+            "cve_id": "CVE-2024-44966",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.852662"
+        },
+        {
+            "cve_id": "CVE-2024-46792",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.852766"
+        },
+        {
+            "cve_id": "CVE-2024-47717",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.852891"
+        },
+        {
+            "cve_id": "CVE-2024-50382",
+            "category": "RISC-V Development Tools",
+            "summary": "这是一个RISC-V相关的RISC-V Development Tools漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V开发工具链相关",
+                "可能影响编译结果",
+                "建议更新工具链版本"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853006"
+        },
+        {
+            "cve_id": "CVE-2024-53075",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853125"
+        },
+        {
+            "cve_id": "CVE-2024-53228",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853244"
+        },
+        {
+            "cve_id": "CVE-2024-53687",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853367"
+        },
+        {
+            "cve_id": "CVE-2024-56673",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853502"
+        },
+        {
+            "cve_id": "CVE-2024-56682",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853615"
+        },
+        {
+            "cve_id": "CVE-2024-57883",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853754"
+        },
+        {
+            "cve_id": "CVE-2024-57939",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.853914"
+        },
+        {
+            "cve_id": "CVE-2024-57945",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854080"
+        },
+        {
+            "cve_id": "CVE-2025-22069",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854202"
+        },
+        {
+            "cve_id": "CVE-2025-23135",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854324"
+        },
+        {
+            "cve_id": "CVE-2025-37822",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854432"
+        },
+        {
+            "cve_id": "CVE-2025-37966",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854537"
+        },
+        {
+            "cve_id": "CVE-2025-37975",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854643"
+        },
+        {
+            "cve_id": "CVE-2025-38261",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854766"
+        },
+        {
+            "cve_id": "CVE-2025-38296",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.854879"
+        },
+        {
+            "cve_id": "CVE-2025-38407",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855008"
+        },
+        {
+            "cve_id": "CVE-2025-38433",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855112"
+        },
+        {
+            "cve_id": "CVE-2025-38434",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855229"
+        },
+        {
+            "cve_id": "CVE-2025-38435",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855333"
+        },
+        {
+            "cve_id": "CVE-2025-38681",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855469"
+        },
+        {
+            "cve_id": "CVE-2025-39699",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855579"
+        },
+        {
+            "cve_id": "CVE-2025-39815",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855680"
+        },
+        {
+            "cve_id": "CVE-2025-39904",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855794"
+        },
+        {
+            "cve_id": "CVE-2025-40065",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.855899"
+        },
+        {
+            "cve_id": "CVE-2025-40079",
+            "category": "Linux Kernel",
+            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "Linux内核中的RISC-V相关漏洞",
+                "可能影响系统稳定性和安全性",
+                "需要内核补丁修复"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.856021"
+        },
+        {
+            "cve_id": "CVE-2025-45006",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.856133"
+        },
+        {
+            "cve_id": "CVE-2025-50897",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.856851"
+        },
+        {
+            "cve_id": "CVE-2025-52484",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.856989"
+        },
+        {
+            "cve_id": "CVE-2025-54873",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.857114"
+        },
+        {
+            "cve_id": "CVE-2025-56301",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.857271"
+        },
+        {
+            "cve_id": "CVE-2025-61588",
+            "category": "Other",
+            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "需要进一步分析",
+                "建议查看详细描述"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.857419"
+        },
+        {
+            "cve_id": "CVE-2025-63384",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.857533"
+        },
+        {
+            "cve_id": "CVE-2025-8774",
+            "category": "RISC-V CPU/SoC",
+            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "key_points": [
+                "RISC-V处理器或SoC相关漏洞",
+                "可能涉及硬件设计问题",
+                "需要固件或硬件更新"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "classification_timestamp": "2025-11-17T16:38:22.857674"
+        }
+    ]
+}

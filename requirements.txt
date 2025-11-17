@@ -1,0 +1,19 @@
+# RISC-V CVE Database Requirements
+
+# 基础功能（CVE提取）不需要任何依赖
+# 所有基础脚本使用Python标准库
+
+# 基础依赖
+requests>=2.31.0  # 用于下载CVE增量包
+
+# LLM分类功能可选依赖
+pyyaml>=6.0  # 用于读取YAML配置文件
+
+# OpenAI API支持（可选）
+openai>=1.0.0
+
+# Anthropic API支持（可选）
+anthropic>=0.7.0
+
+# 其他可选依赖
+# python-dotenv>=1.0.0  # 如果使用.env文件管理环境变量

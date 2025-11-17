@@ -1,0 +1,70 @@
+name: Update RISC-V CVEs
+
+on:
+  schedule:
+    # 每天北京时间上午9:35运行 (UTC 01:35)
+    - cron: '35 1 * * *'
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+    
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+    
+    - name: Download and extract CVE delta package
+      run: |
+        cd visualization
+        python update_riscv_cves.py
+      env:
+        # 如果使用OpenAI API，从secrets读取
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        # 如果使用Anthropic API，从secrets读取
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    
+    - name: Commit and push changes
+      run: |
+        git add visualization/riscv_cves_classified.json
+        git add visualization/riscv_cves_classified_summary.json
+        git add riscv_cves/*.json
+        
+        # 检查是否有变更
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto update: RISC-V CVEs $(date +'%Y-%m-%d')"
+          git push
+        fi
+    
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: visualization/
+    
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

@@ -1,0 +1,564 @@
+RISC-V CVE Extraction Report
+======================================================================
+
+Total RISC-V related CVEs found: 83
+
+CVE IDs:
+----------------------------------------------------------------------
+
+CVE-2024-35987 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Fix loading 64-bit NOMMU kernels past the start of RAM
+
+commit 3335068f8721 ("riscv: Use PUD/P4D/PGD pages for the linear
+ma...
+
+CVE-2024-35873 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Fix vector state restore in rt_sigreturn()
+
+The RISC-V Vector specification states in "Appendix D: Calling
+Convention for Ve...
+
+CVE-2024-35871 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: process: Fix kernel gp leakage
+
+childregs represents the registers which are active for the new thread
+in user context. For ...
+
+CVE-2024-35988 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Fix TASK_SIZE on 64-bit NOMMU
+
+On NOMMU, userspace memory can come from anywhere in physical RAM. The
+current definition of ...
+
+CVE-2024-26843 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+efi: runtime: Fix potential overflow of soft-reserved region size
+
+md_size will have been narrowed if we have >= 4GB worth of pages...
+
+CVE-2024-26619 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Fix module loading free order
+
+Reverse order of kfree calls to resolve use-after-free error.
+
+CVE-2024-26795 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Sparse-Memory/vmemmap out-of-bounds fix
+
+Offset vmemmap so that the first page of vmemmap will be mapped
+to the first page o...
+
+CVE-2024-26796 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+drivers: perf: ctr_get_width function for legacy is not defined
+
+With parameters CONFIG_RISCV_PMU_LEGACY=y and CONFIG_RISCV_PMU_SBI...
+
+CVE-2024-26902 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+perf: RISCV: Fix panic on pmu overflow handler
+
+(1 << idx) of int is not desired when setting bits in unsigned long
+overflowed_ctrs...
+
+CVE-2024-53075 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Prevent a bad reference count on CPU nodes
+
+When populating cache leaves we previously fetched the CPU device node
+at the ve...
+
+CVE-2024-53687 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Fix IPIs usage in kfence_protect_page()
+
+flush_tlb_kernel_range() may use IPIs to flush the TLBs of all the
+cores, which tri...
+
+CVE-2024-53228 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: kvm: Fix out-of-bounds array access
+
+In kvm_riscv_vcpu_sbi_init() the entry->ext_idx can contain an
+out-of-bound index. This...
+
+CVE-2024-38667 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: prevent pt_regs corruption for secondary idle threads
+
+Top of the kernel thread stack should be reserved for pt_regs. Howeve...
+
+CVE-2024-21875 [PUBLISHED]
+  Allocation of Resources Without Limits or Throttling vulnerability in Badge leading to a denial of service attack.Team Hacker Hotel Badge 2024 on risc-v (billboard modules) allows Flooding.This issue ...
+
+CVE-2024-50382 [PUBLISHED]
+  Botan before 3.6.0, when certain LLVM versions are used, has compiler-induced secret-dependent control flow in lib/utils/ghash/ghash.cpp in GHASH in AES-GCM. There is a branch instead of an XOR with c...
+
+CVE-2024-44966 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+binfmt_flat: Fix corruption when not offsetting data start
+
+Commit 04d82a6d0881 ("binfmt_flat: allow not offsetting data start")
+in...
+
+CVE-2024-56673 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: mm: Do not call pmd dtor on vmemmap page table teardown
+
+The vmemmap's, which is used for RV64 with SPARSEMEM_VMEMMAP, page
+...
+
+CVE-2024-56682 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+irqchip/riscv-aplic: Prevent crash when MSI domain is missing
+
+If the APLIC driver is probed before the IMSIC driver, the parent MS...
+
+CVE-2024-43843 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv, bpf: Fix out-of-bounds issue when preparing trampoline image
+
+We get the size of the trampoline image during the dry run pha...
+
+CVE-2024-43868 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv/purgatory: align riscv_kernel_entry
+
+When alignment handling is delegated to the kernel, everything must be
+word-aligned in p...
+
+CVE-2024-47717 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+RISC-V: KVM: Don't zero-out PMU snapshot area before freeing data
+
+With the latest Linux-6.11-rc3, the below NULL pointer crash is ...
+
+CVE-2024-42140 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: kexec: Avoid deadlock in kexec crash path
+
+If the kexec crash code is called in the interrupt context, the
+machine_kexec_mas...
+
+CVE-2024-42267 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv/mm: Add handling for VM_FAULT_SIGSEGV in mm_fault_error()
+
+Handle VM_FAULT_SIGSEGV in the page fault path so that we correctl...
+
+CVE-2024-46792 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: misaligned: Restrict user access to kernel memory
+
+raw_copy_{to,from}_user() do not call access_ok(), so this code allowed
+u...
+
+CVE-2024-57945 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: mm: Fix the out of bound issue of vmemmap address
+
+In sparse vmemmap model, the virtual address of vmemmap is calculated as:...
+
+CVE-2024-57883 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+mm: hugetlb: independent PMD page table shared count
+
+The folio refcount may be increased unexpectly through try_get_folio() by
+cal...
+
+CVE-2024-57939 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Fix sleeping in invalid context in die()
+
+die() can be called in exception handler, and therefore cannot sleep.
+However, die...
+
+CVE-2024-40915 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: rewrite __kernel_map_pages() to fix sleeping in invalid context
+
+__kernel_map_pages() is a debug function which clears the v...
+
+CVE-2024-11263 [PUBLISHED]
+  When the Global Pointer (GP) relative addressing is enabled (CONFIG_RISCV_GP=y), the gp reg points at 0x800 bytes past the start of the .sdata section which is then used by the linker to relax accesse...
+
+CVE-2020-29561 [PUBLISHED]
+  An issue was discovered in SonicBOOM riscv-boom 3.0.0. For LR, it does not avoid acquiring a reservation in the case where a load translates successfully but still generates an exception.
+
+CVE-2022-26296 [PUBLISHED]
+  BOOM: The Berkeley Out-of-Order RISC-V Processor commit d77c2c3 was discovered to allow unauthorized disclosure of information to an attacker with local user access via a side-channel analysis.
+
+CVE-2022-49004 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Sync efi page table's kernel mappings before switching
+
+The EFI page table is initially created as a copy of the kernel page...
+
+CVE-2022-49852 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: process: fix kernel info leakage
+
+thread_struct's s[12] may contain random kernel memory content, which
+may be finally leake...
+
+CVE-2022-49851 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: fix reserved memory setup
+
+Currently, RISC-V sets up reserved memory using the "early" copy of the
+device tree. As a result,...
+
+CVE-2022-49001 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: fix race when vmap stack overflow
+
+Currently, when detecting vmap stack overflow, riscv firstly switches
+to the so called sh...
+
+CVE-2022-50225 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv:uprobe fix SR_SPIE set/clear handling
+
+In riscv the process of uprobe going to clear spie before exec
+the origin insn,and set...
+
+CVE-2022-48922 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: fix oops caused by irqsoff latency tracer
+
+The trace_hardirqs_{on,off}() require the caller to setup frame pointer
+properly....
+
+CVE-2022-34641 [PUBLISHED]
+  CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a and RISCV-Boom commit ad64c5419151e5e886daee7084d8399713b46b4b implements the incorrect exception type when a PMP violation occurs during address t...
+
+CVE-2022-34636 [PUBLISHED]
+  CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a and RISCV-Boom commit ad64c5419151e5e886daee7084d8399713b46b4b implements the incorrect exception type when a PMA violation occurs during address t...
+
+CVE-2022-34642 [PUBLISHED]
+  The component mcontrol.action in RISCV ISA Sim commit ac466a21df442c59962589ba296c702631e041b5 contains the incorrect mask which can cause a Denial of Service (DoS).
+
+CVE-2022-34643 [PUBLISHED]
+  RISCV ISA Sim commit ac466a21df442c59962589ba296c702631e041b5 implements the incorrect exception priotrity when accessing memory.
+
+CVE-2021-1104 [PUBLISHED]
+  The RISC-V Instruction Set Manual contains a documented ambiguity for the Machine Trap Vector Base Address (MTVEC) register that may lead to a vulnerability due to the initial state of the register no...
+
+CVE-2021-47134 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+efi/fdt: fix panic when no valid fdt found
+
+setup_arch() would invoke efi_init()->efi_get_fdt_params(). If no
+valid fdt found then ...
+
+CVE-2021-47486 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv, bpf: Fix potential NULL dereference
+
+The bpf_jit_binary_free() function requires a non-NULL argument. When
+the RISC-V BPF JI...
+
+CVE-2021-47414 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Flush current cpu icache before other cpus
+
+On SiFive Unmatched, I recently fell onto the following BUG when booting:
+
+[    ...
+
+CVE-2021-46957 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv/kprobe: fix kernel panic when invoking sys_read traced by kprobe
+
+The execution of sys_read end up hitting a BUG_ON() in __fi...
+
+CVE-2025-38434 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+Revert "riscv: Define TASK_SIZE_MAX for __access_ok()"
+
+This reverts commit ad5643cf2f69 ("riscv: Define TASK_SIZE_MAX for
+__access...
+
+CVE-2025-38296 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+ACPI: platform_profile: Avoid initializing on non-ACPI platforms
+
+The platform profile driver is loaded even on platforms that do n...
+
+CVE-2025-38435 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: vector: Fix context save/restore with xtheadvector
+
+Previously only v0-v7 were correctly saved/restored,
+and the context of ...
+
+CVE-2025-38261 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: save the SR_SUM status over switches
+
+When threads/tasks are switched we need to ensure the old execution's
+SR_SUM state is ...
+
+CVE-2025-38407 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: cpu_ops_sbi: Use static array for boot_data
+
+Since commit 6b9f29b81b15 ("riscv: Enable pcpu page first chunk
+allocator"), if...
+
+CVE-2025-38681 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+mm/ptdump: take the memory hotplug lock inside ptdump_walk_pgd()
+
+Memory hot remove unmaps and tears down various kernel page table...
+
+CVE-2025-38433 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: fix runtime constant support for nommu kernels
+
+the `__runtime_fixup_32` function does not handle the case where `val` is
+ze...
+
+CVE-2025-50897 [PUBLISHED]
+  A vulnerability exists in riscv-boom SonicBOOM 1.2 (BOOMv1.2) processor implementation, where valid virtual-to-physical address translations configured with write permissions (PTE_W) in SV39 mode may ...
+
+CVE-2025-63384 [PUBLISHED]
+  A vulnerability was discovered in RISC-V Rocket-Chip v1.6 and before implementation where the SRET (Supervisor-mode Exception Return) instruction fails to correctly transition the processor's privileg...
+
+CVE-2025-56301 [PUBLISHED]
+  An issue was discovered in Chipsalliance Rocket-Chip commit f517abbf41abb65cea37421d3559f9739efd00a9 (2025-01-29) allowing attackers to corrupt exception handling and privilege state transitions via a...
+
+CVE-2025-23135 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+RISC-V: KVM: Teardown riscv specific bits after kvm_exit
+
+During a module removal, kvm_exit invokes arch specific disable
+call whic...
+
+CVE-2025-22069 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: fgraph: Fix stack layout to match __arch_ftrace_regs argument of ftrace_return_to_handler
+
+Naresh Kamboju reported a "Bad fr...
+
+CVE-2025-39699 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+iommu/riscv: prevent NULL deref in iova_to_phys
+
+The riscv_iommu_pte_fetch() function returns either NULL for
+unmapped/never-mapped...
+
+CVE-2025-39904 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+arm64: kexec: initialize kexec_buf struct in load_other_segments()
+
+Patch series "kexec: Fix invalid field access".
+
+The kexec_buf ...
+
+CVE-2025-39815 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+RISC-V: KVM: fix stack overrun when loading vlenb
+
+The userspace load can put up to 2048 bits into an xlen bit stack
+buffer.  We wa...
+
+CVE-2025-8774 [PUBLISHED]
+  A vulnerability has been found in riscv-boom SonicBOOM up to 2.2.3 and classified as problematic. Affected by this vulnerability is an unknown functionality of the component L1 Data Cache Handler. The...
+
+CVE-2025-52484 [PUBLISHED]
+  RISC Zero is a general computing platform based on zk-STARKs and the RISC-V microarchitecture. Due to a missing constraint in the rv32im circuit, any 3-register RISC-V instruction (including remu and ...
+
+CVE-2025-45006 [PUBLISHED]
+  Improper mstatus.SUM bit retention (non-zero) in Open-Source RISC-V Processor commit f517abb violates privileged spec constraints, enabling potential physical memory access attacks.
+
+CVE-2025-61588 [PUBLISHED]
+  RISC Zero is a zero-knowledge verifiable general computing platform based on zk-STARKs and the RISC-V microarchitecture. In versions 2.0.2 and below of risc0-zkvm-platform, when the zkVM guest calls s...
+
+CVE-2025-40079 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv, bpf: Sign extend struct ops return values properly
+
+The ns_bpf_qdisc selftest triggers a kernel panic:
+
+    Unable to handle...
+
+CVE-2025-40065 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+RISC-V: KVM: Write hgatp register with valid mode bits
+
+According to the RISC-V Privileged Architecture Spec, when MODE=Bare
+is sel...
+
+CVE-2025-37822 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: uprobes: Add missing fence.i after building the XOL buffer
+
+The XOL (execute out-of-line) buffer is used to single-step the
+...
+
+CVE-2025-37966 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Fix kernel crash due to PR_SET_TAGGED_ADDR_CTRL
+
+When userspace does PR_SET_TAGGED_ADDR_CTRL, but Supm extension is not
+avai...
+
+CVE-2025-37975 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: module: Fix out-of-bounds relocation access
+
+The current code allows rel[j] to access one element past the end of the
+reloca...
+
+CVE-2025-54873 [PUBLISHED]
+  RISC Zero is a zero-knowledge verifiable general computing platform based on zk-STARKs and the RISC-V microarchitecture. RISC packages risc0-zkvm versions 2.0.0 through 2.1.0 and risc0-circuit-rv32im ...
+
+CVE-2023-53583 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+perf: RISC-V: Remove PERF_HES_STOPPED flag checking in riscv_pmu_start()
+
+Since commit 096b52fd2bb4 ("perf: RISC-V: throttle perf e...
+
+CVE-2023-53135 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Use READ_ONCE_NOCHECK in imprecise unwinding stack mode
+
+When CONFIG_FRAME_POINTER is unset, the stack unwinding function
+wa...
+
+CVE-2023-53699 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: move memblock_allow_resize() after linear mapping is ready
+
+The initial memblock metadata is accessed from kernel image mapp...
+
+CVE-2023-53694 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: ftrace: Fixup panic by disabling preemption
+
+In RISCV, we must use an AUIPC + JALR pair to encode an immediate,
+forming a ju...
+
+CVE-2023-52839 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+drivers: perf: Do not broadcast to other cpus when starting a counter
+
+This command:
+
+$ perf record -e cycles:k -e instructions:k -...
+
+CVE-2023-52797 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+drivers: perf: Check find_first_bit() return value
+
+We must check the return value of find_first_bit() before using the
+return valu...
+
+CVE-2023-52934 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+mm/MADV_COLLAPSE: catch !none !huge !bad pmd lookups
+
+In commit 34488399fa08 ("mm/madvise: add file and shmem support to
+MADV_COLLA...
+
+CVE-2023-52995 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv/kprobe: Fix instruction simulation of JALR
+
+Set kprobe at 'jalr 1140(ra)' of vfs_write results in the following
+crash:
+
+[   3...
+
+CVE-2023-52761 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: VMAP_STACK overflow detection thread-safe
+
+commit 31da94c25aea ("riscv: add VMAP_STACK overflow detection") added
+support fo...
+
+CVE-2023-52978 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: kprobe: Fixup kernel panic when probing an illegal position
+
+The kernel would panic when probed for an illegal position. eg:...
+
+CVE-2023-52677 [PUBLISHED]
+  In the Linux kernel, the following vulnerability has been resolved:
+
+riscv: Check if the code to patch lies in the exit section
+
+Otherwise we fall through to vmalloc_to_page() which panics since the
+a...
+
+CVE-2023-27386 [PUBLISHED]
+  Uncontrolled search path in some Intel(R) Pathfinder for RISC-V software may allow an authenticated user to potentially enable escalation of privilege via local access.
