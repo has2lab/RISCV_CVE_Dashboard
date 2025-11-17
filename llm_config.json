@@ -1,0 +1,70 @@
+{
+  "default": {
+    "provider": "openai",
+    "model": "deepseek-chat"
+  },
+  "openai": {
+    "api_key": "",
+    "base_url": "https://api.deepseek.com/v1",
+    "models": [
+      "deepseek-chat",
+      "deepseek-reasoner"
+    ],
+    "default_model": "deepseek-chat",
+    "temperature": 0.6,
+    "max_tokens": 1000,
+    "timeout": 60,
+    "rate_limit_delay": 1.0
+  },
+  "anthropic": {
+    "api_key": "",
+    "models": [
+      "claude-3-opus-20240229",
+      "claude-3-sonnet-20240229",
+      "claude-3-haiku-20240307"
+    ],
+    "default_model": "claude-3-sonnet-20240229",
+    "max_tokens": 1000,
+    "timeout": 30,
+    "rate_limit_delay": 0.5
+  },
+  "local": {
+    "base_url": "http://localhost:11434",
+    "models": [
+      "llama2",
+      "mistral",
+      "qwen"
+    ],
+    "default_model": "llama2",
+    "temperature": 0.3,
+    "max_tokens": 1000,
+    "timeout": 60
+  },
+  "custom": {
+    "api_key": "",
+    "base_url": "",
+    "model": "",
+    "temperature": 0.3,
+    "max_tokens": 1000,
+    "timeout": 30,
+    "rate_limit_delay": 0.5
+  },
+  "classification": {
+    "predefined_categories": [
+      "Linux Kernel",
+      "RISC-V CPU/SoC",
+      "Simulator",
+      "RISC-V Development Tools",
+      "Device-Specific Firmware & Applications",
+      "RISC-V Instruction Set Manual",
+      "Other"
+    ],
+    "allow_new_categories": true,
+    "system_prompt": "You are a cybersecurity expert specializing in RISC-V architecture vulnerabilities."
+  },
+  "output": {
+    "save_original_data": true,
+    "generate_report": true,
+    "generate_summary": true
+  }
+}

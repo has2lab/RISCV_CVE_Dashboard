@@ -1,6 +1,4 @@
 # LLM配置文件（包含API密钥）
-my_llm_config.json
-*_config.json
 *.env
 .env.*
 
