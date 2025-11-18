@@ -48,9 +48,10 @@ jobs:
     
     - name: Commit and push changes
       run: |
-        git add visualization/riscv_cves_classified.json
-        git add visualization/riscv_cves_classified_summary.json
+        git add riscv_cves_classified.json
+        git add riscv_cves_classified_summary.json
         git add riscv_cves/*.json
+        git add visualization/
         
         # 检查是否有变更
         if git diff --staged --quiet; then
@@ -60,11 +61,10 @@ jobs:
           git push
         fi
     
-    - name: Upload Pages artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: visualization/
-    
     - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./visualization
+        publish_branch: gh-pages
+        force_orphan: true
