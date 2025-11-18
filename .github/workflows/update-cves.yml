@@ -61,6 +61,11 @@ jobs:
           git push
         fi
     
+    - name: Copy classified JSON files to visualization
+      run: |
+        cp riscv_cves_classified.json visualization/
+        cp riscv_cves_classified_summary.json visualization/
+    
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
       with:

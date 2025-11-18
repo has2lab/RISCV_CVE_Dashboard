@@ -2,8 +2,8 @@
 const CONFIG = {
   // 数据文件路径
   DATA_SOURCES: {
-    SUMMARY: '../riscv_cves_classified_summary.json',
-    DETAILED: '../riscv_cves_classified.json'
+    SUMMARY: './riscv_cves_classified_summary.json',
+    DETAILED: './riscv_cves_classified.json'
   },
 
   // 分类配置
