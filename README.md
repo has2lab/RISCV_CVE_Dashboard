@@ -1,15 +1,16 @@
 # RISC-V CVE 数据库 + 可视化系统
 
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![Auto Update](https://github.com/YOUR_USERNAME/RISCV_CVE_Dashboard/actions/workflows/update-cves.yml/badge.svg)](https://github.com/YOUR_USERNAME/RISCV_CVE_Dashboard/actions/workflows/update-cves.yml)
-[![GitHub Pages](https://github.com/YOUR_USERNAME/RISCV_CVE_Dashboard/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/YOUR_USERNAME/RISCV_CVE_Dashboard/actions/workflows/deploy-pages.yml)
+
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 一个全自动的RISC-V CVE数据库系统，每日自动更新并部署到GitHub Pages。
 
 ## 🌐 在线查看
 
-**访问地址**: https://YOUR_USEE.github.io/RISCV_CVE_Dashboard/
+**访问地址**: https://YOUR_USERNAME.github.io/RISCV_CVE_Dashboard/visualization
+
+例如：[https://has2lab.github.io/RISCV_CVE_Dashboard/visualization](https://has2lab.github.io/RISCV_CVE_Dashboard/visualization)
 
 系统每天北京时间上午9:35自动更新CVE数据并重新部署。
 
