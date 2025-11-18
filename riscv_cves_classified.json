@@ -1,17 +1,19 @@
 {
     "metadata": {
         "total_cves": 83,
-        "classification_date": "2025-11-17T16:38:22.857694",
-        "model_used": "gpt-3.5-turbo",
-        "provider": "local",
+        "classification_date": "2025-11-18T09:41:44.031593",
+        "model_used": "deepseek-chat",
+        "provider": "openai",
         "categories": [
             "Linux Kernel",
             "RISC-V CPU/SoC",
             "Simulator",
             "RISC-V Development Tools",
+            "Device-Specific Firmware & Applications",
+            "RISC-V Instruction Set Manual",
             "Other"
         ],
-        "config_file": "llm_config.yaml"
+        "config_file": "llm_config.json"
     },
     "statistics": {
         "total_processed": 83,
@@ -20,23 +22,25 @@
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 9,
-            "Other": 9,
+            "RISC-V Instruction Set Manual": 1,
             "Linux Kernel": 64,
-            "RISC-V Development Tools": 1
+            "Simulator": 2,
+            "RISC-V Development Tools": 5,
+            "Device-Specific Firmware & Applications": 2
         }
     },
     "classified_cves": [
         {
             "cve_id": "CVE-2020-29561",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "SonicBOOM RISC-V处理器版本3.0.0中存在LR指令实现缺陷。当加载操作成功转换但产生异常时，处理器未能避免获取保留权限，可能导致非预期的内存访问行为。该漏洞影响处理器的内存一致性保障机制。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "LR（Load Reserved）指令实现缺陷",
+                "异常处理过程中错误获取内存保留权限",
+                "影响RISC-V处理器的内存原子操作正确性"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞涉及RISC-V架构中的LR/SC（Load Reserved/Store Conditional）原子操作机制。具体而言，当LR指令执行时：1）地址转换成功完成（通过MMU），但指令执行过程中产生了其他异常（如中断、页面错误等）；2）处理器在这种情况下仍错误地获取了目标地址的保留权限；3）这破坏了LR/SC原子操作的正确语义，可能导致后续SC指令在不应成功的情况下错误执行，破坏多核环境下的内存一致性。该漏洞主要影响采用SonicBOOM微架构的RISC-V处理器，涉及内存管理单元与异常处理机制的协同设计缺陷。",
             "original_data": {
                 "containers": {
                     "cna": {
@@ -177,18 +181,19 @@
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.846275"
+            "classification_timestamp": "2025-11-18T09:22:09.924480"
         },
         {
             "cve_id": "CVE-2021-1104",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "RISC-V Instruction Set Manual",
+            "summary": "RISC-V指令集手册中关于MTVEC寄存器的初始状态定义存在模糊性，可能导致系统启动时执行非法指令。该漏洞可能引发信息泄露、数据篡改和拒绝服务攻击。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "MTVEC寄存器初始状态未明确定义",
+                "漏洞影响机器模式异常向量基地址设置",
+                "可能导致特权级安全机制被绕过"
             ],
-            "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞源于RISC-V特权架构规范对MTVEC（Machine Trap Vector Base Address）寄存器复位值的定义不明确。在系统启动过程中，若MTVEC寄存器未正确初始化，可能指向任意内存地址。攻击者可利用此特性：1) 通过预置恶意代码在可能指向的地址空间实现代码执行 2) 破坏异常处理机制导致系统崩溃 3) 结合其他漏洞提升权限。该问题影响所有遵循该规范实现的RISC-V处理器，需通过固件更新明确初始化序列来修复。",
             "original_data": {
                 "containers": {
                     "cna": {
@@ -329,19 +334,19 @@
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.846439"
+            "classification_timestamp": "2025-11-18T09:22:21.438910"
         },
         {
             "cve_id": "CVE-2021-46957",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的kprobe实现缺陷。当在sys_read系统调用入口设置kprobe时，会导致内核触发BUG_ON崩溃，具体表现为在执行单步调试过程中出现指令页错误异常处理不当。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "kprobe在sys_read入口替换指令为ebreak导致异常",
+                "单步调试期间清除SIE中断使能位引发问题",
+                "指令页错误异常处理逻辑存在缺陷"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术细节如下：1) kprobe在sys_read入口将第一条指令替换为ebreak指令；2) 执行到ebreak时陷入断点处理程序，在准备单步执行原指令时会备份sstatus并清除SIE位禁用中断；3) 恢复执行时若指令槽的页表项未填充，会触发指令页错误异常（scause=0xc）；4) 页错误异常处理程序根据kprobe状态（KPROBE_HIT_SS）采取错误策略，最终导致__find_get_block中的BUG_ON被触发。漏洞根源在于RISC-V架构下kprobe单步执行与页错误处理的交互逻辑存在缺陷。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -547,19 +552,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.846599"
+            "classification_timestamp": "2025-11-18T09:22:36.205632"
         },
         {
             "cve_id": "CVE-2021-47134",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的EFI/FDT初始化过程中，当系统未找到有效的设备树（FDT）时，会导致内核恐慌（panic）。该问题在RISC-V架构上被发现，需要及时处理无效FDT的情况。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "setup_arch()调用efi_init()->efi_get_fdt_params()时未处理无效FDT情况",
+                "当initial_boot_params为null时继续执行FDT处理导致内核恐慌",
+                "漏洞在RISC-V架构上被发现和报告"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术细节如下：在Linux内核启动过程中，setup_arch()函数会调用EFI初始化链（efi_init()->efi_get_fdt_params()）。如果系统没有找到有效的设备树（Flattened Device Tree），initial_boot_params指针将保持为null值。然而代码没有对此情况进行适当检查，继续执行后续的FDT处理操作，最终导致内核发生panic。这个问题在RISC-V架构上特别明显，因为RISC-V系统高度依赖设备树进行硬件描述和配置。修复方案是在检测到initial_boot_params为null时立即停止进一步的FDT处理流程。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -765,19 +770,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.846775"
+            "classification_timestamp": "2025-11-18T09:22:49.858068"
         },
         {
             "cve_id": "CVE-2021-47414",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核在RISC-V架构上的指令缓存同步问题。当内核进行动态代码修补时，当前CPU的指令缓存未及时刷新，导致执行了陈旧的非法指令。这主要影响SiFive Unmatched平台的内核启动过程。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "指令缓存同步时序问题",
+                "动态代码修补过程中的缓存一致性缺陷",
+                "多核架构下的缓存管理漏洞"
             ],
             "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "技术细节：\n1. 漏洞触发场景：在ftrace进行动态代码修补时，对riscv_cpuid_to_hartid_mask函数进行指令替换\n2. 根本原因：patch_text_nosync在修补指令后调用flush_icache_range，但该函数通过sbi_remote_fence_i仅刷新其他CPU的指令缓存，而未刷新当前CPU的缓存\n3. 具体表现：当前CPU继续执行旧的缓存指令，导致非法指令异常，引发内核恐慌\n4. 修复方案：在要求其他CPU刷新指令缓存之前，先刷新当前CPU的指令缓存，确保缓存一致性",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -983,19 +988,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.846914"
+            "classification_timestamp": "2025-11-18T09:23:03.640462"
         },
         {
             "cve_id": "CVE-2021-47486",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V BPF JIT编译器中，当JIT编译器在NR_JIT_ITERATIONS步骤内无法收敛时，会导致jit_data->header为NULL，进而引发空指针解引用问题。通过添加参数检查可避免此漏洞。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "RISC-V架构的BPF JIT编译器存在空指针解引用漏洞",
+                "当JIT编译无法在指定迭代次数内收敛时触发",
+                "bpf_jit_binary_free()函数未对NULL参数进行检查"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术细节如下：1) RISC-V BPF JIT编译器在编译过程中需要多次迭代优化；2) 当超过NR_JIT_ITERATIONS最大迭代次数仍未收敛时，jit_data->header会被设置为NULL；3) 后续调用bpf_jit_binary_free()函数时未检查参数有效性，直接对NULL指针进行解引用操作，导致内核崩溃或潜在的安全风险。修复方案是在调用bpf_jit_binary_free()前添加NULL检查。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -1321,19 +1326,20 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847062"
+            "classification_timestamp": "2025-11-18T09:23:17.335204"
         },
         {
             "cve_id": "CVE-2022-26296",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "CVE-2022-26296是伯克利乱序执行RISC-V处理器中的一个侧信道漏洞。攻击者可通过本地用户访问权限利用该漏洞泄露敏感信息。该漏洞存在于特定版本的BOOM处理器实现中。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "侧信道信息泄露漏洞",
+                "需要本地用户访问权限",
+                "影响BOOM处理器特定版本(d77c2c3)",
+                "通过微架构侧信道分析实现信息泄露"
             ],
-            "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于伯克利大学开发的乱序执行RISC-V处理器(BOOM)的特定提交版本d77c2c3中。攻击者通过侧信道分析技术，能够从处理器的微架构状态中提取敏感信息。由于乱序执行特性导致的时序差异或缓存状态变化，使得攻击者能够推断出本应受保护的数据内容。这种攻击不需要直接访问目标数据，而是通过观察处理器的行为特征来间接获取信息，属于典型的侧信道攻击。",
             "original_data": {
                 "containers": {
                     "cna": {
@@ -1474,19 +1480,19 @@
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847170"
+            "classification_timestamp": "2025-11-18T09:23:30.173767"
         },
         {
             "cve_id": "CVE-2022-34636",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "CVE-2022-34636涉及CVA6和RISCV-Boom处理器核心在地址转换过程中存在异常类型处理错误。当发生物理内存属性(PMA)违规时，系统未能正确实现相应的异常类型。该漏洞可能影响处理器的内存保护机制和系统稳定性。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "地址转换过程中的PMA违规异常处理错误",
+                "影响CVA6和RISCV-Boom两个开源RISC-V处理器核心",
+                "异常类型实现不正确可能导致安全边界绕过"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞具体表现为：在RISC-V处理器的地址转换过程中，当发生物理内存属性(PMA)违规时，系统本应触发正确的异常类型（如访问错误异常），但实际实现的异常类型存在错误。PMA违规通常发生在处理器尝试访问不符合内存区域属性（如执行不可执行区域、写入只读区域等）的情况下。错误的异常类型可能导致：1）系统无法正确处理内存保护违规；2）可能被利用来绕过内存保护机制；3）影响操作系统的异常处理流程。该漏洞涉及两个重要的开源RISC-V实现：CVA6（原名Ariane）和RISCV-Boom，两者都在特定提交版本中存在此问题。",
             "original_data": {
                 "containers": {
                     "cna": {
@@ -1645,19 +1651,19 @@
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847285"
+            "classification_timestamp": "2025-11-18T09:23:45.800407"
         },
         {
             "cve_id": "CVE-2022-34641",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "CVE-2022-34641涉及CVA6和RISCV-Boom处理器核心中的PMP（物理内存保护）漏洞。当在地址转换过程中发生PMP违规时，处理器会触发错误的异常类型。该漏洞可能导致安全机制失效，影响系统的内存保护能力。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "PMP违规时触发异常类型错误",
+                "影响地址转换过程中的内存保护机制",
+                "涉及CVA6和RISCV-Boom两个开源处理器核心"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞的技术细节如下：1) 在地址转换阶段（如MMU进行虚拟地址到物理地址的转换时），如果发生PMP访问权限违规，处理器本应触发精确的访问故障异常；2) 但受影响的实现错误地触发了其他类型的异常，这可能导致安全监控机制无法正确识别和处理内存违规访问；3) 具体涉及CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a和RISCV-Boom commit ad64c5419151e5e886daee7084d8399713b46b4b两个版本；4) 此漏洞可能被利用来绕过内存保护机制，导致权限提升或信息泄露。",
             "original_data": {
                 "containers": {
                     "cna": {
@@ -1834,18 +1840,19 @@
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847394"
+            "classification_timestamp": "2025-11-18T09:24:01.147695"
         },
         {
             "cve_id": "CVE-2022-34642",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "Simulator",
+            "summary": "该CVE涉及RISC-V ISA模拟器中mcontrol.action组件的掩码设置错误，可能导致模拟器崩溃或拒绝服务。漏洞源于特定提交版本ac466a21df442c59962589ba296c702631e041b5的代码缺陷。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "mcontrol.action组件掩码配置错误",
+                "触发条件可导致模拟器运行中断",
+                "影响RISC-V指令集模拟器的稳定性"
             ],
             "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "在RISC-V ISA模拟器的调试模块中，mcontrol.action字段用于控制调试断点行为。该漏洞由于位掩码计算错误，可能导致：1) 错误地触发或跳过断点条件 2) 模拟器内部状态机异常 3) 最终引发段错误或无限循环。具体表现为当处理特定调试事件时，错误的掩码值会使模拟器无法正确处理mcontrol寄存器配置，进而导致整个模拟进程崩溃。",
             "original_data": {
                 "containers": {
                     "cna": {
@@ -1986,18 +1993,19 @@
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847504"
+            "classification_timestamp": "2025-11-18T09:24:14.624942"
         },
         {
             "cve_id": "CVE-2022-34643",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "Simulator",
+            "summary": "该CVE涉及RISC-V ISA模拟器在处理内存访问时的异常优先级实现错误。具体表现为在ac466a21df442c59962589ba296c702631e041b5提交中，异常处理优先级未按规范正确实现，可能导致安全漏洞。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "RISC-V ISA模拟器内存访问异常优先级实现错误",
+                "涉及特定提交版本ac466a21df442c59962589ba296c702631e041b5",
+                "可能影响模拟器的正确性和安全性"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于RISC-V指令集架构模拟器中，具体问题是在处理内存访问操作时，异常优先级未按照RISC-V规范正确实现。当发生多个异常条件时，模拟器未能按照规定的优先级顺序处理这些异常，可能导致非预期的行为或安全绕过。由于这是模拟器实现层面的缺陷，主要影响使用该模拟器的开发和测试环境，对实际硬件部署影响有限。",
             "original_data": {
                 "containers": {
                     "cna": {
@@ -2138,19 +2146,19 @@
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847613"
+            "classification_timestamp": "2025-11-18T09:24:27.818784"
         },
         {
             "cve_id": "CVE-2022-48922",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核在RISC-V架构上的一个内核空指针解引用问题。当启用irqsoff延迟跟踪器时，由于帧指针设置不当，导致trace_hardirqs_on/off函数在获取调用者信息时触发内存访问错误。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "帧指针设置问题：汇编入口代码未正确设置$fp寄存器作为帧指针",
+                "宏调用风险：CALLER_ADDR1宏依赖正确的帧指针来获取返回地址",
+                "内存访问错误：在trace_hardirqs_on函数中访问无效内存地址0x00000000000000f8"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞技术细节如下：1) RISC-V架构的汇编入口代码中，$s0寄存器被用于存储任务标志而非作为帧指针；2) trace_hardirqs_{on,off}函数使用__builtin_return_address(1)宏获取调用者信息，该宏依赖正确的帧指针设置；3) 当$fp寄存器未被正确设置为帧指针时，生成的汇编代码'ld s2,-8(a1)'会尝试从错误的内存地址读取数据，导致空指针解引用和内核oops。修复方案是为这些跟踪函数添加额外的包装层，使其能够安全地被低级入口代码调用。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -2355,19 +2363,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847748"
+            "classification_timestamp": "2025-11-18T09:24:43.619453"
         },
         {
             "cve_id": "CVE-2022-49001",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "Linux内核RISC-V架构存在vmap栈溢出竞争条件漏洞。当检测到vmap栈溢出时，多个硬件线程可能同时使用相同的影子栈，导致竞争条件。通过引入原子变量spin_shadow_stack来解决该问题。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "vmap栈溢出检测时存在竞争条件",
+                "多个hart可能同时使用相同的影子栈",
+                "通过原子交换操作解决竞争问题"
             ],
-            "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞涉及RISC-V架构在Linux内核中的vmap栈溢出处理机制。当检测到栈溢出时，系统会先切换到影子栈，然后调用get_overflow_stack()获取溢出栈。问题在于多个硬件线程（hart）可能同时使用同一个影子栈，造成竞争条件。修复方案是引入spin_shadow_stack原子变量，通过原子交换操作（包含AQ内存序）在自身地址和0之间切换，当变量被设置时表示影子栈正在使用，清除时表示空闲。Palmer补充了AQ内存序要求和相关注释以确保正确性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -2549,19 +2557,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847867"
+            "classification_timestamp": "2025-11-18T09:24:56.593730"
         },
         {
             "cve_id": "CVE-2022-49004",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及RISC-V架构下Linux内核的EFI页表同步问题。当启用VMAP_STACK时，若内核栈分配在新的PGD中，切换至EFI页表会导致内核陷入陷阱并引发系统崩溃。修复方案是在切换前同步EFI页表的内核映射。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "VMAP_STACK启用时内核栈分配在vmalloc区域",
+                "EFI页表初始化为内核页表副本但未实时同步新PGD映射",
+                "访问未同步的vmalloc内核栈时触发陷阱导致内核恐慌"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "技术细节说明：该漏洞本质是页表同步时序问题。EFI页表初始化阶段完整复制内核页表后，当VMAP_STACK机制在vmalloc区域动态分配新PGD层级的栈空间时，EFI页表未同步更新对应内核映射。当系统切换至EFI页表执行时，访问这些新分配的栈内存会触发页错误陷阱。由于EFI模式下缺页异常处理程序可能未适配此场景，最终导致内核恐慌。修复方案通过__efi_sync_low_kernel_mappings()在切换前主动同步内核映射，确保EFI页表包含所有活跃的vmalloc区域映射。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -2741,19 +2749,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.847992"
+            "classification_timestamp": "2025-11-18T09:25:13.075922"
         },
         {
             "cve_id": "CVE-2022-49851",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V架构的内存管理缺陷。由于在引导过程中过早使用设备树的早期副本设置保留内存，导致后续访问保留内存区域时出现内核恐慌。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "保留内存设置时机错误：使用早期设备树副本初始化保留内存",
+                "虚拟地址访问异常：of_reserved_mem_lookup()使用预虚拟内存地址导致内核崩溃",
+                "修复方案：将early_init_fdt_scan_reserved_mem()移至setup_arch()中的early_init_dt_verify()之后执行"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞的技术核心在于RISC-V架构在引导过程中对保留内存的处理时序问题。具体表现为：1）early_init_fdt_scan_reserved_mem()在过早阶段被调用，此时使用的是dtb_early_va设置的initial_boot_params；2）当后续通过of_reserved_mem_lookup()访问保留内存区域时，指针仍指向早期的预虚拟内存地址（如0x00000000401c31ac）；3）在尝试访问缓冲区名称时，由于虚拟内存映射尚未完全建立，导致内核页错误和系统崩溃。修复方法是将保留内存扫描推迟到setup_arch()中直接调用early_init_dt_verify()之后，确保使用正确的虚拟内存地址。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -2930,19 +2938,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.848312"
+            "classification_timestamp": "2025-11-18T09:25:29.042132"
         },
         {
             "cve_id": "CVE-2022-49852",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V架构的一个安全问题，在进程创建时thread_struct结构体的s[12]数组可能包含未初始化的内核内存内容，最终可能泄露给用户空间。通过在fork时清除s[12]数组来修复此漏洞。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "thread_struct结构体中的s[12]数组未正确初始化",
+                "可能泄露内核内存内容到用户空间",
+                "影响fork和kthread创建过程"
             ],
             "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "在RISC-V架构的Linux内核实现中，当创建新进程（通过fork系统调用）或内核线程时，thread_struct结构体中的s[12]寄存器保存数组未能被正确初始化，可能包含先前使用的内核内存数据。这些敏感的内核数据可能通过用户空间程序被读取，造成信息泄露。修复方案是在fork和创建内核线程时显式清除s[12]数组的内容。该漏洞主要影响RISC-V架构的Linux系统，需要特定条件才能被利用。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -3149,19 +3157,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.848433"
+            "classification_timestamp": "2025-11-18T09:25:42.009354"
         },
         {
             "cve_id": "CVE-2022-50225",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及RISC-V架构Linux内核中的uprobe实现缺陷。在uprobe执行过程中，错误地设置/清除SR_SPIE寄存器导致在中断禁用状态下触发页面故障，引发内核警告。修复方案是移除不必要的SR_SPIE寄存器操作。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "uprobe执行流程中SR_SPIE寄存器处理不当",
+                "中断禁用状态下触发页面故障导致内核警告",
+                "修复方法为移除arch_uprobe_pre/post/abort_xol中的SR_SPIE操作"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于RISC-V架构的Linux内核uprobe实现中。在arch_uprobe_pre_xol函数执行原始指令前会清除SR_SPIE（Supervisor Previous Interrupt Enable）标志，执行后再重新设置。但当访问存放原始指令的页面时可能发生页面故障，而此时中断已被禁用，导致系统检测到在无效上下文中调用睡眠函数（如获取读锁），触发内核警告。技术根源在于不必要的SR_SPIE操作，最终通过完全移除这些操作来修复问题。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -3326,18 +3334,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.848552"
+            "classification_timestamp": "2025-11-18T09:25:55.832970"
         },
         {
             "cve_id": "CVE-2023-27386",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "RISC-V Development Tools",
+            "summary": "英特尔RISC-V Pathfinder软件存在未受控的搜索路径漏洞，允许本地认证用户通过特定操作实现权限提升。该漏洞影响软件的安全隔离机制，可能被利用来执行未授权操作。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "路径搜索未受控导致权限提升",
+                "需本地认证用户身份",
+                "影响英特尔RISC-V Pathfinder工具链"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞属于DLL劫持类安全问题，由于英特尔Pathfinder for RISC-V软件在加载动态链接库时未正确限制搜索路径，攻击者可在优先搜索的目录中放置恶意动态库。当认证用户运行该软件时，系统会加载恶意库而非合法库，从而导致权限提升。漏洞利用需要攻击者已获得本地访问权限，但成功利用后可获得更高系统权限。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -3477,19 +3486,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.848795"
+            "classification_timestamp": "2025-11-18T09:26:07.843054"
         },
         {
             "cve_id": "CVE-2023-52677",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V架构补丁机制中，当尝试修补位于退出段（exit section）的代码时，未进行正确验证。这会导致内核错误调用vmalloc_to_page()函数，引发系统崩溃。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "漏洞涉及RISC-V架构的内核代码热补丁机制",
+                "缺少对目标代码段是否为退出段的检查",
+                "错误处理流程触发vmalloc_to_page()导致内核恐慌"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术核心在于：当Linux内核需要对RISC-V架构的运行时代码进行动态修补时，修补函数未能正确识别目标代码是否位于内核的退出段（包含__exit标记的代码段）。由于退出段通常不在常规的vmalloc映射区域内，当错误地尝试通过vmalloc_to_page()转换这类地址时，会触发内核恐慌（panic），导致系统不可用。这属于内核内存管理层面的边界条件处理缺陷，影响系统稳定性和可靠性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -3755,19 +3764,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.848937"
+            "classification_timestamp": "2025-11-18T09:26:21.152407"
         },
         {
             "cve_id": "CVE-2023-52761",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的VMAP_STACK溢出检测机制存在线程安全问题。当多个CPU核心同时发生内核栈溢出时，会因共享shadow_stack而导致状态互相破坏。修复方案通过直接使用每CPU的overflow_stack来消除竞争条件。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "VMAP_STACK溢出检测存在竞态条件",
+                "多个CPU同时溢出时共享shadow_stack导致状态破坏",
+                "通过每CPU overflow_stack直接切换解决安全问题"
             ],
             "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "技术细节：1) 原始实现中，当检测到内核栈溢出时，CPU会先切换到临时shadow_stack，再转到每CPU的overflow_stack；2) 问题在于shadow_stack不是每CPU专属的，多个CPU同时溢出时会互相干扰和破坏状态；3) 修复方案定义了汇编宏来直接获取每CPU符号，在entry.S中检测到溢出时直接定位到每CPU的overflow_stack，避免了中间共享状态；4) 实现时需要将x31寄存器临时保存到CSR_SCRATCH中，因为计算每CPU符号需要临时寄存器；5) 该漏洞可通过特定调试命令触发，导致内核栈溢出和系统崩溃。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -3983,19 +3992,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849074"
+            "classification_timestamp": "2025-11-18T09:26:36.637278"
         },
         {
             "cve_id": "CVE-2023-52797",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V性能监控单元(PMU)驱动程序的数组越界问题。由于未检查find_first_bit()函数返回值，导致内核使用无效索引访问数组，引发系统崩溃。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "find_first_bit()返回值未验证即用作数组索引",
+                "触发条件为RISC-V平台的性能监控单元溢出处理",
+                "导致内核数组越界访问并引发内核恐慌(Kernel Panic)"
             ],
             "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "在drivers/perf/目录下的RISC-V PMU驱动中，pmu_sbi_ovf_handler()函数直接使用find_first_bit()的返回值作为数组索引，但未验证该值是否在合法范围内。当find_first_bit()返回异常值（如0xFFFFFFFF）时，会导致访问超出数组边界的内存地址，最终触发内核致命异常。从堆栈跟踪可见崩溃发生在中断处理流程中：riscv_intc_irq → handle_riscv_irq → pmu_sbi_ovf_handler+0x3a4处。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -4201,19 +4210,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849198"
+            "classification_timestamp": "2025-11-18T09:26:50.525566"
         },
         {
             "cve_id": "CVE-2023-52839",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V性能监控单元(PMU)的一个设计缺陷。当使用perf record命令启动性能计数器时，会不必要地向所有CPU广播启动指令，导致内核警告和潜在的系统不稳定。问题源于对计数器启动机制的误解，仅需在mmap操作时进行广播。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "漏洞触发条件：使用perf record -e cycles:k -e instructions:k命令时",
+                "根本原因：错误地在计数器启动时调用了smp_call_function_many_cond广播函数",
+                "修复方案：移除pmu_sbi_ctr_start函数中不必要的CPU广播调用"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于drivers/perf目录下的RISC-V PMU驱动中。当用户执行perf record命令启动硬件性能计数器时，系统会调用pmu_sbi_ctr_start函数，该函数错误地通过on_each_cpu_cond_mask向所有CPU核心广播启动指令。实际上，计数器启动只需在本地CPU执行，广播操作仅在mmap场景下当计数器可能已在其他CPU上启动时才需要。这导致了不必要的smp_call_function_many_cond调用，触发内核警告并可能影响系统性能。修复方案是直接移除start操作中的广播调用，保持与stop操作的一致性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -4392,19 +4401,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849335"
+            "classification_timestamp": "2025-11-18T09:27:06.525817"
         },
         {
             "cve_id": "CVE-2023-52934",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中MADV_COLLAPSE功能在RISC-V架构下的pmd查找逻辑漏洞。在commit 34488399fa08中修改了find_pmd_or_thp_or_none()函数，移除了!pmd_present()检查，导致可能将swap条目等非pte-table-mapping pmd错误识别为有效的映射。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "pmd查找逻辑存在缺陷，允许!none && !huge && !bad的pmd通过验证",
+                "RISC-V架构的pmd_present()实现依赖_PAGE_LEAF位检查",
+                "漏洞可能导致内核错误处理swap条目等特殊情况"
             ],
             "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞源于Linux内核内存管理子系统中的find_pmd_or_thp_or_none()函数。在支持MADV_COLLAPSE的文件/shmem代码路径中，修改后的代码只检查pmd_none()而忽略了pmd_present()，这导致swap条目等非pte-table-mapping pmd可能被错误分类。RISC-V架构的pmd_present()实现需要检查_PAGE_LEAF位，但在代码修改后，某些过渡状态的pmd（如正在执行__split_huge_pmd_locked()时）可能被错误处理。修复方案是在pmd_none()检查后恢复!pmd_present()检查，但需要小心处理不同架构下pmd状态转换的细微差异。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -4527,19 +4536,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849460"
+            "classification_timestamp": "2025-11-18T09:27:23.943952"
         },
         {
             "cve_id": "CVE-2023-52978",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及RISC-V架构Linux内核中的kprobe机制漏洞。当在非法指令位置设置探测点时，会导致内核栈损坏并引发内核恐慌。漏洞修复通过添加位置验证来阻止在指令中间等非法位置设置探测点。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "kprobe在非法位置设置探测点时触发内核恐慌",
+                "ebreak指令破坏了原始内核代码执行流",
+                "缺乏对探测位置的正确性验证机制"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术细节如下：1) 当用户尝试在非法指令位置（如指令中间）设置kprobe探测点时，内核会执行ebreak断点指令，这破坏了原始代码的正常执行流程；2) 由于缺乏适当的位置验证，ebreak指令被插入到不适当的位置，导致内核栈保护机制检测到栈损坏；3) 具体表现为当CONFIG_RISCV_ISA_C未启用时，在kernel_clone+0x16位置设置探测点会触发内核恐慌，调用栈显示在__do_sys_newfstatat+0xb8处检测到栈损坏；4) 修复方案是在arch_prepare_kprobe函数中添加arch_check_kprobe检查，确保探测点位置的有效性，防止在指令中间等非法位置设置探测。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -4744,19 +4753,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849591"
+            "classification_timestamp": "2025-11-18T09:27:40.352722"
         },
         {
             "cve_id": "CVE-2023-52995",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的kprobe功能缺陷。在模拟JALR指令执行时，由于未正确处理源寄存器(rs1)和目的寄存器(rd)相同的情况，导致内核崩溃。该漏洞在设置kprobe到'jalr 1140(ra)'指令时触发。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "JALR指令模拟存在缺陷",
+                "未处理rs1和rd寄存器相同的情况",
+                "导致内核非法内存访问和系统崩溃"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞具体技术细节如下：1) 当kprobe设置在类似'jalr 1140(ra)'的指令时，由于rs1(ra)和rd(ra)是同一个寄存器，指令模拟器需要先获取目标地址，然后再更新rd寄存器；2) 原始实现未正确处理这种特殊情况，导致在更新rd寄存器时破坏了原本的rs1值；3) 这最终引发内核无法处理用户空间内存访问，产生Oops错误，错误地址00aaaaaad77b1170表明发生了非法内存访问；4) 漏洞影响RISC-V架构下的内核动态追踪功能，可能被利用导致系统不稳定。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -4900,19 +4909,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849705"
+            "classification_timestamp": "2025-11-18T09:27:56.654754"
         },
         {
             "cve_id": "CVE-2023-53135",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V架构的堆栈展开功能缺陷。当未启用帧指针且开启KASAN时，walk_stackframe函数在非精确展开模式下会触发堆栈越界读取。修复方案是使用READ_ONCE_NOCHECK替代原有读取方式。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "触发条件：CONFIG_FRAME_POINTER未设置 + KASAN启用",
+                "问题本质：非精确堆栈展开模式下的内存越界读取",
+                "修复方法：使用READ_ONCE_NOCHECK进行堆栈读取"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "在RISC-V架构的Linux内核中，当系统配置为不使用帧指针(CONFIG_FRAME_POINTER=n)时，堆栈展开函数walk_stackframe采用非精确模式。该模式下函数会随机读取堆栈内存，当内核地址消毒器(KASAN)启用时，这种读取行为会被检测为堆栈越界访问，导致KASAN报错。漏洞表现为在系统启动过程中swapper任务触发堆栈越界读取，地址为ffffffff81807c40。修复方案将原有的内存读取操作替换为READ_ONCE_NOCHECK宏，该宏会绕过KASAN的边界检查，避免误报同时保持功能正常。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -5119,19 +5128,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849849"
+            "classification_timestamp": "2025-11-18T09:28:13.023828"
         },
         {
             "cve_id": "CVE-2023-53583",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V PMU驱动程序的性能监控漏洞。在事件解除限制时，由于未正确更新PERF_HES_STOPPED标志，导致触发内核警告。修复方案是移除riscv_pmu_start()函数中不必要的标志检查。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "性能事件限制机制缺陷：当性能事件采样率过高时，中断处理未正确更新事件状态标志",
+                "内核警告触发：在perf_event_overflow()后未调用riscv_pmu_stop()更新PERF_HES_STOPPED标志",
+                "代码逻辑不一致：与其他架构PMU驱动实现相比，RISC-V驱动存在多余的标志检查逻辑"
             ],
-            "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于RISC-V PMU驱动在性能事件溢出处理时的逻辑缺陷。当性能监控事件产生过多中断时，perf框架会通过perf_sample_event_took()降低采样率并进行限制。但在解除限制时，由于pmu_sbi_ovf_handler()中未调用riscv_pmu_stop()来更新PERF_HES_STOPPED标志，导致后续riscv_pmu_start()函数中的WARN_ON_ONCE检查触发内核警告。通过对比Arm、Loongarch等其他架构的实现，发现它们均未在*_pmu_start()中进行此类标志检查，因此修复方案是直接移除riscv_pmu_start()中的PERF_HES_STOPPED标志验证逻辑。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -5275,19 +5284,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.849973"
+            "classification_timestamp": "2025-11-18T09:28:30.773715"
         },
         {
             "cve_id": "CVE-2023-53694",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及RISC-V架构下Linux内核的ftrace功能缺陷。当启用内核抢占时，由于AUIPC和JALR指令对之间的竞争条件，可能导致系统崩溃。漏洞通过禁用抢占机制得到修复。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "RISC-V架构下ftrace使用AUIPC+JALR指令对实现长跳转",
+                "内核抢占可能导致指令对执行期间被中断并修改跳转地址",
+                "地址修改错误造成XLEN:12位与11:0位地址混用"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "技术细节：在RISC-V架构中，ftrace使用AUIPC（高位立即数加载）和JALR（跳转链接寄存器）指令组合实现超过4K范围的跳转。当启用内核抢占时，任务可能在执行AUIPC指令后被切换出CPU，在此期间如果ftrace函数被动态修改，当任务重新调度执行JALR指令时，会使用部分旧地址（XLEN:12位）和部分新地址（11:0位）组合的错误跳转地址，导致系统崩溃。修复方案是通过禁用抢占来确保指令对的原子性执行。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -5431,19 +5440,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.850087"
+            "classification_timestamp": "2025-11-18T09:28:45.886333"
         },
         {
             "cve_id": "CVE-2023-53699",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核在RISC-V架构启动过程中的内存管理缺陷。在内核初始化阶段，memblock允许重新分配内存区域时，线性映射尚未完全建立，导致内存访问异常和页面错误。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "memblock_allow_resize()调用时机过早",
+                "线性映射未完成时进行内存区域重分配",
+                "内核镜像映射到线性映射的内存拷贝引发页面错误"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术细节包括：1）在RISC-V内核启动过程中，memblock元数据最初通过内核镜像映射访问；2）当需要扩展memblock区域时，系统会重新分配regions数组并通过线性映射访问；3）问题在于memblock允许重新分配的时机过早，在create_linear_mapping_page_table()完成之前就触发了memblock.reserved.regions的重分配；4）这导致在将旧数组从内核镜像映射拷贝到线性映射的新数组时发生页面错误，具体表现为无法处理虚拟地址ff600000ffffd000的页面请求。该问题与arm64架构中已修复的漏洞类似，需要通过调整memblock_allow_resize()的调用时机来解决。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -5608,18 +5617,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.850219"
+            "classification_timestamp": "2025-11-18T09:29:01.941641"
         },
         {
             "cve_id": "CVE-2024-11263",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "该CVE涉及RISC-V架构中全局指针相对寻址配置的安全问题。当启用CONFIG_RISCV_GP配置时，gp寄存器指向.sdata段起始位置后0x800字节处，链接器使用此地址进行全局符号访问优化时可能引发安全风险。此漏洞影响zephyrproject-rtos Zephyr项目。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "全局指针相对寻址配置问题",
+                "gp寄存器错误偏移0x800字节",
+                "链接器符号访问优化存在安全隐患"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "技术细节：1) 当CONFIG_RISCV_GP配置启用时，系统错误地将gp寄存器设置为指向.sdata段起始位置后0x800字节处，而非正确的起始位置；2) 链接器依赖此错误地址进行全局符号的访问优化（relaxation），可能导致内存访问越界或数据损坏；3) 该漏洞存在于Zephyr实时操作系统的RISC-V架构支持中，影响使用该配置的嵌入式设备。攻击者可能利用此漏洞进行内存破坏或执行任意代码。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -5773,18 +5783,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.850340"
+            "classification_timestamp": "2025-11-18T09:29:15.562884"
         },
         {
             "cve_id": "CVE-2024-21875",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "CVE-2024-21875是针对Hacker Hotel 2024徽章设备的资源分配漏洞，攻击者可通过无限制资源分配发起洪水攻击，导致设备拒绝服务。该漏洞影响0.1.0至0.1.3版本固件。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "资源分配缺乏限制机制",
+                "通过洪水攻击可造成拒绝服务",
+                "影响RISC-V架构的专用设备固件"
             ],
             "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞存在于基于RISC-V架构的Hacker Hotel 2024徽章设备的billboard模块固件中。由于未对资源分配实施合理的限制或流量控制机制，攻击者可通过持续发送大量请求耗尽系统资源，导致设备无法正常响应合法请求。漏洞影响范围限定在0.1.0至0.1.3版本固件，属于设备特定固件的设计缺陷。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -5999,19 +6010,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.850471"
+            "classification_timestamp": "2025-11-18T09:29:27.212375"
         },
         {
             "cve_id": "CVE-2024-26619",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的模块加载机制存在释放顺序错误，导致可能触发use-after-free漏洞。修复方案为调整kfree调用顺序以消除安全隐患。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "模块加载过程中资源释放顺序错误",
+                "可能造成已释放内存的非法访问",
+                "通过反转kfree调用顺序修复"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于Linux内核的RISC-V模块加载子系统中。在模块卸载或加载失败时，系统会按特定顺序释放已分配的资源。原始代码中的kfree调用顺序存在缺陷，可能导致某个内核对象在被释放后仍被其他代码引用，从而引发use-after-free条件。攻击者可能利用此漏洞导致内核崩溃或执行任意代码。修复方案通过调整kfree的调用顺序，确保依赖关系正确的释放顺序，从而消除use-after-free风险。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -6190,19 +6201,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.850597"
+            "classification_timestamp": "2025-11-18T09:29:39.000805"
         },
         {
             "cve_id": "CVE-2024-26795",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的稀疏内存/vmemmap越界问题。通过调整vmemmap偏移量确保物理内存首页与虚拟内存映射首页对齐，以保障地址转换操作的边界安全。修复后SV39/48/57地址转换宏能在物理内存限制内为所有有效DRAM_BASE生成正确地址。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "vmemmap偏移量校准缺陷导致越界访问风险",
+                "影响pfn_to_page()/page_to_pfn()地址转换准确性",
+                "涉及SV39/48/57多级页表地址转换机制"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于RISC-V架构实现中vmemmap初始偏移量未与物理内存首页严格对齐。当DRAM_BASE处于特定范围时，虚拟内存映射边界检查可能失效，导致：1) 通过页帧号(pfn)转换物理地址时可能访问非法内存区域 2) 在稀疏内存配置下可能触发内核页表异常。修复方案通过重设vmemmap基址偏移，确保虚拟内存映射结构完全覆盖有效物理内存范围，同时保持各级页表转换宏（SV39/48/57）的地址生成一致性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -6495,19 +6506,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.850802"
+            "classification_timestamp": "2025-11-18T09:29:53.694588"
         },
         {
             "cve_id": "CVE-2024-26796",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "在Linux内核中，当配置CONFIG_RISCV_PMU_LEGACY=y且CONFIG_RISCV_PMU_SBI=n时，由于未定义ctr_get_width函数，导致执行perf record时发生内核空指针解引用崩溃。该漏洞影响RISC-V架构的性能监控单元(PMU)驱动。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "配置条件：CONFIG_RISCV_PMU_LEGACY=y 且 CONFIG_RISCV_PMU_SBI=n",
+                "触发方式：执行perf record命令",
+                "根本原因：legacy模式下的ctr_get_width函数未定义但被调用"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞是RISC-V架构PMU驱动中的一个空指针解引用问题。在legacy PMU模式下，arch_perf_update_userpage函数试图调用未定义的ctr_get_width函数，导致内核访问0x0000000000000000地址而崩溃。错误日志显示'Unable to handle kernel NULL pointer dereference at virtual address 0000000000000000'，epc寄存器指向0x0，表明程序计数器跳转到了空地址。该问题仅影响特定的内核配置组合，需要同时启用legacy PMU支持并禁用SBI PMU支持。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -6715,19 +6726,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.850944"
+            "classification_timestamp": "2025-11-18T09:30:09.519254"
         },
         {
             "cve_id": "CVE-2024-26843",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核EFI运行时子系统中的潜在整数溢出漏洞。当软保留区域包含超过4GB的页面时，md_size变量会发生窄化导致溢出。此漏洞可能影响使用EFI引导的RISC-V系统。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "EFI运行时子系统中的整数溢出漏洞",
+                "软保留区域大小计算存在缺陷",
+                "影响>=4GB内存页面的处理"
             ],
-            "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于Linux内核的EFI（可扩展固件接口）运行时组件中。当系统存在大小达到或超过4GB的软保留内存区域时，md_size变量在计算过程中会发生整数溢出。这是因为md_size被定义为较窄的数据类型，无法正确表示大尺寸内存区域。在RISC-V架构系统中，这可能影响内存管理功能的正确性，导致内存分配错误或系统不稳定。漏洞修复需要确保在计算大内存区域时使用足够宽的数据类型来避免溢出。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -7049,19 +7060,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851081"
+            "classification_timestamp": "2025-11-18T09:30:22.328419"
         },
         {
             "cve_id": "CVE-2024-26902",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的性能监控单元(PMU)溢出处理漏洞。在设置无符号长整型overflowed_ctrs的位时，错误使用了(1 << idx)而非BIT()宏，导致在Sophgo SG2042处理器上运行'perf record -e branches'时引发内核空指针解引用和系统崩溃。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "位操作错误：使用(1 << idx)而非BIT()宏导致整数溢出问题",
+                "空指针解引用：在riscv_pmu_ctr_get_width_mask函数中访问0x98地址",
+                "特定触发条件：在Sophgo SG2042上执行perf record -e branches命令时复现"
             ],
             "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "技术细节：该漏洞源于RISC-V PMU溢出处理程序(pmu_sbi_ovf_handler)中的位操作错误。当设置overflowed_ctrs无符号长整型变量的位时，代码错误地使用了(1 << idx)而不是BIT()宏。由于idx可能超过32位，导致整数溢出和未定义行为，最终在riscv_pmu_ctr_get_width_mask函数中引发空指针解引用（地址0x98）。从堆栈跟踪可见，问题发生在中断处理上下文中，导致内核崩溃并显示'Kernel panic - not syncing: Fatal exception in interrupt'。该漏洞特定影响RISC-V架构的Linux内核性能监控子系统。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -7267,19 +7278,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851207"
+            "classification_timestamp": "2025-11-18T09:30:39.174444"
         },
         {
             "cve_id": "CVE-2024-35871",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核RISC-V架构中内核全局指针(gp)泄露漏洞。当创建用户模式辅助线程时，未正确清除子进程寄存器状态，导致内核指针可能通过多种途径被用户空间获取。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "用户模式辅助线程(childregs)未正确初始化gp寄存器",
+                "内核全局指针可能通过ptrace、性能监控等途径泄露",
+                "影响范围包括execve执行前的线程状态和寄存器采样"
             ],
             "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "漏洞核心在于内核创建用户模式辅助线程时，childregs结构体中的gp寄存器保留内核态全局指针值。攻击者可通过：1)PTRACE_GETREGSET附加未执行exec的线程 2)PERF_SAMPLE_REGS_USER采样 3)追踪基础设施等多种方式获取内核地址。虽然需要特定条件触发，但可能绕过LOCKDOWN_PERF防护机制暴露内核内存布局。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -7572,19 +7583,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851351"
+            "classification_timestamp": "2025-11-18T09:30:51.565279"
         },
         {
             "cve_id": "CVE-2024-35873",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核RISC-V架构中rt_sigreturn()系统调用存在的向量状态恢复缺陷。当从信号处理程序返回时，错误的向量状态同步机制会导致用户态向量寄存器状态损坏，进而引发应用程序崩溃。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "向量状态同步错误：在rt_sigreturn()中未正确清理向量实时状态脏标记",
+                "触发条件：需启用CONFIG_RISCV_ISA_V_UCOPY_THRESHOLD且vlen>128b",
+                "根本原因：向量化user_from_copy()操作前未将实时状态标记为clean"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "根据RISC-V向量规范，执行系统调用会丢弃调用者保存的向量寄存器状态。在rt_sigreturn()执行过程中：1）进入系统调用时向量实时状态被丢弃并标记为dirty；2）从sigcontext恢复向量状态时，由于dirty标记未清除，向量化user_from_copy()会将已丢弃的实时状态错误保存至vstate；3）最终导致任务向量状态损坏。修复方案是在恢复vstate前显式将实时状态标记为clean。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -7763,19 +7774,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851488"
+            "classification_timestamp": "2025-11-18T09:31:06.748072"
         },
         {
             "cve_id": "CVE-2024-35987",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核在RISC-V架构NOMMU模式下的内存映射漏洞。由于PAGE_OFFSET固定导致内存初始化越界，可能破坏相邻内核内存。补丁通过恢复NOMMU内核的先前行为解决了此问题。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "NOMMU模式下PAGE_OFFSET固定为内核加载地址",
+                "内存初始化时mem_map数组越界访问",
+                "commit 3335068f8721引入的线性映射修改不兼容NOMMU"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于RISC-V架构的NOMMU（无内存管理单元）特殊配置。当使用PUD/P4D/PGD页表进行线性映射时，NOMMU模式的PAGE_OFFSET被固定为内核加载地址，导致ARCH_PFN_OFFSET以下的物理帧号对应到mem_map数组的负索引位置。在mm初始化过程中，这种越界访问会破坏相邻的内核数据结构，可能引发系统崩溃或不可预测行为。修复方案是专门为NOMMU内核恢复原有的内存映射处理逻辑。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -7983,19 +7994,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851609"
+            "classification_timestamp": "2025-11-18T09:31:20.368909"
         },
         {
             "cve_id": "CVE-2024-35988",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V架构在64位NOMMU（无内存管理单元）配置下的TASK_SIZE定义错误。当物理RAM存在4GB以上内存时，会导致用户空间访问例程出现虚假故障，影响用户态内存的正常访问。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "影响64位NOMMU配置的RISC-V系统",
+                "TASK_SIZE定义未正确考虑4GB以上物理内存",
+                "导致用户空间内存访问异常"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "在RISC-V NOMMU架构中，用户空间内存可以直接映射到物理RAM的任何位置。当前TASK_SIZE的定义基于32位地址空间假设（4GB限制），当系统实际物理RAM超过4GB时，该定义变得不正确。这会导致内核在验证用户空间地址时错误地拒绝合法访问，表现为用户空间程序无法正常访问高位物理内存区域。修复需要根据实际物理内存布局动态调整TASK_SIZE的值，确保用户空间能够正确访问所有可用的物理内存资源。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -8288,19 +8299,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851741"
+            "classification_timestamp": "2025-11-18T09:31:33.467861"
         },
         {
             "cve_id": "CVE-2024-38667",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "在Linux内核中，RISC-V架构的次要引导线程存在内核线程栈与pt_regs结构重叠的问题，导致寄存器状态可能被破坏。该漏洞在启用向量扩展(V)的CPU热插拔测试中触发，造成内核尝试保存或恢复不存在的向量上下文。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "次要空闲线程的栈与pt_regs内存区域重叠",
+                "smp_callin函数栈操作破坏pt_regs状态字段",
+                "未正确继承主线程的栈保留修复（c7cdd96eca28补丁）"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于RISC-V架构中内核线程栈顶未预留pt_regs空间的设计缺陷。次要引导硬件的空闲线程栈与pt_regs结构共享内存区域，当执行smp_callin函数时，寄存器保存操作会覆盖pt_regs的关键字段（包括状态寄存器）。这会导致内核误判向量扩展上下文状态，进而引发上下文保存/恢复异常。该问题与早期主线程修复（commit c7cdd96eca28）形成对称性缺陷，主要影响支持向量扩展和CPU热插拔的系统。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -8535,19 +8546,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851865"
+            "classification_timestamp": "2025-11-18T09:31:47.518638"
         },
         {
             "cve_id": "CVE-2024-40915",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的__kernel_map_pages()函数存在原子上下文中睡眠的问题。该调试函数在清除页表项有效位时可能获取信号量导致睡眠，违反了原子操作的约束。最终通过重写函数使用apply_to_existing_page_range()方法解决了此问题。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "__kernel_map_pages()在原子上下文中调用时可能睡眠",
+                "__set_memory()操作会获取init_mm信号量违反原子性约束",
+                "使用apply_to_existing_page_range()重写避免了锁操作"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的核心技术问题在于：__kernel_map_pages()作为调试函数，用于通过清除已释放页面页表项的有效位来检测非法内存访问。但该函数调用__set_memory()时会获取init_mm的读写信号量，这一操作可能进入睡眠状态。当函数在原子上下文（如中断处理、内核线程创建等场景）中被调用时，睡眠操作违反了内核的原子性约束，导致系统出现'睡眠函数在无效上下文中调用'的警告。解决方案是使用apply_to_existing_page_range()接口重写函数逻辑，该方案无需加锁，因为__kernel_map_pages()处理的页面正处于分配/释放过程中，在此期间不会被其他操作修改。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -8783,19 +8794,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.851996"
+            "classification_timestamp": "2025-11-18T09:32:02.929425"
         },
         {
             "cve_id": "CVE-2024-42140",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞涉及RISC-V架构在Linux内核的kexec崩溃路径中存在的死锁问题。当中断上下文中调用kexec崩溃代码时，会因获取irqdesc自旋锁与停用irqchip的操作导致系统僵死。修复方案为移除无实际作用的irq_set_irqchip_state()调用。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "中断上下文中触发kexec崩溃路径时产生死锁",
+                "machine_kexec_mask_interrupts()函数尝试获取irqdesc自旋锁时与irq_set_irqchip_state()形成循环依赖",
+                "RISC-V仅需irq_eoi处理程序即可完成EOI操作，移除冗余函数调用可消除死锁"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞本质是内核同步机制缺陷。当系统在中断上下文中执行kexec崩溃处理时，machine_kexec_mask_interrupts()会先获取irq_desc->lock自旋锁，随后调用irq_set_irqchip_state()尝试停用中断控制器。但后者在某些情况下可能反向请求相同锁资源，形成AB-BA式死锁。与arm64架构不同，RISC-V架构只需通过irq_eoi回调完成中断结束处理，保留irq_set_irqchip_state()不仅无用反而引入死锁风险。修复方案直接移除该函数调用，既保持功能完整又消除锁冲突。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -9068,19 +9079,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.852136"
+            "classification_timestamp": "2025-11-18T09:32:19.188043"
         },
         {
             "cve_id": "CVE-2024-42267",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的页面错误处理漏洞。当发生VM_FAULT_SIGSEGV错误时，系统未能正确处理导致内核BUG()而非终止进程。补丁通过添加对VM_FAULT_SIGSEGV的处理确保正确终止违规进程。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "mm_fault_error()函数缺少VM_FAULT_SIGSEGV处理",
+                "漏洞导致内核触发BUG()而非正常终止进程",
+                "影响RISC-V架构的页面错误处理路径"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于Linux内核的RISC-V内存管理子系统（riscv/mm）。当页面错误处理程序遇到VM_FAULT_SIGSEGV（内存访问违规）时，由于mm_fault_error()函数未包含对应的处理逻辑，会导致内核执行BUG()操作造成系统崩溃。修复方案是在mm_fault_error()中新增对VM_FAULT_SIGSEGV的处理分支，使其能正确发送SIGSEGV信号终止违规进程，维持系统稳定性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -9334,19 +9345,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.852294"
+            "classification_timestamp": "2025-11-18T09:32:32.684425"
         },
         {
             "cve_id": "CVE-2024-43843",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的BPF子系统，在准备蹦床图像时存在边界外访问问题。由于在试运行阶段和实际补丁阶段对`im`参数的处理不一致，导致RV64架构下生成指令数量不同，可能引发内存越界。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "蹦床图像大小计算不一致",
+                "emit_imm指令生成数量在试运行和实际执行阶段不同",
+                "RV64架构下可能产生内存越界访问"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于commit 26ef208c209a引入的架构变化。在BPF蹦床图像准备过程中，试运行阶段获取的图像大小与实际补丁阶段使用的`im`参数不一致。具体来说，在RV64架构中，emit_imm函数在生成立即数地址时，由于参数状态不同，可能产生不同数量的指令。这种不一致性导致预先分配的内存空间可能不足以容纳实际生成的指令，从而造成越界写入。修复方案是在试运行阶段就按照最大指令数量进行估算，确保内存分配充足。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -9503,19 +9514,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.852407"
+            "classification_timestamp": "2025-11-18T09:32:45.883354"
         },
         {
             "cve_id": "CVE-2024-43868",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞涉及Linux内核中RISC-V架构的purgatory组件，当内核委托处理对齐异常时，purgatory中的代码未正确进行字对齐，可能导致系统崩溃。该问题已在JH7110 SoC平台上通过测试验证。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "purgatory组件中riscv_kernel_entry未正确对齐",
+                "当内核委托处理未对齐访问异常时可能触发崩溃",
+                "影响kexec异常处理机制的正常运行"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "在RISC-V架构中，当对齐异常处理被委托给内核时，purgatory中的所有内容必须进行字对齐。由于riscv_kernel_entry未正确对齐，当触发异常时会跳转到kexec的陷阱处理程序，但由于对齐问题最终导致系统崩溃。正常情况下内核的处理程序会处理这些异常，但在此特定配置下（如JH7110 SoC使用oreboot和SBI委托未对齐访问异常，且内核配置为处理这些异常），缺少对齐会导致严重问题。该漏洞暴露了在内核启动早期阶段对架构特性支持不完善的问题。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -9727,19 +9738,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.852526"
+            "classification_timestamp": "2025-11-18T09:32:59.464435"
         },
         {
             "cve_id": "CVE-2024-44966",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V架构特有的二进制格式处理缺陷。当启用CONFIG_BINFMT_FLAT_NO_DATA_START_OFFSET配置时，未正确禁用共享库指针数组初始化代码，导致文本段末尾内存损坏。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "RISC-V特定FLAT格式处理缺陷",
+                "共享库指针数组越界写入",
+                "文本段末尾内存损坏"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞源于commit 04d82a6d0881引入的RISC-V FLAT格式优化，当配置CONFIG_BINFMT_FLAT_NO_DATA_START_OFFSET时未保留共享库指针空间，但初始化代码仍会执行，导致在DATA段前的sizeof(long)字节（通常为文本段末尾）被错误覆盖。通过引入MAX_SHARED_LIBS_UPDATE条件编译保护修复。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -9972,19 +9983,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.852662"
+            "classification_timestamp": "2025-11-18T09:33:10.790645"
         },
         {
             "cve_id": "CVE-2024-46792",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的内存访问漏洞。由于raw_copy_{to,from}_user()函数未调用access_ok()验证，导致用户空间可以访问任意内核虚拟内存地址。这是一个严重的内核权限绕过漏洞。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "raw_copy_to_user和raw_copy_from_user函数缺少access_ok()检查",
+                "允许用户空间程序访问任意内核内存地址",
+                "涉及RISC-V架构的未对齐内存访问处理"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于Linux内核的RISC-V架构特定代码中，具体在misaligned内存访问处理模块。raw_copy_to_user和raw_copy_from_user作为底层内存拷贝函数，设计上不包含access_ok()验证，本应仅在内核内部使用。但由于代码逻辑缺陷，用户空间可以通过特定路径调用这些函数，从而绕过内存权限检查，直接读写内核空间任意地址。这可能导致权限提升、信息泄露或系统崩溃等严重后果。漏洞影响所有使用受影响Linux内核版本的RISC-V系统。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -10141,19 +10152,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.852766"
+            "classification_timestamp": "2025-11-18T09:33:23.919983"
         },
         {
             "cve_id": "CVE-2024-47717",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V KVM模块中，当启用SBI PMU快照功能时，强制关闭虚拟机会导致空指针崩溃。问题出现在kvm_pmu_clear_snapshot_area()函数试图在释放数据前清零PMU快照区域。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "漏洞触发条件：启用SBI PMU快照的虚拟机被强制关闭",
+                "根本原因：kvm_pmu_clear_snapshot_area()函数在释放数据前错误地尝试清零PMU快照区域",
+                "影响范围：使用RISC-V KVM虚拟化且启用PMU快照功能的Linux系统"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术细节如下：1) 在Linux内核6.11-rc3中，当虚拟机配置了SBI PMU快照功能并被强制关闭时，kvm_pmu_clear_snapshot_area()函数会调用kvm_vcpu_write_guest()来清零PMU快照区域；2) 此时相关的guest内存可能已被释放，导致空指针解引用崩溃；3) 修复方案是简化kvm_pmu_clear_snapshot_area()逻辑，不再在虚拟机销毁时清零PMU快照区域，因为虚拟机本身正在被销毁；4) 该函数在虚拟机更改VCPU的PMU快照区域时也会被调用，此时同样不应清零之前的快照区域，因为guest可能已将该区域用于其他目的。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -10331,19 +10342,20 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.852891"
+            "classification_timestamp": "2025-11-18T09:33:40.291920"
         },
         {
             "cve_id": "CVE-2024-50382",
             "category": "RISC-V Development Tools",
-            "summary": "这是一个RISC-V相关的RISC-V Development Tools漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "Botan密码库在3.6.0之前版本中，当使用特定LLVM编译器（如LLVM 15）编译RISC-V架构代码时，GHASH实现存在编译器诱导的秘密依赖控制流漏洞。该漏洞在AES-GCM的GHASH运算中用分支判断替代了应有的带进位异或操作，可能导致侧信道攻击。",
             "key_points": [
-                "RISC-V开发工具链相关",
-                "可能影响编译结果",
-                "建议更新工具链版本"
+                "漏洞存在于Botan密码库的GHASH实现（lib/utils/ghash/ghash.cpp）",
+                "特定编译器（LLVM 15）在RISC-V架构上产生非恒定时间代码",
+                "控制流依赖秘密数据，存在侧信道攻击风险",
+                "影响AES-GCM加密模式的安全性"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞是编译器优化引入的侧信道漏洞。在RISC-V架构下，当使用LLVM 15等特定编译器编译Botan库的GHASH函数时，编译器错误地将本应使用恒定时间实现的带进位异或操作（XOR with carry）优化为条件分支操作。这种秘密依赖的控制流使得攻击者可能通过计时攻击或功耗分析等手段推断出加密密钥或其他敏感信息。漏洞特别影响AES-GCM加密模式中的GHASH认证运算，破坏了加密方案应有的侧信道安全性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -10489,19 +10501,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853006"
+            "classification_timestamp": "2025-11-18T09:33:55.608199"
         },
         {
             "cve_id": "CVE-2024-53075",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞涉及Linux内核中RISC-V架构的缓存叶子节点处理逻辑。当启用ACPI时，代码会提前返回而未释放已获取的CPU设备节点引用，导致引用计数错误。修复方案通过调整节点获取时机并添加错误检查来确保资源正确释放。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "ACPI启用路径中缺少of_node_put调用导致CPU设备节点引用计数泄漏",
+                "通过延迟CPU设备节点获取时机至ACPI处理块之后保证资源释放",
+                "新增错误检查机制处理节点获取失败情况（返回-ENOENT）"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞存在于Linux内核的RISC-V架构特定代码中，具体在drivers/of/cache.c的cache_setup_acpi_cpu_node函数内。原始实现会在函数起始处调用of_get_cpu_node获取CPU设备节点，但在ACPI启用分支中提前返回时未调用of_node_put释放节点引用。修复后：1. 将节点获取操作移至ACPI处理块之后；2. 添加节点获取失败的返回值检查；3. 确保所有执行路径均能正确释放节点引用。此问题虽不直接导致权限提升，但可能引起内核内存泄漏或系统稳定性问题。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -10633,19 +10645,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853125"
+            "classification_timestamp": "2025-11-18T09:34:10.586627"
         },
         {
             "cve_id": "CVE-2024-53228",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V KVM模块中，在kvm_riscv_vcpu_sbi_init()函数中存在数组越界访问问题。当处理SBI扩展时，未对entry->ext_idx进行边界检查，可能导致内核内存越界访问。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "kvm_riscv_vcpu_sbi_init()函数中的数组越界访问",
+                "entry->ext_idx未进行边界检查",
+                "特殊标记值被直接用作数组索引"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞的技术细节如下：在RISC-V KVM虚拟化模块初始化过程中，kvm_riscv_vcpu_sbi_init()函数负责初始化SBI（Supervisor Binary Interface）扩展。其中entry->ext_idx被用作特殊标记来表示基础扩展（这些扩展不能被禁用），但在遍历扩展列表时，代码未对该索引值进行越界检查就直接用作数组下标。这可能导致访问到数组边界之外的内存区域，造成内核不稳定或潜在的安全风险。修复方案是在索引数组前添加适当的边界检查逻辑。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -10851,19 +10863,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853244"
+            "classification_timestamp": "2025-11-18T09:34:23.405254"
         },
         {
             "cve_id": "CVE-2024-53687",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "在Linux内核的RISC-V架构中，kfence_protect_page()函数在中断禁用状态下错误使用了IPI（处理器间中断）来刷新所有核心的TLB，导致内核警告。修复方案改为仅刷新本地TLB，通过延迟的kfence页错误处理机制来容忍潜在的不一致性。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "IPI在中断禁用环境下的不当使用",
+                "TLB刷新机制与kfence保护的冲突",
+                "通过本地TLB刷新+延迟错误处理的优化方案"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞涉及RISC-V架构下Linux内核的内存保护机制。当kfence_protect_page()调用flush_tlb_kernel_range()时，该函数会通过IPI强制所有CPU核心刷新TLB，但在中断禁用上下文（如中断处理程序）中执行此操作会触发smp_call_function_many_cond()的警告。技术根本原因是：1）IPI机制要求中断可用 2）全局TLB刷新在特定上下文中不可行。修复方案采用保守策略：仅刷新本地TLB，允许其他核心可能暂时持有旧的受保护页表项，通过后续页错误处理进行纠正。这种设计权衡接受了短暂的内存保护不一致性，但避免了系统稳定性问题。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -11007,19 +11019,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853367"
+            "classification_timestamp": "2025-11-18T09:34:38.631053"
         },
         {
             "cve_id": "CVE-2024-56673",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V架构的内存管理缺陷。在RV64系统使用SPARSEMEM_VMEMMAP时，vmemmap页表拆卸过程中错误调用了pmd析构函数，导致内核崩溃。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "vmemmap页表分配未使用标准pmd分配机制",
+                "页表拆卸时错误调用pmd析构函数",
+                "触发条件：运行HMM自测并卸载test_hmm.ko模块"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "技术细节说明：在RISC-V 64位系统中，当使用SPARSEMEM_VMEMMAP内存模型时，vmemmap页表通过直接分配页面并调用vmemmap_set_pmd()进行填充，而非使用标准的pmd_alloc()或RISC-V特定的create_pgd_mapping()/alloc_pmd_late()机制。这导致pmd构造函数未被调用。然而在拆卸这些页表时，清理代码无条件调用了pmd析构函数，造成内核BUG和系统崩溃。该问题在运行HMM自测试（test_hmm.sh smoke）并卸载测试模块时触发，表现为VM_BUG_ON_PAGE(ptdesc->pmd_huge_pte)错误。修复方案是在vmemmap_free()调用上下文中添加检查，避免调用pmd析构函数。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -11203,19 +11215,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853502"
+            "classification_timestamp": "2025-11-18T09:34:54.344308"
         },
         {
             "cve_id": "CVE-2024-56682",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞涉及Linux内核中RISC-V APLIC中断控制器驱动，当APLIC驱动在IMSIC驱动之前加载时，由于缺少父级MSI域导致空指针解引用。解决方案是通过延迟探测机制等待父级MSI域就绪。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "驱动加载顺序问题导致空指针解引用",
+                "缺少父级MSI域时触发系统崩溃",
+                "使用dev_err_probe()实现优雅的错误处理"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞技术核心在于RISC-V中断控制器的初始化依赖关系：1) APLIC(Advanced Platform-Level Interrupt Controller)需要IMSIC(Incoming Message Signaled Interrupt Controller)提供的MSI域作为父域 2) 当APLIC先于IMSIC被探测时，msi_create_device_irq_domain()会尝试访问不存在的父域指针 3) 修复方案采用-EPROBE_DEFER机制，使驱动能安全地等待依赖组件初始化完成 4) 使用dev_err_probe()避免了不必要的错误日志输出",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -11402,19 +11414,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853615"
+            "classification_timestamp": "2025-11-18T09:35:07.345036"
         },
         {
             "cve_id": "CVE-2024-57883",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中HugeTLB页表管理的一个引用计数错误。当通过try_get_folio()等函数意外增加folio引用计数时，huge_pmd_unshare()中的共享检查会出错，导致页表泄露和内存管理异常。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "HugeTLB页表共享计数检查缺陷",
+                "folio引用计数意外增加导致误判",
+                "页表泄露引发Bad page state内核错误"
             ],
             "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞涉及Linux内核内存管理子系统中的HugeTLB功能。核心问题在于huge_pmd_unshare()函数使用folio引用计数来判断PMD页表是否共享，但当通过split_huge_pages、damon、offline_page等路径调用try_get_folio()时，引用计数会被意外增加，导致共享检查失效。这会造成两个严重后果：1）页表本身因报告'nonzero mapcount'而被错误丢弃；2）HugeTLB页面由于页表被误判为共享而无法正确解除映射，最终导致内存泄露。修复方案是引入独立的PMD页表共享计数（pt_share_count），避免与其他引用计数机制冲突。该漏洞可被多种内存管理工具触发，影响系统稳定性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -11643,19 +11655,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853754"
+            "classification_timestamp": "2025-11-18T09:35:22.469973"
         },
         {
             "cve_id": "CVE-2024-57939",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的die()函数在异常处理程序中错误使用自旋锁的问题。当启用PREEMPT_RT实时内核配置时，自旋锁可能导致睡眠，违反异常处理上下文不可睡眠的限制。解决方案是将spinlock_t替换为raw_spinlock_t以避免睡眠。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "die()函数在异常处理上下文中调用自旋锁",
+                "PREEMPT_RT配置下自旋锁可能触发睡眠导致内核警告",
+                "使用raw_spinlock_t替代spinlock_t修复问题"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于RISC-V架构的die()函数实现缺陷。在异常处理程序（如非法指令陷阱）中调用die()时，由于异常上下文具有原子性（in_atomic()=1, irqs_disabled()=1），此时使用普通自旋锁（spinlock_t）在PREEMPT_RT实时内核中会触发调度操作，违反不可睡眠约束。错误表现为'BUG: sleeping function called from invalid context'内核警告，可能导致系统不稳定。修复方案通过改用原始自旋锁（raw_spinlock_t）确保在实时内核中仍保持自旋等待而不睡眠。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -11936,19 +11948,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.853914"
+            "classification_timestamp": "2025-11-18T09:35:36.988869"
         },
         {
             "cve_id": "CVE-2024-57945",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞涉及Linux内核中RISC-V架构的稀疏vmemmap模型虚拟地址计算错误问题。当物理内存基址未按内存段大小对齐时，会导致vmemmap虚拟地址越界访问。内核通过引入对齐的vmemmap_start_pfn变量修复了此问题。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "稀疏vmemmap模型虚拟地址计算存在边界错误",
+                "phys_ram_base未对齐导致结构体页面虚拟地址越界",
+                "通过vmemmap_start_pfn变量确保地址对齐"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "在稀疏vmemmap模型中，vmemmap虚拟地址计算公式为：((struct page *)VMEMMAP_START - (phys_ram_base >> PAGE_SHIFT))。当phys_ram_base所在内存段的第一个页面物理地址不等于(phys_ram_base >> PAGE_SHIFT)时，计算出的结构体页面虚拟地址会低于VMEMMAP_START边界，甚至可能低于PCI_IO_END，造成越界访问。修复方案是引入按内存段大小对齐的vmemmap_start_pfn变量替代原有计算方式。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -12162,19 +12174,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854080"
+            "classification_timestamp": "2025-11-18T09:35:50.443119"
         },
         {
             "cve_id": "CVE-2025-22069",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞是Linux内核中RISC-V架构的函数图追踪（fgraph）实现缺陷，由于返回处理器的栈布局与__arch_ftrace_regs结构不匹配，导致内核触发'Bad frame pointer'警告。该问题在运行ftrace_stress_test测试时可通过动态事件追踪复现。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "栈布局不匹配：return_to_handler中的栈构造与__arch_ftrace_regs结构定义不一致",
+                "函数返回处理异常：ftrace_return_to_handler无法正确读取帧指针",
+                "动态追踪触发：通过fprobes启用do_nanosleep返回值追踪可复现问题"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "技术细节说明：该漏洞源于RISC-V架构特定的函数图追踪实现。在ftrace_return_to_handler中，预期通过__arch_ftrace_regs结构读取返回地址和栈帧信息，但由于栈布局构造错误，实际读取到的帧指针（ba34c141e9594000）与预期值（ff2000000065be50）严重不符。这种不匹配导致内核检测到无效的栈帧，从而触发WARNING级别的内核警告。问题具体出现在从do_nanosleep函数返回时，通过fprobes机制追踪函数返回值的过程中，暴露出架构特定实现与通用ftrace框架之间的集成缺陷。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -12297,19 +12309,20 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854202"
+            "classification_timestamp": "2025-11-18T09:36:07.182376"
         },
         {
             "cve_id": "CVE-2025-23135",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V KVM模块中，在模块卸载时存在资源清理顺序错误。aia_exit在kvm_exit之前被调用，导致AI中断控制器未能正确禁用，造成IRQ状态不一致和内核警告。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "资源清理顺序错误：aia_exit在kvm_exit之前执行",
+                "导致AI中断控制器未能正确禁用",
+                "产生IRQ状态不一致和内核警告信息",
+                "影响KVM模块重新加载能力"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞是RISC-V KVM模块中的资源管理缺陷。在模块卸载过程中，aia_exit（RISC-V特定AI中断控制器退出函数）在kvm_exit（通用KVM退出函数）之前被调用。正确的顺序应该是先调用kvm_exit执行通用清理，其中包括调用架构特定的disable回调来禁用AIA，然后再调用aia_exit进行最终的资源释放。由于顺序颠倒，导致AIA未能通过disable回调正确禁用，造成percpu IRQ仍然处于启用状态，触发内核警告'WARNING: CPU: 3 PID: 943 at kernel/irq/manage.c:2476 __free_percpu_irq+0xa2/0x150'，并且使得KVM内核模块无法重新插入系统。修复方案是将aia_exit和其他架构特定清理函数移到kvm_exit之后执行。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -12453,19 +12466,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854324"
+            "classification_timestamp": "2025-11-18T09:36:23.430620"
         },
         {
             "cve_id": "CVE-2025-37822",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "Linux内核RISC-V架构的uprobes功能存在指令缓存同步漏洞。在构建XOL缓冲区后缺少必要的fence.i指令，可能导致执行过时或错误的指令。该漏洞在Spacemit K1/X60平台上运行BPF测试时被发现。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "XOL缓冲区构建后缺少fence.i指令",
+                "指令缓存未正确刷新导致指令执行错误",
+                "影响uprobes单步调试功能"
             ],
-            "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞涉及RISC-V架构在Linux内核中的uprobes实现。uprobes使用XOL（execute out-of-line）缓冲区来单步执行被替换的指令。由于在构建XOL缓冲区后缺少fence.i指令，指令缓存（i$）未能及时刷新，导致CPU可能执行缓存中的旧指令而非新构建的指令。这种内存一致性错误在Spacemit K1/X60平台上运行BPF自测程序（test_progs: uprobe_autoattach, attach_probe）时表现为随机性故障。fence.i指令在RISC-V中用于同步指令缓存和数据缓存，确保后续指令获取能够看到最新的指令内容。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -12609,19 +12622,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854432"
+            "classification_timestamp": "2025-11-18T09:36:37.226007"
         },
         {
             "cve_id": "CVE-2025-37966",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "Linux内核在RISC-V架构下存在一个内核崩溃漏洞。当用户空间执行PR_SET_TAGGED_ADDR_CTRL操作时，如果系统不支持Supm扩展，会导致内核触发非法指令异常而崩溃。该漏洞已通过检查Supm扩展可用性得到修复。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "触发条件：用户空间调用PR_SET_TAGGED_ADDR_CTRL时Supm扩展不可用",
+                "根本原因：缺少对Supm扩展的可用性检查",
+                "影响表现：内核非法指令异常导致系统崩溃"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于Linux内核的RISC-V架构特定代码中。当用户空间通过prctl系统调用设置标签地址控制（PR_SET_TAGGED_ADDR_CTRL）时，内核函数set_tagged_addr_ctrl()会尝试执行Supm扩展相关指令。如果硬件不支持Supm扩展，将触发非法指令异常（epc: ffffffff80011ace），导致内核崩溃。错误调用栈显示从__riscv_sys_prctl到set_tagged_addr_ctrl的完整路径。修复方案是在执行相关操作前检查Supm扩展的可用性，避免在不支持的硬件上执行特权指令。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -12744,19 +12757,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854537"
+            "classification_timestamp": "2025-11-18T09:36:51.697323"
         },
         {
             "cve_id": "CVE-2025-37975",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V模块加载器的安全漏洞，由于边界检查不充分，可能导致越界访问重定位表。攻击者可利用此漏洞造成内核崩溃或潜在代码执行。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "重定位表边界检查缺失",
+                "rel[j]可能访问超出一个元素的非法内存",
+                "通过简化num_relocations计算修复"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "在RISC-V架构的Linux内核模块加载过程中，处理重定位表时未正确验证索引边界。原代码使用‘size/sizeof(Elf64_Rela)’计算重定位数量，但循环条件允许访问最后一个元素之后的位置。修复方案将循环条件改为严格使用num_relocations变量，确保所有内存访问均在合法范围内。此漏洞可能被恶意模块利用进行内核内存破坏，但需要配合模块加载权限。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -12900,19 +12913,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854643"
+            "classification_timestamp": "2025-11-18T09:37:03.407853"
         },
         {
             "cve_id": "CVE-2025-38261",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的线程切换漏洞。在任务切换过程中未正确保存和恢复SR_SUM状态位，导致在启用用户访问权限的代码区域内发生任务切换时可能引发内核崩溃。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "SR_SUM状态位在任务切换时未正确保存恢复",
+                "在put_user()等用户空间访问操作期间发生任务切换导致崩溃",
+                "漏洞在系统高负载时通过syz-stress工具触发"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞的核心问题是RISC-V架构中的SR_SUM（Supervisor User Memory access）控制位在任务切换时未能正确保存和恢复。当线程在启用用户访问权限的代码区域（通过__enable_user_access()设置SR_SUM）内发生切换时，新线程可能继承错误的SR_SUM状态。具体表现为：在schedule_tail()函数的put_user()操作期间，该宏会先启用用户访问（设置SR_SUM），然后执行用户空间写入操作。如果在参数计算过程中发生任务切换，SR_SUM状态可能被错误清除，导致后续的用户空间访问引发'Unable to handle kernel access to user memory'异常。修复方案是在switch_to()函数中显式保存和恢复SR_SUM状态位，确保任务切换前后该状态的一致性。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -13039,19 +13052,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854766"
+            "classification_timestamp": "2025-11-18T09:37:19.431980"
         },
         {
             "cve_id": "CVE-2025-38296",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "Linux内核平台配置文件驱动在非ACPI平台上错误初始化，导致RISC-V虚拟环境中出现内核警告。该漏洞因驱动未检查ACPI启用状态即创建sysfs条目引发。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "平台配置文件驱动未验证ACPI状态即初始化",
+                "sysfs创建依赖未初始化的acpi_kobj对象",
+                "RISC-V QEMU虚拟化环境触发内核堆栈警告"
             ],
             "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞技术核心在于：1) 平台配置文件驱动（platform_profile）在模块初始化时直接调用platform_profile_init()创建sysfs属性组；2) 创建过程依赖ACPI子系统的acpi_kobj全局对象，但在非ACPI系统中该对象未初始化；3) 在RISC-V QEMU虚拟机（virtio设备树）中运行无ACPI支持的Linux内核时，internal_create_group()函数检测到异常对象引用，触发WARNING级内核告警并输出完整调用堆栈。修复方案为在初始化流程中加入acpi_disabled条件检查。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -13174,19 +13187,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.854879"
+            "classification_timestamp": "2025-11-18T09:37:32.236427"
         },
         {
             "cve_id": "CVE-2025-38407",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V架构支持中，当启用NUMA并使用页面级percpu分配器时，sbi_hsm_hart_start()函数错误地假设__pa()可以转换vmalloc区域的地址，导致从核启动时访问无效物理地址而挂起。修复方法是将boot_data改为静态数组分配。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "NUMA启用时页面级percpu分配器将数据放在vmalloc区域",
+                "sbi_hsm_hart_start()错误使用__pa()转换非线性地址",
+                "静态分配boot_data数组解决物理地址获取问题"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞的技术核心在于地址转换机制。当CONFIG_NUMA=y且使用percpu_alloc=page时，percpu数据被分配在vmalloc区域（如0xff2000000001d080），这是非线性映射地址。sbi_hsm_hart_start()函数需要sbi_hart_boot_data的物理地址来启动从核，但直接使用__virt_to_phys()转换vmalloc地址会导致无效物理地址访问。从内核日志可见警告信息'virt_to_phys used for non-linear address'，随后CPU1启动失败。修复方案利用struct sbi_hart_boot_data尺寸较小的特点，改用静态数组分配，确保数据位于内核镜像的线性映射区域，使__pa()能够正确工作。该问题在Sophgo SG2042和QEMU virt平台上均可复现，影响SMP系统的多核启动。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -13330,19 +13343,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855008"
+            "classification_timestamp": "2025-11-18T09:37:49.757656"
         },
         {
             "cve_id": "CVE-2025-38433",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的运行时常量修复功能缺陷。在无内存管理单元（nommu）内核中，当处理32位地址高位为零的情况时，__runtime_fixup_32函数错误地生成无效指针，导致内核崩溃。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "__runtime_fixup_32函数对val=0情况处理不当",
+                "错误生成两个nop指令而非正确的指令序列",
+                "导致寄存器中残留随机数据形成无效指针"
             ],
             "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞的核心技术问题在于：当处理物理地址低于4GiB边界且高32位全零的情况时，代码逻辑缺陷导致连续执行两个else分支，错误地生成两个nop指令。这造成本应存储高32位零值的寄存器保留随机数据，与低32位值组合后形成无效指针。当内核后续访问该指针时触发内核恐慌（kernel panic）。修复方案需要确保当第一条指令被修补为nop时，第二条指令能正确调整为li指令而非addi。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -13465,19 +13478,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855112"
+            "classification_timestamp": "2025-11-18T09:38:03.143964"
         },
         {
             "cve_id": "CVE-2025-38434",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞源于Linux内核中RISC-V架构的TASK_SIZE_MAX定义优化不当。原优化将TASK_SIZE_MAX改为LONG_MAX以提升access_ok()性能，但导致地址验证不完整，使得TASK_SIZE至LONG_MAX之间的非法用户地址被错误放行，影响futex等系统调用的安全性。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "TASK_SIZE_MAX错误定义为LONG_MAX导致地址验证漏洞",
+                "get_user_pages_fast()接受非法地址范围(TASK_SIZE, LONG_MAX)",
+                "futex等依赖用户地址验证的机制受影响"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "技术细节说明：该漏洞的核心问题在于RISC-V架构的__access_ok()验证逻辑缺陷。原优化commit ad5643cf2f69将TASK_SIZE_MAX从默认的TASK_SIZE改为LONG_MAX，基于'用户地址<LONG_MAX<内核地址'的假设。但实际上TASK_SIZE到LONG_MAX之间的地址虽非有效用户地址，却被硬件视为合法。特别地，get_user_pages_fast()未正确过滤此区间地址，而futex等系统调用依赖该机制进行用户空间地址验证，导致可能访问非法内存区域。最终通过revert恢复TASK_SIZE_MAX为TASK_SIZE确保正确性，但牺牲了部分性能。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -13621,19 +13634,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855229"
+            "classification_timestamp": "2025-11-18T09:38:18.770799"
         },
         {
             "cve_id": "CVE-2025-38435",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V向量扩展的上下文保存/恢复缺陷。在xtheadvector支持中，仅正确保存了v0-v7寄存器，而v8-v31寄存器内容遭到破坏，导致用户空间程序可能受到影响。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "向量寄存器v8-v31保存/恢复不正确",
+                "仅v0-v7寄存器得到正确处理",
+                "影响xtheadvector扩展的用户空间程序稳定性"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于Linux内核的RISC-V向量扩展支持代码中。当使用xtheadvector扩展时，上下文切换过程中对向量寄存器的保存和恢复存在缺陷：系统仅正确保存和恢复了v0-v7共8个向量寄存器，而v8-v31这24个向量寄存器的内容在上下文切换过程中被损坏。这会导致使用这些寄存器的用户空间应用程序在上下文切换后出现数据损坏、计算错误或崩溃等问题。修复方案是完善向量寄存器上下文管理机制，确保所有32个向量寄存器都能正确保存和恢复。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -13756,19 +13769,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855333"
+            "classification_timestamp": "2025-11-18T09:38:32.411312"
         },
         {
             "cve_id": "CVE-2025-38681",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中内存热插拔与页表转储功能之间的竞争条件。当并发修改内核页表时，ptdump代码可能访问已释放的内存，导致系统不稳定。修复方案是在ptdump_walk_pgd()函数内部统一加内存热插拔锁。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "竞争条件发生在内存热移除与页表转储并发操作时",
+                "中间级页表被释放后，转储代码仍可能访问已释放内存",
+                "修复方案将内存热插拔锁移至通用ptdump_check_wx()函数"
             ],
             "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞涉及RISC-V平台内核页表调试机制。当通过/sys/kernel/debug/kernel_page_tables接口转储页表时，内存热移除操作会同时修改页表结构。若中间页表层级被释放，ptdump代码继续访问会导致野指针解引用。与arm64、s390等架构类似，RISC-V需要通过get_online_mems()/put_online_mems()保护操作序列。修复后统一在ptdump_walk_pgd()内部加锁，同时覆盖check_wx_pages检查路径。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.2",
@@ -14041,19 +14054,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855469"
+            "classification_timestamp": "2025-11-18T09:38:46.506936"
         },
         {
             "cve_id": "CVE-2025-39699",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V IOMMU驱动中，当riscv_iommu_pte_fetch()函数返回NULL时，riscv_iommu_iova_to_phys()函数未能正确处理空指针情况。这可能导致内核空指针解引用，引发系统崩溃或安全风险。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "riscv_iommu_pte_fetch()对未映射的IOVA返回NULL",
+                "riscv_iommu_iova_to_phys()未检查NULL返回值",
+                "移除了不必要的PTE验证逻辑"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞涉及RISC-V IOMMU的地址转换机制。当尝试通过iova_to_phys将IO虚拟地址转换为物理地址时，若对应地址未被映射（riscv_iommu_pte_fetch返回NULL），后续代码会直接解引用该空指针。修复方案包括：1）增加NULL返回值检查 2）移除冗余的页表项验证，因为riscv_iommu_pte_fetch已确保返回有效的叶子PTE或NULL。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -14176,19 +14189,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855579"
+            "classification_timestamp": "2025-11-18T09:38:59.520357"
         },
         {
             "cve_id": "CVE-2025-39815",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于Linux内核的RISC-V KVM模块中，当加载vlenb值时，由于未对用户空间输入进行长度验证，可能导致栈缓冲区溢出。攻击者可利用此漏洞造成系统崩溃或执行任意代码。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "栈缓冲区溢出漏洞",
+                "用户空间输入未验证长度",
+                "最大可写入2048位到xlen位栈缓冲区"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞的技术核心在于RISC-V KVM模块处理vlenb（向量长度字节）加载时存在边界检查缺失。具体表现为：用户空间可向仅能容纳xlen（当前架构位宽，如32/64位）的栈缓冲区写入最多2048位数据，超出缓冲区容量导致栈溢出。这可能被利用来覆盖返回地址或关键栈数据，进而引发权限提升或系统拒绝服务。修复方案是在数据加载前严格校验输入大小，确保不超过xlen位限制。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -14332,19 +14345,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855680"
+            "classification_timestamp": "2025-11-18T09:39:11.582823"
         },
         {
             "cve_id": "CVE-2025-39904",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中kexec_buf结构体未初始化漏洞。在RISC-V和arm64架构的kexec_file加载过程中，由于新增字段未正确初始化，导致读取未定义内存值。补丁通过零初始化该结构体解决了此问题。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "kexec_buf结构体声明时未初始化",
+                "commit bf454ec31add新增字段后架构间初始化不一致",
+                "触发UBSAN警告：无效的_Bool类型值加载"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于Linux内核kexec子系统中的内存初始化缺陷。具体来说：1）kexec_buf结构体在load_other_segments()函数中声明时未进行初始化；2）commit bf454ec31add引入的新字段在所有架构中未保持一致的初始化状态；3）当读取未初始化的_Bool类型字段时，会触发UBSAN（未定义行为消毒剂）警告，因为加载的值252不是有效的_Bool值（应为0或1）；4）这可能导致内核在kexec操作过程中使用垃圾值，影响系统稳定性。补丁方案是在声明时对kexec_buf进行零初始化，确保所有字段处于已知状态。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -14467,19 +14480,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855794"
+            "classification_timestamp": "2025-11-18T09:39:26.175341"
         },
         {
             "cve_id": "CVE-2025-40065",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞涉及RISC-V架构的Linux内核KVM模块，在写入hgatp寄存器时未正确处理Bare模式下的字段清零要求。根据RISC-V特权架构规范，当选择MODE=Bare时，必须将hgatp寄存器的其余字段置零，而当前实现存在违规操作。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "hgatp寄存器模式位设置不符合RISC-V特权架构规范",
+                "Bare模式下未正确清零非模式字段",
+                "漏洞影响KVM虚拟化的地址转换机制"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞本质是RISC-V KVM实现中对hgatp（Hypervisor Guest Address Translation and Protection）寄存器的写入违反架构规范。具体表现为：当hgatp.MODE字段设置为Bare（无地址转换）模式时，架构要求寄存器中除MODE字段外的其他字段（包括VMID和PPN）必须强制清零，但内核代码未严格执行此规定。这可能导致虚拟化环境中的地址转换行为异常，可能被利用造成虚拟机逃逸或系统不稳定。修复方案是通过预检测硬件支持的合法模式，确保在Bare模式下正确清零相关字段。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -14602,19 +14615,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.855899"
+            "classification_timestamp": "2025-11-18T09:39:40.713533"
         },
         {
             "cve_id": "CVE-2025-40079",
             "category": "Linux Kernel",
-            "summary": "这是一个RISC-V相关的Linux Kernel漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的BPF子系统漏洞。在结构体操作（struct ops）返回指针值时，未正确进行符号扩展，导致内核页面错误和系统崩溃。该漏洞在ns_bpf_qdisc自测中触发，表现为无法处理内核分页请求。",
             "key_points": [
-                "Linux内核中的RISC-V相关漏洞",
-                "可能影响系统稳定性和安全性",
-                "需要内核补丁修复"
+                "BPF结构体操作返回指针值时符号扩展错误",
+                "违反RISC-V ABI调用规范",
+                "导致内核页面错误和系统崩溃"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "技术细节：1) bpf_fifo_dequeue程序返回的skb指针被当作32位值处理，在函数尾声错误地进行符号扩展到64位；2) 虽然这种处理对大多数BPF程序类型正确，但违反了结构体操作对RISC-V ABI的要求；3) 漏洞触发条件是在网络数据包处理路径中（__qdisc_run），当BPF程序返回指针时，错误的符号扩展导致虚拟地址ffffffffa38dbf58处出现内核分页错误，最终引发内核崩溃。修复方案是根据函数模型和RISC-V ABI规范正确进行符号扩展。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -14758,19 +14771,19 @@
                     }
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.856021"
+            "classification_timestamp": "2025-11-18T09:39:54.760355"
         },
         {
             "cve_id": "CVE-2025-45006",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "开源RISC-V处理器在提交f517abb中存在mstatus.SUM位保留不当的漏洞，该位非零状态违反了特权规范约束，可能导致物理内存访问攻击。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "mstatus.SUM位错误保留为非零值",
+                "违反RISC-V特权架构规范约束",
+                "可能被利用进行物理内存越权访问"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞涉及RISC-V处理器的特权架构实现缺陷。mstatus寄存器中的SUM(Supervisor User Memory access)位用于控制监管模式下的用户内存访问权限。根据RISC-V特权规范，该位在特定场景下应被正确清零，但受影响版本在提交f517abb中未能正确处理，导致SUM位异常保留为非零状态。这使得在监管模式下可能绕过正常的内存保护机制，直接访问用户空间内存，造成权限提升和内存数据泄露风险。该漏洞属于硬件/微架构层面的权限控制缺陷。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -14895,19 +14908,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.856133"
+            "classification_timestamp": "2025-11-18T09:40:07.092830"
         },
         {
             "cve_id": "CVE-2025-50897",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "RISC-V BOOMv1.2处理器在SV39模式下存在地址转换漏洞，即使页表条目配置了正确的写入权限，存储指令仍可能错误触发访问故障。该漏洞在进入虚拟内存并尝试向映射的内核内存执行存储操作时复现，可能导致内核崩溃或拒绝服务。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "SV39模式下虚拟到物理地址转换异常",
+                "具有写入权限的页表条目仍错误触发存储访问故障",
+                "影响内核内存存储操作，可能导致系统不稳定"
             ],
-            "severity_assessment": "Medium",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞涉及RISC-V BOOMv1.2处理器的内存管理单元(MMU)或物理内存保护(PMP)逻辑缺陷。在SV39分页模式下，当页表条目(PTE)正确配置了写入权限(PTE_W)时，执行存储指令(sd)本应正常完成，但实际却错误触发了Store/AMO访问故障。这表明处理器在验证内存访问权限时存在逻辑错误，特别是在虚拟内存转换过程中对写入权限的检查机制存在缺陷。漏洞在尝试向已映射的内核内存区域执行存储操作时显现，可能破坏系统稳定性，导致内核恐慌或拒绝服务条件。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -15052,18 +15065,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.856851"
+            "classification_timestamp": "2025-11-18T09:40:21.857117"
         },
         {
             "cve_id": "CVE-2025-52484",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "RISC-V Development Tools",
+            "summary": "RISC Zero zkVM在rv32im电路中存在约束缺失漏洞，恶意证明者可利用该漏洞混淆寄存器值。受影响版本为2.0.0-2.0.2，需升级至2.1.0版本修复。使用官方验证器路由器的智能合约无需操作，其他合约需更新验证器版本。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "rv32im电路约束缺失导致三寄存器指令安全漏洞",
+                "恶意证明者可操纵rs1和rs2寄存器值混淆",
+                "影响risc0-zkvm 2.0.0-2.0.2版本"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞源于RISC Zero zkVM的rv32im电路实现中缺少对三寄存器指令的充分约束。攻击者可通过恶意构造的证明，使虚拟机错误地将rs1寄存器的值视为与rs2寄存器相同，从而破坏零知识证明系统的完整性。特别影响remu和divu等算术指令，可能被利用来伪造计算结果的正确性验证。技术核心在于电路约束系统未能完全覆盖所有可能的寄存器状态组合，导致验证过程存在逻辑旁路。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -15227,18 +15241,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.856989"
+            "classification_timestamp": "2025-11-18T09:40:36.060007"
         },
         {
             "cve_id": "CVE-2025-54873",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "RISC-V Development Tools",
+            "summary": "RISC Zero零知识证明虚拟机在2.0.0至2.1.0版本中存在整数除法漏洞。有符号整数除法对特定输入允许产生多个输出结果，且除零操作约束不足。该漏洞已在2.2.0和3.0.0版本中修复。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "有符号整数除法对特定输入存在多结果输出问题",
+                "除零操作约束条件不完整",
+                "影响risc0-zkvm 2.0.0-2.1.0及risc0-circuit-rv32im系列组件"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "High",
+            "technical_details": "该漏洞涉及RISC-V指令集架构中的整数除法运算实现。在零知识证明虚拟机的电路约束层，对有符号整数除法（如DIV指令）的验证约束存在缺陷：1）对于某些特定输入值，电路允许产生多个不同的计算结果，而实际上只有一个是正确的 2）当除数为零时，系统未能施加足够的约束条件来确保确定性的异常处理。这种约束不足可能导致证明验证过程中接受错误的计算结果，破坏零知识证明系统的完整性和安全性。漏洞源于RISC-V指令在zk-STARKs电路实现中的约束条件设计不严谨。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -15374,19 +15389,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.857114"
+            "classification_timestamp": "2025-11-18T09:40:51.263186"
         },
         {
             "cve_id": "CVE-2025-56301",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "在Rocket-Chip特定版本中发现CSR逻辑存在设计缺陷，当在非异常状态下执行MRET指令时可能触发指令访问故障，导致异常处理与异常返回机制同时激活。该冲突会造成控制状态寄存器更新混乱，破坏特权状态转换的完整性。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "MRET在非异常状态下执行时触发指令访问故障",
+                "异常处理与异常返回逻辑同时激活产生冲突",
+                "CSR寄存器被竞争更新导致特权状态损坏"
             ],
             "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞源于Rocket-Chip的CSR模块中异常处理状态机设计缺陷。当CPU处于机器模式但未处理异常时执行MRET指令，会错误触发Instruction Access Fault。此时系统同时进入异常处理流程（保存上下文到mepc/mcause）和异常返回流程（从mepc恢复PC），造成mstatus、mepc等关键CSR寄存器被两个并行逻辑竞争修改。这种状态冲突可能被利用来篡改特权级别或跳过安全检查，最终导致权限提升或系统失控。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -15517,18 +15532,19 @@
                 },
                 "dataVersion": "5.1"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.857271"
+            "classification_timestamp": "2025-11-18T09:41:05.036582"
         },
         {
             "cve_id": "CVE-2025-61588",
-            "category": "Other",
-            "summary": "这是一个RISC-V相关的Other漏洞，可能影响系统的安全性和稳定性。",
+            "category": "RISC-V Development Tools",
+            "summary": "RISC Zero zkVM平台在2.0.2及以下版本存在内存写入漏洞，当zkVM客户端调用sys_read时，主机可通过特制响应写入客户端任意内存位置。该漏洞可导致在客户端内执行任意代码，严重破坏零知识证明的可信保证。",
             "key_points": [
-                "需要进一步分析",
-                "建议查看详细描述"
+                "漏洞核心在sys_read系统调用机制",
+                "主机可操控客户端内存地址空间",
+                "影响所有使用受影响版本构建的客户端程序"
             ],
-            "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Critical",
+            "technical_details": "该漏洞存在于RISC-V零知识证明虚拟机的系统调用实现中。当客户端程序通过sys_read请求输入时，主机端未对内存写入操作进行边界检查，攻击者可构造恶意响应数据实现任意内存地址写入。由于zk-STARKs系统的完整性依赖客户端执行环境的隔离性，此漏洞直接破坏了零知识证明系统的可靠性基础。受影响组件包括risc0-zkvm-platform、risc0-aggregation、risc0-zkos-v1compat等多个相关模块。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -15664,19 +15680,19 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.857419"
+            "classification_timestamp": "2025-11-18T09:41:17.993094"
         },
         {
             "cve_id": "CVE-2025-63384",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "RISC-V Rocket-Chip v1.6及之前版本存在SRET指令执行漏洞，该指令未能正确降低处理器权限级别，导致从机器模式(M-mode)异常返回时错误地保持高权限状态。这造成了严重的权限保留风险，可能被利用进行未授权操作。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "SRET指令权限切换失效",
+                "M-mode权限被错误保留",
+                "sstatus.SPP位设置未被正确遵循"
             ],
             "severity_assessment": "High",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "technical_details": "该漏洞涉及RISC-V特权架构规范中的异常返回机制。当处理器执行SRET指令时，本应根据sstatus寄存器中的SPP位值从机器模式(M-mode)降级到监管模式(S-mode)，但实际实现中未能完成权限切换。这种权限保留漏洞可能允许恶意代码在不应具备的权限级别执行操作，破坏系统的安全隔离机制。受影响的具体版本为Rocket-Chip v1.6及之前的所有版本。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "cveMetadata": {
@@ -15798,19 +15814,19 @@
                 },
                 "dataVersion": "5.2"
             },
-            "classification_timestamp": "2025-11-17T16:38:22.857533"
+            "classification_timestamp": "2025-11-18T09:41:30.886329"
         },
         {
             "cve_id": "CVE-2025-8774",
             "category": "RISC-V CPU/SoC",
-            "summary": "这是一个RISC-V相关的RISC-V CPU/SoC漏洞，可能影响系统的安全性和稳定性。",
+            "summary": "该漏洞存在于riscv-boom SonicBOOM处理器的L1数据缓存处理组件中，攻击者可通过本地访问利用时序差异进行侧信道攻击。由于攻击复杂度高且利用困难，被评估为中等风险漏洞。",
             "key_points": [
-                "RISC-V处理器或SoC相关漏洞",
-                "可能涉及硬件设计问题",
-                "需要固件或硬件更新"
+                "影响范围：riscv-boom SonicBOOM 2.2.3及之前版本",
+                "漏洞位置：L1数据缓存处理组件",
+                "攻击特征：基于时序差异的侧信道攻击"
             ],
-            "severity_assessment": "Low",
-            "technical_details": "基于关键词的自动分类，建议使用LLM进行更详细的分析",
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞属于微架构层面的时序侧信道漏洞。攻击者通过监测L1数据缓存访问的时间差异，可以推断出处理器的缓存状态和内存访问模式。虽然需要本地访问权限且攻击复杂度较高，但可能被用于提取敏感信息。厂商在早期收到披露后未作出响应，建议用户关注后续安全更新。",
             "original_data": {
                 "dataType": "CVE_RECORD",
                 "dataVersion": "5.1",
@@ -16022,7 +16038,7 @@
                     ]
                 }
             },
-            "classification_timestamp": "2025-11-17T16:38:22.857674"
+            "classification_timestamp": "2025-11-18T09:41:43.031368"
         }
     ]
 }
