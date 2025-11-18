@@ -9,7 +9,7 @@
 
 ## 🌐 在线查看
 
-**访问地址**: https://YOUR_USERNAME.github.io/RISCV_CVE_Dashboard/
+**访问地址**: https://YOUR_USEE.github.io/RISCV_CVE_Dashboard/
 
 系统每天北京时间上午9:35自动更新CVE数据并重新部署。
 
