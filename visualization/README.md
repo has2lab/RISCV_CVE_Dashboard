@@ -1,134 +1,327 @@
-# RISC-V CVE 可视化仪表板
+# RISC-V CVE 数据库 + 可视化系统
 
-## 项目概述
+[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-这是一个基于Web的交互式可视化仪表板，用于展示和分析RISC-V相关的CVE（Common Vulnerabilities and Exposures）漏洞数据。系统提供了全面的数据可视化、高级筛选、详细分析和导出功能，帮助安全研究人员和开发者快速理解RISC-V生态系统的安全态势。
+一个全自动的RISC-V CVE数据库系统，每日自动更新并部署到GitHub Pages。
 
-### 项目特色
-- 展示82个RISC-V相关CVE的分类结果
-- 支持多维度统计分析和详细信息展示  
-- 提供智能搜索、筛选和可视化功能
-- 响应式设计，支持多设备访问
+## 🌐 在线查看
 
-🎯 核心功能设计
-1. 总览仪表板 (Dashboard Overview)
-1.1 关键指标卡片
-CVE总数: 82个，带趋势图标
-年份跨度: 2020-2025，时间轴显示
-最新更新: 2025-10-30，自动刷新时间戳
-1.2 分类分布饼图
-Linux Kernel: 64个 (78.0%) - 蓝色
-RISC-V CPU/SoC: 8个 (9.8%) - 橙色
-RISC-V Development Tools: 5个 (6.1%) - 绿色
-Device-Specific Firmware: 2个 (2.4%) - 紫色
-Simulator: 2个 (2.4%) - 红色
-Instruction Set Manual: 1个 (1.2%) - 黄色
-1.3 年度趋势分析
-交互式柱状图显示2020-2025年CVE数量变化
-可切换显示按类别分组的堆叠柱状图
-鼠标悬停显示详细数据和年度增长率
-2. 详细分析页面
-2.1 严重程度分析
-Critical: 计数及百分比，红色标识
-High: 计数及百分比，橙色标识
-Medium: 计数及百分比，黄色标识
-Low: 计数及百分比，绿色标识
-未评分: 计数及百分比，灰色标识
-2.2 技术影响分析
-影响组件热图: 显示kernel、memory、interrupt等关键词频率
-漏洞类型分布: 如缓冲区溢出、空指针解引用、权限提升等
-受影响版本统计: Linux内核版本、处理器版本分布
-2.3 时间线分析
-可交互的时间轴，显示CVE发现时间分布
-可按月/季度/年度聚合显示
-支持时间范围筛选和缩放
-3. CVE详情浏览器
-3.1 CVE列表视图
-表格式展示，支持排序、筛选、分页
-关键字段: CVE ID、类别、严重程度、发现日期、状态
-高级筛选器: 按类别、年份、严重程度、关键词过滤
-搜索功能: 支持CVE ID和描述文本搜索
-3.2 CVE详情卡片
-基本信息区域
+**访问地址**: https://YOUR_USERNAME.github.io/RISCV_CVE_Dashboard
 
-CVE ID（可点击跳转官方页面）
-分类标签（彩色徽章）
-严重程度评级（带颜色图标）
-发现时间和分类时间
-中文摘要区域
+例如：[https://has2lab.github.io/RISCV_CVE_Dashboard](https://has2lab.github.io/RISCV_CVE_Dashboard)
 
-AI生成的中文漏洞摘要
-关键点列表（bullet points）
-技术细节折叠展开区域
-原始数据区域
+系统每天北京时间上午自动更新CVE数据并重新部署（由于GitHub高峰负载，可能会出现延迟）
 
-CVSS评分（如有）
-受影响产品和版本
-参考链接列表
-原始英文描述
-4. 分类深度分析
-4.1 Linux Kernel类别详情
-子分类分析: 内存管理、中断处理、调试工具等
-内核版本影响分析: 受影响的内核版本分布图
-修复状态追踪: 已修复/未修复/部分修复状态统计
-4.2 硬件相关类别分析
-RISC-V CPU/SoC漏洞图谱: 按处理器型号分组
-开发工具链分析: 编译器、调试器、模拟器等工具
-规范相关问题: RISC-V指令集规范相关漏洞
-5. 交互式可视化组件
-5.1 词云分析
-技术关键词云: 从技术描述中提取高频词汇
-动态词云: 支持按年份、类别切换显示
-🎨 用户界面设计
-1. 整体布局
-响应式设计: 支持桌面、平板、手机多端适配
-暗色/亮色主题: 用户可切换主题模式
-侧边导航栏: 固定导航，支持折叠
-面包屑导航: 清晰的页面层级指示
-2. 色彩方案
-主色调: RISC-V官方蓝色 (#1E3A8A)
-辅助色彩:
-成功绿 (#10B981)
-警告橙 (#F59E0B)
-危险红 (#EF4444)
-中性灰 (#6B7280)
-3. 图表风格
-统一的图表库: 使用Chart.js或D3.js
-动画效果: 平滑的数据切换动画
-交互反馈: 鼠标悬停、点击效果
-🔧 技术实现方案
-1. 前端技术栈
-UI组件库: Element Plus 或 Ant Design Vue
-图表库: Chart.js
-2. 后端支持
-数据源: 直接读取JSON文件
-静态文件服务: Python HTTP服务器
-3. 数据处理
-数据解析: 直接解析现有JSON文件
-缓存策略: 浏览器本地缓存优化
-增量更新: 支持数据更新时的增量加载
-📊 数据展示功能
-1. 智能筛选系统
-多维度筛选: 类别、时间、严重程度、关键词
-保存筛选方案: 用户可保存常用筛选条件
-快速筛选按钮: 预设热门筛选组合
-2. 导出功能
-数据导出: CSV、JSON、PDF格式
-图表导出: PNG、SVG格式
-报告生成: 自动生成分析报告
-3. 搜索与发现
-全文搜索: 支持中英文搜索
-相关推荐: 查看CVE时推荐相关漏洞
-🔍 高级分析功能
-1. 对比分析
-年度对比: 不同年份的CVE特征对比
-类别对比: 不同类别间的差异分析
-严重程度变化: 漏洞严重程度的时间变化
-2. 关联分析
-技术关联: 相同技术栈的漏洞关联
-时间关联: 相近时间发现的漏洞关联
-修复关联: 相同修复方案的漏洞关联
-性能优化
-懒加载: 图片和图表按需加载
-虚拟滚动: 大列表性能优化
-压缩优化: 资源文件压缩
+## 🎯 项目特色
+
+- 🔄 **全自动更新**: 使用GitHub Actions每日自动下载CVE增量包
+- 🤖 **智能分类**: 使用LLM对RISC-V CVE进行智能分类和总结
+- 📊 **可视化展示**: 交互式Web界面，支持筛选、搜索和统计
+- 🌐 **在线访问**: 部署到GitHub Pages，无需本地环境即可查看
+- 📈 **实时统计**: 自动生成年份分布、分类统计等可视化图表
+
+## 📦 项目结构
+
+```
+RISCV_CVE_Dashboard/
+├── .github/
+│   └── workflows/
+│       ├── update-cves.yml      # 自动更新CVE的workflow
+│       └── deploy-pages.yml     # 部署到GitHub Pages
+├── visualization/               # Web可视化系统
+│   ├── index.html              # 主页面
+│   ├── css/                    # 样式文件
+│   ├── js/                     # JavaScript代码
+│   ├── update_riscv_cves.py    # 增量更新脚本（整合提取和分类）
+│   ├── riscv_cves_classified.json         # 分类数据（完整版）
+│   └── riscv_cves_classified_summary.json # 分类数据（摘要版）
+├── riscv_cves/                 # 提取的RISC-V CVE
+├── extract_riscv_cves.py       # CVE提取脚本（独立使用）
+├── classify_riscv_cves.py      # CVE分类脚本（独立使用）
+├── llm_config_manager.py       # LLM配置管理器
+├── llm_config.json             # LLM配置文件
+├── README.md                   # 项目说明文档
+└── DEPLOYMENT.md               # GitHub部署指南
+```
+
+## 🚀 GitHub Actions 自动化流程
+
+### 1. 自动更新CVE (每日运行)
+
+Workflow文件: `.github/workflows/update-cves.yml`
+
+**运行时间**: 每天北京时间上午
+
+**工作流程**:
+1. 下载前一天的CVE增量包
+2. 提取RISC-V相关的CVE
+3. 使用LLM进行分类（本地模拟模式）
+4. 更新JSON数据文件
+5. 提交更改到仓库
+6. 自动部署到GitHub Pages
+
+**手动触发**:
+```bash
+# 在GitHub仓库页面
+Actions → Update RISC-V CVEs → Run workflow
+```
+
+### 2. 部署到GitHub Pages
+
+Workflow文件: `.github/workflows/deploy-pages.yml`
+
+**触发条件**:
+- `master`分支的`visualization/`目录有更新时自动部署
+- 可以手动触发
+
+## 📋 部署到您自己的仓库
+
+### 步骤1: Fork或克隆仓库
+
+```bash
+# 方法1: Fork这个仓库到你的GitHub账号
+
+# 方法2: 克隆并推送到新仓库
+git clone https://github.com/YOUR_USERNAME/RISCV_CVE_Dashboard.git
+cd RISCV_CVE_Dashboard
+git remote set-url origin https://github.com/YOUR_NEW_USERNAME/YOUR_NEW_REPO.git
+git push -u origin master
+```
+
+### 步骤2: 启用GitHub Pages
+
+1. 进入仓库的 **Settings** → **Pages**
+2. 在 **Source** 下选择 **GitHub Actions**
+3. 保存设置
+
+### 步骤3: 配置Secrets
+
+如果要使用真实的LLM API（OpenAI或Anthropic），需要添加API密钥，默认使用DeepSeek的baseurl和model。如需手动更改可以修改llm_config.json文件：
+
+1. 进入仓库的 **Settings** → **Secrets and variables** → **Actions**
+2. 点击 **New repository secret**
+3. 添加以下secrets（根据需要）:
+
+| Secret名称 | 说明 | 示例 |
+|-----------|------|------|
+| `OPENAI_API_KEY` | DeepSeek密钥 | `sk-...` |
+| `ANTHROPIC_API_KEY` | Anthropic API密钥 | `sk-ant-...` |
+
+**注意**: 如果不添加这些secrets，系统会使用本地模拟模式（基于规则的分类），不会调用API。
+
+### 步骤4: 更新README中的链接
+
+将以下内容中的 `YOUR_USERNAME` 替换为您的GitHub用户名：
+
+```markdown
+[![Auto Update](https://github.com/YOUR_USERNAME/RISCV_CVE_Dashboard/actions/workflows/update-cves.yml/badge.svg)]
+**访问地址**: https://YOUR_USERNAME.github.io/RISCV_CVE_Dashboard/
+```
+
+### 步骤5: 首次运行
+
+```bash
+# 方法1: 手动触发workflow
+# GitHub仓库页面 → Actions → Update RISC-V CVEs → Run workflow
+
+# 方法2: 推送一个更改触发
+git commit --allow-empty -m "Trigger first run"
+git push
+```
+
+## 🔧 本地开发
+
+### 环境要求
+
+```bash
+# Python 3.11+
+python --version
+
+# 安装依赖
+pip install -r requirements.txt
+```
+
+### 本地运行更新脚本
+
+```bash
+cd visualization
+
+# 测试模式（不下载增量包）
+python update_riscv_cves.py --no-download --provider local
+
+# 下载并更新（下载昨天的增量包）
+python update_riscv_cves.py
+
+# 下载特定日期的增量包
+python update_riscv_cves.py --date 2025-11-16
+```
+
+### 本地预览网页
+
+```bash
+cd visualization
+
+# 启动简单的HTTP服务器
+python serve.py
+# 或
+python -m http.server 8000
+
+# 在浏览器中访问
+# http://localhost:8000
+```
+
+## 📊 数据文件说明
+
+### visualization/riscv_cves_classified.json
+完整的分类数据，包含所有CVE的原始数据、分类信息、摘要等。
+
+```json
+{
+  "metadata": {
+    "total_cves": 83,
+    "classification_date": "2025-11-17T16:38:22",
+    "categories": ["Linux Kernel", "RISC-V CPU/SoC", "Simulator", ...]
+  },
+  "statistics": {
+    "by_category": {
+      "Linux Kernel": 64,
+      "RISC-V CPU/SoC": 9,
+      "Simulator": 3,
+      "RISC-V Development Tools": 2,
+      ...
+    }
+  },
+  "classified_cves": [...]
+}
+```
+
+### visualization/riscv_cves_classified_summary.json
+简化版本，不包含CVE原始数据，文件更小，适合Web端快速加载。
+
+## 🎨 可视化功能
+
+访问在线页面后，您可以：
+
+- 📋 **浏览CVE列表**: 查看所有RISC-V相关的CVE
+- 🔍 **搜索和筛选**: 按CVE ID、分类、严重程度筛选
+- 📊 **统计图表**: 查看年份分布、分类分布等统计图表
+- 📝 **详细信息**: 点击CVE查看完整的描述和技术细节
+- 🏷️ **分类标签**: 根据智能分类快速定位相关CVE
+
+## 🔐 安全性说明
+
+### API密钥管理
+
+- ✅ API密钥存储在GitHub Secrets中，不会暴露在代码或日志中
+- ✅ Workflow日志不会显示敏感信息
+- ✅ 如果不配置API密钥，系统使用本地模拟模式，无安全风险
+
+### 数据隐私
+
+- ✅ 所有CVE数据来自公开的CVE数据库
+- ✅ 不收集任何用户信息
+- ✅ 部署到GitHub Pages的都是静态文件
+
+## 🛠️ 自定义配置
+
+### 修改更新时间
+
+编辑 `.github/workflows/update-cves.yml`:
+
+```yaml
+on:
+  schedule:
+    # 修改为您想要的时间 (UTC时区)
+    - cron: '35 1 * * *'  # 北京时间上午9:35
+```
+
+### 修改LLM配置
+
+编辑 `llm_config.json`:
+
+```json
+default:
+  provider: local  # 改为 "openai" 或 "anthropic"
+  model: gpt-3.5-turbo
+
+classification:
+  predefined_categories:
+    - Linux Kernel
+    - RISC-V CPU/SoC
+    - Simulator
+    - RISC-V Development Tools
+    - Device-Specific Firmware & Applications
+    - RISC-V Instruction Set Manual
+    - Other
+  allow_new_categories: true
+```
+
+### 修改更新脚本
+
+如果要使用OpenAI API，修改 `.github/workflows/update-cves.yml`:
+
+```yaml
+- name: Download and extract CVE delta package
+  run: |
+    cd visualization
+    # 改为使用 openai provider
+    python update_riscv_cves.py --provider openai --model gpt-3.5-turbo
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+```
+
+## 📈 监控和调试
+
+### 查看Workflow运行状态
+
+1. 进入仓库的 **Actions** 标签页
+2. 选择相应的workflow
+3. 查看运行历史和日志
+
+### 查看部署状态
+
+1. 进入 **Settings** → **Pages**
+2. 查看最新部署状态和URL
+
+### 常见问题
+
+**Q: Workflow运行失败怎么办？**
+- 检查Actions日志查看错误信息
+- 确认GitHub Pages已启用
+- 检查API密钥是否正确配置（如果使用）
+
+**Q: 页面无法访问？**
+- 确认GitHub Pages已启用并选择"GitHub Actions"作为源
+- 等待几分钟让部署完成
+- 检查仓库是否为Public（Private仓库需要GitHub Pro）
+
+**Q: 如何跳过某天的更新？**
+- 在Actions页面手动取消运行
+- 或临时禁用workflow
+
+## 📚 相关文档
+
+- [GitHub部署指南](DEPLOYMENT.md) - 详细的部署步骤和故障排查
+- [GitHub Actions 文档](https://docs.github.com/actions)
+- [GitHub Pages 文档](https://docs.github.com/pages)
+- [CVE数据源](https://github.com/CVEProject/cvelistV5)
+
+## 🤝 贡献
+
+欢迎提交Issue和Pull Request！
+
+## 📜 许可证
+
+MIT License
+
+## 🙏 致谢
+
+- CVE数据: [CVEProject/cvelistV5](https://github.com/CVEProject/cvelistV5)
+- RISC-V社区: [RISC-V International](https://riscv.org/)
+
+---
+
+**最后更新**: 2025-11-17  
+**版本**: 2.0.0 (支持GitHub Actions自动化)
+
+Made with ❤️ for RISC-V Security Research

@@ -1,8 +1,6 @@
 # RISC-V CVE 数据库 + 可视化系统
 
-[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 一个全自动的RISC-V CVE数据库系统，每日自动更新并部署到GitHub Pages。
 
@@ -12,7 +10,7 @@
 
 例如：[https://has2lab.github.io/RISCV_CVE_Dashboard](https://has2lab.github.io/RISCV_CVE_Dashboard)
 
-系统每天北京时间上午9:35自动更新CVE数据并重新部署。
+系统每天北京时间上午自动更新CVE数据并重新部署（由于GitHub高峰负载，可能会出现延迟）
 
 ## 🎯 项目特色
 
@@ -52,7 +50,7 @@ RISCV_CVE_Dashboard/
 
 Workflow文件: `.github/workflows/update-cves.yml`
 
-**运行时间**: 每天北京时间上午9:35 (UTC 01:35)
+**运行时间**: 每天北京时间上午
 
 **工作流程**:
 1. 下载前一天的CVE增量包
@@ -96,9 +94,9 @@ git push -u origin master
 2. 在 **Source** 下选择 **GitHub Actions**
 3. 保存设置
 
-### 步骤3: 配置Secrets (可选)
+### 步骤3: 配置Secrets
 
-如果要使用真实的LLM API（OpenAI或Anthropic），需要添加API密钥：
+如果要使用真实的LLM API（OpenAI或Anthropic），需要添加API密钥，默认使用DeepSeek的baseurl和model。如需手动更改可以修改llm_config.json文件：
 
 1. 进入仓库的 **Settings** → **Secrets and variables** → **Actions**
 2. 点击 **New repository secret**
@@ -106,7 +104,7 @@ git push -u origin master
 
 | Secret名称 | 说明 | 示例 |
 |-----------|------|------|
-| `OPENAI_API_KEY` | OpenAI API密钥 | `sk-...` |
+| `OPENAI_API_KEY` | DeepSeek密钥 | `sk-...` |
 | `ANTHROPIC_API_KEY` | Anthropic API密钥 | `sk-ant-...` |
 
 **注意**: 如果不添加这些secrets，系统会使用本地模拟模式（基于规则的分类），不会调用API。
