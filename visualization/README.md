@@ -312,7 +312,7 @@ classification:
 
 ## 📜 许可证
 
-MIT License
+Apache License
 
 ## 🙏 致谢
 
@@ -321,7 +321,6 @@ MIT License
 
 ---
 
-**最后更新**: 2025-11-17  
-**版本**: 2.0.0 (支持GitHub Actions自动化)
+免责声明：分析结果均由大模型生成，仅供参考。
 
 Made with ❤️ for RISC-V Security Research
