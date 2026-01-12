@@ -232,6 +232,20 @@ const App = {
       totalCvesEl.textContent = Utils.formatNumber(stats.totalCves);
     }
 
+    // CVE趋势 (本年度新增)
+    const cveTrendEl = document.getElementById('cveTrend');
+    if (cveTrendEl) {
+      const yearlyData = DataLoader.getYearlyDistribution();
+      const currentYear = new Date().getFullYear();
+      const currentYearData = yearlyData.find(d => d.year === currentYear);
+      const count = currentYearData ? currentYearData.total : 0;
+      
+      cveTrendEl.innerHTML = `
+        <i class="fas fa-arrow-up"></i>
+        <span>+${count} ${currentYear}年</span>
+      `;
+    }
+
     // 分类完成率
     const classificationRateEl = document.getElementById('classificationRate');
     if (classificationRateEl) {
