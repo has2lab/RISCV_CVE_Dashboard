@@ -14,6 +14,9 @@ openai>=1.0.0
 
 # Anthropic API支持（可选）
 anthropic>=0.7.0
-
+# 聚类与嵌入功能（扩展关键词验证）
+scikit-learn>=1.3.0
+hdbscan>=0.8.33
+numpy>=1.24.0
 # 其他可选依赖
 # python-dotenv>=1.0.0  # 如果使用.env文件管理环境变量

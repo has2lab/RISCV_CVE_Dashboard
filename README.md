@@ -156,6 +156,157 @@ python update_riscv_cves.py
 python update_riscv_cves.py --date 2025-11-16
 ```
 
+## 🔍 CVE 提取脚本详解 (extract_riscv_cves.py)
+
+`extract_riscv_cves.py` 是核心的 CVE 提取脚本，支持**直接关键词匹配**和**扩展关键词 + LLM 验证**两种模式。
+
+### 设计思路
+
+1. **直接匹配**: 使用正则表达式匹配明确的 RISC-V 关键词（如 `risc-v`, `riscv`, `arch/riscv` 等），匹配到的 CVE 直接加入结果
+2. **扩展关键词匹配**: 匹配可能与 RISC-V 相关的关键词（如 BOOM, Rocket, XiangShan, Spike 等），但这些关键词可能存在同名的不相关项目
+3. **LLM 验证过滤**: 对扩展关键词匹配的候选 CVE，使用大模型判断是否真正与 RISC-V 相关
+4. **聚类优化**: 当候选数量超过 50 个时，使用 HDBSCAN 聚类算法对 CVE 描述进行聚类，按簇批量提交给 LLM 验证，提高效率
+
+### 扩展关键词列表
+
+| 关键词 | 说明 | 可能的误匹配 |
+|-------|------|-------------|
+| `BOOM` | Berkeley Out-of-Order Machine (RISC-V 处理器) | 其他项目 |
+| `rocket` | Rocket Chip Generator (RISC-V SoC 生成器) | Rocket.Chat 等 |
+| `XiangShan` / `香山` | 开源 RISC-V 处理器项目 | - |
+| `opentitan` | 开源安全芯片项目 (使用 RISC-V 内核) | - |
+| `Spike` | RISC-V 官方指令集模拟器 | Spike 游戏等 |
+| `NEMU` | RISC-V 模拟器 | - |
+
+### 基本用法
+
+```bash
+# 基本提取（直接匹配 + 扩展关键词 + LLM 验证）
+python extract_riscv_cves.py --cves-dir /path/to/cves --output-dir ./riscv_cves
+
+# 仅使用直接 RISC-V 匹配（不使用扩展关键词和 LLM）
+python extract_riscv_cves.py --cves-dir /path/to/cves --no-extended
+
+# 指定配置文件
+python extract_riscv_cves.py --cves-dir /path/to/cves --config ./llm_config.json
+```
+
+### 命令行参数
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `--cves-dir` | `cves` | CVE JSON 文件所在目录 |
+| `--output-dir` | `riscv_cves` | 输出目录 |
+| `--config` | `llm_config.json` | LLM 配置文件路径 |
+| `--no-extended` | - | 禁用扩展关键词匹配和 LLM 验证 |
+| `--extended-only` | - | 仅测试扩展关键词（调试用） |
+
+### 环境变量配置
+
+```bash
+# LLM API 密钥 (用于验证扩展关键词候选)
+export OPENAI_API_KEY="your-api-key"       # 如果使用 OpenAI/DeepSeek
+
+# Embedding API 密钥 (用于聚类，阿里云百炼)
+export DASHSCOPE_API_KEY="your-dashscope-key"
+```
+
+### 配置文件说明 (llm_config.json)
+
+#### Embedding 配置 (阿里云百炼)
+
+用于对大量候选 CVE 进行文本嵌入和聚类：
+
+```json
+{
+  "embedding": {
+    "provider": "dashscope",
+    "api_key": "",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model": "text-embedding-v4",
+    "dimensions": 1024,
+    "batch_size": 10,
+    "timeout": 60,
+    "env_var": "DASHSCOPE_API_KEY"
+  }
+}
+```
+
+#### 验证配置
+
+控制 LLM 验证行为：
+
+```json
+{
+  "verification": {
+    "max_cves_per_batch": 5,
+    "clustering_method": "hdbscan",
+    "min_cluster_size": 3,
+    "max_retries": 5,
+    "initial_retry_delay": 1.0,
+    "max_retry_delay": 60.0,
+    "retry_multiplier": 2.0,
+    "riscv_criteria": [
+      "RISC-V处理器",
+      "RISC-V SoC",
+      "RISC-V指令集",
+      "RISC-V模拟器",
+      "RISC-V漏洞",
+      "RISC-V开发工具",
+      "RISC-V固件或应用"
+    ]
+  }
+}
+```
+
+### 处理流程图
+
+```
+CVE 文件扫描
+    │
+    ├─── 直接匹配 RISC-V 关键词 ──→ ✓ 直接加入结果
+    │
+    └─── 匹配扩展关键词 ──→ 候选列表 (去除直接匹配的)
+                              │
+                              ├─ ≤50 个 ──→ 直接分批 LLM 验证
+                              │
+                              └─ >50 个 ──→ Embedding 聚类
+                                             │
+                                             └─→ 按簇分批 LLM 验证
+                                                     │
+                                                     ├─ 相关 ──→ ✓ 加入结果
+                                                     └─ 不相关 ──→ ✗ 丢弃
+```
+
+### 输出示例
+
+```
+Scanning /path/to/cves for RISC-V related CVEs...
+Output directory: riscv_cves
+Extended keyword matching: Enabled
+----------------------------------------------------------------------
+Total CVE files to scan: 250000
+----------------------------------------------------------------------
+✓ Found RISC-V CVE: CVE-2024-26619
+✓ Found RISC-V CVE: CVE-2024-35847
+Progress: 100000/250000 files scanned...
+----------------------------------------------------------------------
+Extended keyword candidates: 45
+Using direct batch verification (≤50 candidates)
+
+验证批次 1/9...
+  ✓ CVE-2024-12345: RISC-V related - OpenTitan security chip uses RISC-V core
+  ✗ CVE-2024-67890: Not related - This is about Rocket.Chat messaging app
+
+----------------------------------------------------------------------
+Extraction complete!
+Total RISC-V related CVEs found: 87
+  - Direct RISC-V matches: 83
+  - Extended keyword candidates: 45
+  - LLM verified: 4
+  - LLM rejected: 41
+```
+
 ### 本地预览网页
 
 ```bash

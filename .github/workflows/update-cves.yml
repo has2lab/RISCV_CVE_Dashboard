@@ -45,13 +45,20 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         # 如果使用Anthropic API，从secrets读取
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        # 如果使用阿里云百炼 Embedding API
+        DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+    
+    - name: Copy classified JSON files to visualization
+      run: |
+        cp riscv_cves_classified.json visualization/ || true
+        cp riscv_cves_classified_summary.json visualization/ || true
     
     - name: Commit and push changes
       run: |
-        git add riscv_cves_classified.json
-        git add riscv_cves_classified_summary.json
-        git add riscv_cves/*.json
-        git add visualization/
+        git add riscv_cves_classified.json || true
+        git add riscv_cves_classified_summary.json || true
+        git add riscv_cves/*.json || true
+        git add visualization/*.json || true
         
         # 检查是否有变更
         if git diff --staged --quiet; then
@@ -60,11 +67,6 @@ jobs:
           git commit -m "Auto update: RISC-V CVEs $(date +'%Y-%m-%d')"
           git push
         fi
-    
-    - name: Copy classified JSON files to visualization
-      run: |
-        cp riscv_cves_classified.json visualization/
-        cp riscv_cves_classified_summary.json visualization/
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4

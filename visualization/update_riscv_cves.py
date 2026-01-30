@@ -39,6 +39,17 @@ class RISCVCVEUpdater:
         r'\briscv:',        # Linux kernel subsystem prefix
     ]
     
+    # Extended keywords that may be RISC-V related (require LLM verification)
+    EXTENDED_KEYWORDS = [
+        (r'\bBOOM\b', 'BOOM'),           # Berkeley Out-of-Order Machine
+        (r'\brocket\b', 'rocket'),        # Rocket Chip
+        (r'\bXiangShan\b', 'XiangShan'),  # 香山处理器
+        (r'\b香山\b', 'XiangShan'),
+        (r'\bopentitan\b', 'opentitan'),  # OpenTitan
+        (r'\bSpike\b', 'Spike'),          # RISC-V ISA Simulator
+        (r'\bNEMU\b', 'NEMU'),            # NEMU Emulator
+    ]
+    
     def __init__(
         self,
         cves_dir: str = "../cves",
@@ -98,6 +109,10 @@ class RISCVCVEUpdater:
         self.compiled_patterns = [
             re.compile(pattern, re.IGNORECASE) for pattern in self.RISCV_PATTERNS
         ]
+        self.compiled_extended = [
+            (re.compile(pattern, re.IGNORECASE), name) 
+            for pattern, name in self.EXTENDED_KEYWORDS
+        ]
         
         # 加载现有分类数据
         self.existing_classified_data = self._load_existing_classified_data()
@@ -111,10 +126,26 @@ class RISCVCVEUpdater:
         # 新发现的CVE
         self.new_cves: List[Dict] = []
         
+        # Extended keyword candidates (for LLM verification)
+        self.extended_candidates: Dict[str, Dict] = {}  # cve_id -> cve_data
+        self.extended_match_keywords: Dict[str, Set[str]] = {}  # cve_id -> matched keywords
+        self.verified_extended_cves: List[Dict] = []  # LLM-verified extended CVEs
+        self.direct_match_ids: Set[str] = set()  # CVE IDs matched by direct RISC-V patterns
+        
+        # Retry configuration
+        self.max_retries = 5
+        self.initial_retry_delay = 1.0
+        self.max_retry_delay = 60.0
+        self.retry_multiplier = 2.0
+        
         # 统计信息
         self.stats = {
             "delta_downloaded": 0,
             "new_riscv_cves_found": 0,
+            "extended_candidates": 0,
+            "extended_verified": 0,
+            "extended_rejected": 0,
+            "by_keyword": {},
             "classification_successful": 0,
             "classification_failed": 0,
             "new_categories_created": 0
@@ -281,15 +312,40 @@ class RISCVCVEUpdater:
                 return True
         return False
     
+    def check_extended_keywords(self, content: str) -> Set[str]:
+        """
+        Check if content matches any extended keywords.
+        
+        Args:
+            content: String content to check
+            
+        Returns:
+            Set of matched keyword names
+        """
+        matched = set()
+        for pattern, name in self.compiled_extended:
+            if pattern.search(content):
+                matched.add(name)
+        return matched
+    
+    def _get_cve_description(self, cve_data: Dict) -> str:
+        """Extract description from CVE data."""
+        containers = cve_data.get('containers', {})
+        cna = containers.get('cna', {})
+        descriptions = cna.get('descriptions', [])
+        if descriptions:
+            return descriptions[0].get('value', '')
+        return ''
+    
     def scan_for_new_riscv_cves(self, delta_files: Optional[List[Path]] = None) -> List[Dict]:
         """
-        扫描新的RISC-V相关CVE
+        扫描新的RISC-V相关CVE（直接匹配和扩展关键词匹配）
         
         Args:
             delta_files: 增量文件列表，如果为None则扫描整个cves目录
             
         Returns:
-            新发现的RISC-V CVE列表
+            新发现的RISC-V CVE列表（直接匹配的）
         """
         print(f"\n{'='*70}")
         print(f"扫描新的RISC-V相关CVE")
@@ -313,8 +369,13 @@ class RISCVCVEUpdater:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                # 快速检查是否包含RISC-V关键字
-                if not self.is_riscv_related(content):
+                # Check for direct RISC-V match first
+                is_direct_match = self.is_riscv_related(content)
+                
+                # Check for extended keywords
+                extended_matches = self.check_extended_keywords(content)
+                
+                if not is_direct_match and not extended_matches:
                     continue
                 
                 # 解析JSON
@@ -325,21 +386,37 @@ class RISCVCVEUpdater:
                 if cve_id in self.known_cve_ids:
                     continue
                 
-                print(f"✓ 发现新的RISC-V CVE: {cve_id}")
-                new_riscv_cves.append(cve_data)
-                self.known_cve_ids.add(cve_id)
-                
-                # 保存单个CVE文件
-                output_file = self.output_dir / f"{cve_id}.json"
-                with open(output_file, 'w', encoding='utf-8') as f:
-                    json.dump(cve_data, f, indent=4, ensure_ascii=False)
+                if is_direct_match:
+                    # Direct RISC-V match - add immediately
+                    print(f"✓ 发现新的RISC-V CVE: {cve_id}")
+                    new_riscv_cves.append(cve_data)
+                    self.known_cve_ids.add(cve_id)
+                    self.direct_match_ids.add(cve_id)
+                    
+                    # 保存单个CVE文件
+                    output_file = self.output_dir / f"{cve_id}.json"
+                    with open(output_file, 'w', encoding='utf-8') as f:
+                        json.dump(cve_data, f, indent=4, ensure_ascii=False)
+                        
+                elif extended_matches and cve_id not in self.direct_match_ids:
+                    # Extended keyword match - add to candidates for LLM verification
+                    self.extended_candidates[cve_id] = cve_data
+                    if cve_id not in self.extended_match_keywords:
+                        self.extended_match_keywords[cve_id] = set()
+                    self.extended_match_keywords[cve_id].update(extended_matches)
+                    
+                    # Update keyword statistics
+                    for kw in extended_matches:
+                        self.stats["by_keyword"][kw] = self.stats["by_keyword"].get(kw, 0) + 1
                 
             except Exception as e:
                 print(f"✗ 处理文件失败 {file_path}: {e}")
                 continue
         
         self.stats['new_riscv_cves_found'] = len(new_riscv_cves)
-        print(f"\n✓ 发现 {len(new_riscv_cves)} 个新的RISC-V CVE")
+        self.stats['extended_candidates'] = len(self.extended_candidates)
+        print(f"\n✓ 发现 {len(new_riscv_cves)} 个新的RISC-V CVE（直接匹配）")
+        print(f"✓ 发现 {len(self.extended_candidates)} 个扩展关键词候选CVE（待LLM验证）")
         return new_riscv_cves
     
     def _init_llm_client(self):
@@ -373,6 +450,201 @@ class RISCVCVEUpdater:
         else:
             print(f"⚠️  不支持的提供商: {self.provider}")
             return False
+    
+    def _call_llm_with_retry(self, prompt: str, system_prompt: str = None) -> Optional[str]:
+        """
+        Call LLM API with exponential backoff retry.
+        
+        Args:
+            prompt: The prompt to send
+            system_prompt: Optional system prompt
+            
+        Returns:
+            Response content or None if all retries failed
+        """
+        if system_prompt is None:
+            system_prompt = self.system_prompt
+            
+        delay = self.initial_retry_delay
+        
+        for attempt in range(self.max_retries):
+            try:
+                if self.provider == "openai" and self.client:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens
+                    )
+                    return response.choices[0].message.content
+                    
+                elif self.provider == "anthropic" and self.client:
+                    message = self.client.messages.create(
+                        model=self.model,
+                        max_tokens=self.max_tokens,
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    return message.content[0].text
+                    
+            except Exception as e:
+                error_msg = str(e).lower()
+                is_retryable = any(x in error_msg for x in ["timeout", "rate", "limit", "503", "429", "connection"])
+                
+                if attempt < self.max_retries - 1 and is_retryable:
+                    print(f"  ⚠️  API调用失败 (尝试 {attempt + 1}/{self.max_retries}): {e}")
+                    print(f"  ⏳ {delay:.1f}秒后重试...")
+                    time.sleep(delay)
+                    delay = min(delay * self.retry_multiplier, self.max_retry_delay)
+                else:
+                    print(f"  ✗ API调用失败，共尝试 {attempt + 1} 次: {e}")
+                    return None
+        
+        return None
+    
+    def verify_extended_candidates(self) -> List[Dict]:
+        """
+        Verify extended keyword candidates using LLM.
+        
+        Returns:
+            List of verified CVE data that are RISC-V related
+        """
+        if not self.extended_candidates:
+            print("\n没有扩展关键词候选CVE需要验证")
+            return []
+        
+        print(f"\n{'='*70}")
+        print(f"使用LLM验证扩展关键词候选CVE")
+        print(f"{'='*70}")
+        print(f"待验证CVE数量: {len(self.extended_candidates)}")
+        print(f"LLM提供商: {self.provider}")
+        print(f"模型: {self.model}")
+        
+        # Initialize LLM client
+        if not self._init_llm_client():
+            print("✗ LLM客户端初始化失败，跳过扩展关键词验证")
+            return []
+        
+        verified_cves = []
+        candidates = list(self.extended_candidates.values())
+        max_batch_size = 5  # Process 5 CVEs per batch
+        
+        total = len(candidates)
+        verified_count = 0
+        rejected_count = 0
+        
+        for i in range(0, total, max_batch_size):
+            batch = candidates[i:i + max_batch_size]
+            batch_num = i // max_batch_size + 1
+            total_batches = (total + max_batch_size - 1) // max_batch_size
+            
+            print(f"\n验证批次 {batch_num}/{total_batches}...")
+            
+            results = self._verify_batch(batch)
+            
+            for cve, (cve_id, is_related, reason) in zip(batch, results):
+                if is_related:
+                    verified_cves.append(cve)
+                    self.verified_extended_cves.append(cve)
+                    self.known_cve_ids.add(cve_id)
+                    verified_count += 1
+                    print(f"  ✓ {cve_id}: RISC-V相关 - {reason}")
+                    
+                    # Save individual CVE file
+                    output_file = self.output_dir / f"{cve_id}.json"
+                    with open(output_file, 'w', encoding='utf-8') as f:
+                        json.dump(cve, f, indent=4, ensure_ascii=False)
+                else:
+                    rejected_count += 1
+                    print(f"  ✗ {cve_id}: 不相关 - {reason}")
+            
+            # Rate limit between batches
+            if i + max_batch_size < total:
+                time.sleep(self.rate_limit_delay)
+        
+        self.stats["extended_verified"] = verified_count
+        self.stats["extended_rejected"] = rejected_count
+        print(f"\n✓ 验证完成: {verified_count} 个通过, {rejected_count} 个拒绝")
+        
+        return verified_cves
+    
+    def _verify_batch(self, cves: List[Dict]) -> List[tuple]:
+        """
+        Verify a batch of CVEs for RISC-V relevance.
+        
+        Args:
+            cves: List of CVE data dictionaries (max 5)
+            
+        Returns:
+            List of tuples: (cve_id, is_riscv_related, reason)
+        """
+        if not self.client:
+            return [(cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN'), False, "No LLM") for cve in cves]
+        
+        # Build prompt with CVE information
+        riscv_criteria = [
+            "RISC-V processor", "RISC-V SoC", "RISC-V instruction set", "RISC-V simulator",
+            "RISC-V vulnerabilities", "RISC-V development tools", "RISC-V firmware or applications"
+        ]
+        criteria_str = ", ".join(riscv_criteria)
+        cve_info_list = []
+        
+        for cve in cves:
+            cve_id = cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN')
+            description = self._get_cve_description(cve)
+            cve_info_list.append(f"CVE ID: {cve_id}\nDescription: {description[:500]}")
+        
+        cve_info = "\n\n---\n\n".join(cve_info_list)
+        
+        prompt = f"""Please determine whether the following CVE vulnerabilities are related to the RISC-V ecosystem.
+
+Criteria for RISC-V relevance include: {criteria_str}
+
+Please analyze the following CVEs and determine whether each is related to RISC-V:
+
+{cve_info}
+
+Please return results in JSON format as follows:
+{{
+    "results": [
+        {{"cve_id": "CVE-XXXX-XXXXX", "is_riscv_related": true/false, "reason": "Brief explanation"}}
+    ]
+}}
+
+Important notes:
+1. BOOM refers to Berkeley Out-of-Order Machine (a RISC-V processor)
+2. Rocket refers to Rocket Chip Generator (a RISC-V SoC generator)
+3. XiangShan is an open-source RISC-V processor project
+4. OpenTitan is an open-source secure chip project that typically uses RISC-V cores
+5. Spike is the official RISC-V ISA simulator
+6. NEMU is a RISC-V emulator
+
+Please judge carefully. If the CVE is clearly related to other technologies (such as unrelated software with the same name), it should be marked as not related."""
+
+        system_prompt = "You are a cybersecurity expert specializing in RISC-V architecture. Your task is to determine whether CVEs are related to RISC-V ecosystem."
+        response = self._call_llm_with_retry(prompt, system_prompt)
+        
+        if response:
+            try:
+                # Parse JSON response
+                start_idx = response.find('{')
+                end_idx = response.rfind('}') + 1
+                if start_idx != -1 and end_idx > start_idx:
+                    result = json.loads(response[start_idx:end_idx])
+                    results = result.get("results", [])
+                    return [
+                        (r.get("cve_id", "UNKNOWN"), 
+                         r.get("is_riscv_related", False), 
+                         r.get("reason", ""))
+                        for r in results
+                    ]
+            except json.JSONDecodeError as e:
+                print(f"  ✗ JSON解析失败: {e}")
+        
+        # Return default (not related) for all CVEs if parsing failed
+        return [(cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN'), False, "Parse failed") for cve in cves]
     
     def _create_classification_prompt(self, cve_data: Dict) -> str:
         """创建分类提示词"""
@@ -686,6 +958,13 @@ If you suggest a new category, set "is_new_category" to true and provide a clear
         print(f"{'='*70}")
         print(f"下载增量包: {self.stats['delta_downloaded']} 个")
         print(f"新发现RISC-V CVE: {self.stats['new_riscv_cves_found']} 个")
+        print(f"扩展关键词候选: {self.stats['extended_candidates']} 个")
+        print(f"扩展关键词LLM验证通过: {self.stats['extended_verified']} 个")
+        print(f"扩展关键词LLM验证拒绝: {self.stats['extended_rejected']} 个")
+        if self.stats["by_keyword"]:
+            print(f"扩展关键词分布:")
+            for kw, count in sorted(self.stats["by_keyword"].items()):
+                print(f"    {kw}: {count}")
         print(f"分类成功: {self.stats['classification_successful']} 个")
         print(f"分类失败: {self.stats['classification_failed']} 个")
         print(f"新建分类: {self.stats['new_categories_created']} 个")
@@ -734,17 +1013,24 @@ If you suggest a new category, set "is_new_category" to true and provide a clear
         # 3. 扫描新的RISC-V CVE
         new_riscv_cves = self.scan_for_new_riscv_cves()
         
-        if not new_riscv_cves:
+        # 4. 验证扩展关键词候选CVE
+        verified_extended_cves = self.verify_extended_candidates()
+        
+        # 合并所有新CVE
+        all_new_cves = new_riscv_cves + verified_extended_cves
+        
+        if not all_new_cves:
             print("\n没有发现新的RISC-V CVE，无需更新")
+            self.print_statistics()
             return
         
-        # 4. 分类新CVE
-        classified_cves = self.classify_new_cves(new_riscv_cves)
+        # 5. 分类新CVE
+        classified_cves = self.classify_new_cves(all_new_cves)
         
-        # 5. 更新JSON文件
+        # 6. 更新JSON文件
         self.update_json_files(classified_cves)
         
-        # 6. 打印统计信息
+        # 7. 打印统计信息
         self.print_statistics()
 
 
@@ -793,13 +1079,13 @@ def main():
     )
     parser.add_argument(
         '--classified-file',
-        default='riscv_cves_classified.json',
-        help='分类后的完整JSON文件 (默认: riscv_cves_classified.json)'
+        default='../riscv_cves_classified.json',
+        help='分类后的完整JSON文件 (默认: ../riscv_cves_classified.json)'
     )
     parser.add_argument(
         '--summary-file',
-        default='riscv_cves_classified_summary.json',
-        help='分类摘要JSON文件 (默认: riscv_cves_classified_summary.json)'
+        default='../riscv_cves_classified_summary.json',
+        help='分类摘要JSON文件 (默认: ../riscv_cves_classified_summary.json)'
     )
     parser.add_argument(
         '--config',

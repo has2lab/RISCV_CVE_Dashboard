@@ -49,6 +49,35 @@
     "timeout": 30,
     "rate_limit_delay": 0.5
   },
+  "embedding": {
+    "provider": "dashscope",
+    "api_key": "",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model": "text-embedding-v4",
+    "dimensions": 1024,
+    "batch_size": 10,
+    "timeout": 60,
+    "env_var": "DASHSCOPE_API_KEY"
+  },
+  "verification": {
+    "max_cves_per_batch": 5,
+    "clustering_method": "hdbscan",
+    "min_cluster_size": 3,
+    "max_retries": 5,
+    "initial_retry_delay": 1.0,
+    "max_retry_delay": 60.0,
+    "retry_multiplier": 2.0,
+    "system_prompt": "You are a cybersecurity expert specializing in RISC-V architecture. Your task is to determine whether CVEs are related to RISC-V ecosystem.",
+    "riscv_criteria": [
+      "RISC-V Process",
+      "RISC-V SoC",
+      "RISC-V instruction set",
+      "RISC-V Simulator",
+      "RISC-V Vulnerabilities",
+      "RISC-V Development Tools",
+      "RISC-V Firmware or Applications"
+    ]
+  },
   "classification": {
     "predefined_categories": [
       "Linux Kernel",

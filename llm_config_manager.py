@@ -8,7 +8,7 @@ LLM配置管理模块
 import os
 import json
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 
 
 class LLMConfig:
@@ -185,6 +185,77 @@ class LLMConfig:
         """是否生成摘要"""
         output_config = self.config.get("output", {})
         return output_config.get("generate_summary", True)
+    
+    # ========== Embedding Configuration ==========
+    
+    def get_embedding_config(self) -> Dict[str, Any]:
+        """获取嵌入模型配置"""
+        return self.config.get("embedding", {})
+    
+    def get_embedding_api_key(self) -> Optional[str]:
+        """获取嵌入模型API密钥"""
+        embedding_config = self.config.get("embedding", {})
+        api_key = embedding_config.get("api_key", "")
+        if not api_key:
+            env_var = embedding_config.get("env_var", "DASHSCOPE_API_KEY")
+            api_key = os.getenv(env_var, "")
+        return api_key if api_key else None
+    
+    def get_embedding_model(self) -> str:
+        """获取嵌入模型名称"""
+        return self.config.get("embedding", {}).get("model", "text-embedding-v4")
+    
+    def get_embedding_base_url(self) -> str:
+        """获取嵌入模型API地址"""
+        return self.config.get("embedding", {}).get(
+            "base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        )
+    
+    # ========== Verification Configuration ==========
+    
+    def get_verification_config(self) -> Dict[str, Any]:
+        """获取验证配置"""
+        return self.config.get("verification", {})
+    
+    def get_max_cves_per_batch(self) -> int:
+        """获取每批次最大CVE数量"""
+        return self.config.get("verification", {}).get("max_cves_per_batch", 5)
+    
+    def get_clustering_method(self) -> str:
+        """获取聚类方法"""
+        return self.config.get("verification", {}).get("clustering_method", "hdbscan")
+    
+    def get_min_cluster_size(self) -> int:
+        """获取最小聚类大小"""
+        return self.config.get("verification", {}).get("min_cluster_size", 3)
+    
+    def get_max_retries(self) -> int:
+        """获取最大重试次数"""
+        return self.config.get("verification", {}).get("max_retries", 5)
+    
+    def get_retry_config(self) -> Dict[str, float]:
+        """获取重试配置"""
+        verification = self.config.get("verification", {})
+        return {
+            "max_retries": verification.get("max_retries", 5),
+            "initial_delay": verification.get("initial_retry_delay", 1.0),
+            "max_delay": verification.get("max_retry_delay", 60.0),
+            "multiplier": verification.get("retry_multiplier", 2.0)
+        }
+    
+    def get_verification_system_prompt(self) -> str:
+        """获取验证系统提示词"""
+        return self.config.get("verification", {}).get(
+            "system_prompt",
+            "You are a cybersecurity expert specializing in RISC-V architecture."
+        )
+    
+    def get_riscv_criteria(self) -> List[str]:
+        """获取RISC-V相关性判断标准"""
+        return self.config.get("verification", {}).get("riscv_criteria", [
+            "RISC-V处理器", "RISC-V SoC", "RISC-V指令集", "RISC-V模拟器",
+            "RISC-V漏洞", "RISC-V开发工具", "RISC-V固件或应用"
+        ])
     
     def get_provider_config(self, provider: str) -> Dict[str, Any]:
         """
