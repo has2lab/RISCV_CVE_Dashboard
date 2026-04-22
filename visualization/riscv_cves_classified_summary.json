@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 92,
-        "classification_date": "2026-01-29T18:16:37.895499",
+        "total_cves": 106,
+        "classification_date": "2026-04-22T10:56:18.169674",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,18 +16,18 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 92,
-        "successful": 92,
+        "total_processed": 106,
+        "successful": 106,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
-            "RISC-V CPU/SoC": 12,
+            "RISC-V CPU/SoC": 14,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 70,
-            "Simulator": 2,
-            "RISC-V Development Tools": 4,
-            "Device-Specific Firmware & Applications": 2,
-            "Other": 1
+            "Linux Kernel": 73,
+            "Simulator": 7,
+            "RISC-V Development Tools": 5,
+            "Device-Specific Firmware & Applications": 4,
+            "Other": 2
         }
     },
     "classified_cves": [
@@ -1236,6 +1236,189 @@
             "severity_assessment": "Medium",
             "technical_details": "该漏洞属于微架构侧信道攻击，具体为缓存时序攻击。攻击者通过监控L1数据缓存访问的时间差异，可推断出处理器的缓存状态变化，从而可能泄露敏感数据或执行模式。虽然需要本地访问权限且攻击复杂度较高，但在多用户环境或虚拟化场景中，恶意用户可能利用此漏洞跨安全边界获取其他进程或虚拟机的信息。漏洞涉及缓存一致性协议或替换算法的实现缺陷，导致不同内存访问模式产生可观测的时间差异。",
             "classification_timestamp": "2026-01-29T18:16:36.895356"
+        },
+        {
+            "cve_id": "CVE-2025-71203",
+            "category": "Linux Kernel",
+            "summary": "该CVE涉及Linux内核中RISC-V架构的系统调用表索引漏洞。攻击者可通过用户控制的系统调用号，在推测执行条件下越界访问内核内存。补丁使用array_index_nospec()函数在边界检查后对索引值进行安全处理，防止侧信道数据泄露。",
+            "key_points": [
+                "推测执行漏洞：利用CPU推测执行特性绕过边界检查",
+                "侧信道攻击：通过缓存时序分析泄露内核内存数据",
+                "用户控制输入：系统调用号作为攻击向量可被恶意操控"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞属于推测执行侧信道攻击（Speculative Execution Side-Channel）在RISC-V架构的具体实现漏洞。技术原理为：1) 系统调用处理流程中，用户空间传递的系统调用号在边界检查后仍可能被CPU推测执行单元用于预取操作；2) 即使越界访问最终会被撤销，但通过缓存状态变化（如Flush+Reload、Prime+Probe等侧信道技术）可推断出内核敏感数据；3) array_index_nospec()通过插入序列化屏障（如csrrc zero, 0xCC）和掩码操作，确保推测执行时索引值被限制在合法范围内。此漏洞影响所有支持推测执行的RISC-V处理器，但需要本地执行权限才能利用。",
+            "classification_timestamp": "2026-04-22T10:53:01.749760"
+        },
+        {
+            "cve_id": "CVE-2025-71234",
+            "category": "Linux Kernel",
+            "summary": "该漏洞存在于Linux内核的rtl8xxxu无线网卡驱动程序中，由于未正确设置硬件数据结构大小，导致mac80211子系统分配的内存空间不足。当驱动程序访问超出分配范围的私有数据时，会在RISC-V平台上触发slab-out-of-bounds越界写入漏洞。",
+            "key_points": [
+                "驱动程序未设置hw->sta_data_size导致内存分配不足",
+                "rtl8xxxu_sta_add()函数越界访问struct rtl8xxxu_sta_info",
+                "漏洞在RISC-V平台（VisionFive 2）上通过KASAN检测发现"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞是Linux内核无线子系统中的驱动程序缺陷。rtl8xxxu驱动程序（支持RTL8192EU等USB无线网卡）在初始化时未正确设置ieee80211_hw结构体中的sta_data_size字段。mac80211框架依赖此字段确定每个站点（station）私有数据的分配大小。当驱动程序未设置此值时，__sta_info_alloc()仅分配默认大小的内存，而rtl8xxxu_sta_add()函数试图通过sta->drv_priv指针访问完整的rtl8xxxu_sta_info结构体成员时，就会超出实际分配的内存边界，造成堆内存越界写入。修复方案是在驱动程序探测阶段将hw->sta_data_size设置为sizeof(struct rtl8xxxu_sta_info)，确保内存分配匹配驱动程序需求。虽然漏洞在RISC-V平台上被发现（使用StarFive VisionFive 2开发板和RTL8192EU适配器），但本质上属于驱动程序通用缺陷，可能影响其他架构平台。",
+            "classification_timestamp": "2026-04-22T10:53:17.510035"
+        },
+        {
+            "cve_id": "CVE-2026-23217",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V架构存在一个由函数追踪与SBI调用交互引发的死锁漏洞。当启用特定函数追踪时，__sbi_ecall函数会触发环形缓冲区快照，而快照操作需要IPI中断，该中断又会导致再次调用__sbi_ecall，形成无限递归死锁循环。该漏洞在未启用SSTC扩展的RISC-V系统中容易因定时器周期性SBI调用而触发。",
+            "key_points": [
+                "死锁触发条件：对__sbi_ecall函数启用ftrace快照追踪",
+                "根本原因：快照操作触发IPI中断 → 中断处理需要SBI调用 → 再次触发快照 → 无限递归",
+                "易发环境：未配置CONFIG_RISCV_ALTERNATIVE_EARLY且无SSTC扩展的系统",
+                "修复方案：永久将sbi_ecall.c中的函数排除在函数追踪范围外"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞属于RISC-V架构特定的内核同步问题。技术机制如下：1) __sbi_ecall是RISC-V SBI（Supervisor Binary Interface）的底层调用接口；2) 当对该函数启用ftrace的snapshot功能时，每次调用都会尝试保存环形缓冲区状态；3) snapshot操作需要跨CPU同步，通过IPI（处理器间中断）实现；4) 在RISC-V中，IPI发送依赖SBI调用，从而再次进入__sbi_ecall；5) 形成“SBI调用→快照→IPI→SBI调用”的硬死锁循环。特别值得注意的是，在没有SSTC（Supervisor Software Time Compare）扩展的系统中，时钟事件驱动会定期触发SBI调用，使得该漏洞更容易在运行时被触发。修复方案选择永久排除而非条件排除，是因为SBI调用已可通过trace events机制记录，不影响调试能力。",
+            "classification_timestamp": "2026-04-22T10:53:35.023377"
+        },
+        {
+            "cve_id": "CVE-2026-29642",
+            "category": "RISC-V CPU/SoC",
+            "summary": "该漏洞存在于香山RISC-V处理器特定版本中，当特权模式执行对menvcfg CSR的读写操作时，会意外修改xstatus寄存器中本应保留的WPRI位。这违反了RISC-V架构规范中WPRI字段“写保持原值，读忽略值”的设计原则。",
+            "key_points": [
+                "漏洞触发条件：攻击者通过特权CSR操作（如M-mode下的csrrs指令）访问menvcfg寄存器",
+                "核心问题：menvcfg的访问意外污染了xstatus中的WPRI保留位（应始终保持不变）",
+                "架构违规：直接违反RISC-V特权架构手册对WPRI字段的明确定义"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞是香山处理器微架构实现缺陷。在特定提交版本（aecf601e803bfd2371667a3fb60bfcd83c333027）中，menvcfg（机器模式环境配置寄存器）与xstatus（扩展状态寄存器）的硬件逻辑存在非预期的耦合。当软件通过CSR指令操作menvcfg时，其写操作会错误地传播到xstatus的WPRI字段，导致这些本应保持不变的保留位被置1。WPRI字段在RISC-V规范中定义为：1）写入时必须保持原有值不变；2）读取时返回可忽略的值。此漏洞可能破坏操作系统状态隔离，影响系统稳定性，但需要本地特权执行能力才能利用。",
+            "classification_timestamp": "2026-04-22T10:53:48.788647"
+        },
+        {
+            "cve_id": "CVE-2026-29643",
+            "category": "RISC-V CPU/SoC",
+            "summary": "香山开源高性能RISC-V处理器在NewCSR子系统中存在异常处理缺陷。当针对不存在/自定义CSR地址执行特定操作序列时，可能触发非法指令异常但无法可靠跳转到陷阱处理程序（mtvec），导致控制流中断。攻击者可利用此漏洞造成拒绝服务及处理器状态不一致。",
+            "key_points": [
+                "CSR子系统异常处理机制存在缺陷",
+                "非法CSR操作序列导致控制流转移失败",
+                "可能造成处理器挂起或状态不一致"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于香山处理器（XiangShan）的NewCSR（控制和状态寄存器）子系统中，具体涉及commit edb1dfaf7d290ae99724594507dc46c2c2125384版本。当处理器执行针对不存在或自定义CSR地址的特定操作序列时，虽然会正确触发非法指令异常（illegal-instruction exception），但异常处理机制存在缺陷：系统无法可靠地将控制权转移至预设的陷阱处理程序地址（mtvec寄存器指向的位置）。这导致处理器可能无法进入正常的异常处理流程，造成控制流中断、处理器挂起或进入不可恢复状态。从架构层面看，此漏洞破坏了RISC-V特权架构中异常处理的可靠性保证，可能被本地攻击者通过执行恶意代码利用，造成拒绝服务（DoS）和处理器架构状态不一致的安全风险。",
+            "classification_timestamp": "2026-04-22T10:54:01.874174"
+        },
+        {
+            "cve_id": "CVE-2026-29645",
+            "category": "Simulator",
+            "summary": "NEMU模拟器在RISC-V向量指令解码器中存在验证缺陷。该漏洞允许恶意构造的二进制文件绕过非法指令异常检查，将无效的OP-V指令错误解码为vset*配置指令执行，导致系统状态损坏或拒绝服务。",
+            "key_points": [
+                "RISC-V向量指令集（RVV）解码器验证不充分",
+                "funct3字段验证缺失导致非法指令绕过",
+                "vsetvli/vsetivli/vsetvl指令的错误解码"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于NEMU模拟器的RISC-V向量指令解码逻辑中。具体而言，当解码vsetvli/vsetivli/vsetvl指令时，解码器未能正确验证funct3字段的有效性。攻击者可以构造特定的OP-V指令编码，这些编码本应触发非法指令异常（illegal-instruction exception），但由于验证缺失，会被错误解释为合法的vset*配置指令并执行。这会导致：1）陷阱处理行为异常，破坏正常的异常处理流程；2）架构状态损坏或分歧，影响模拟器与真实硬件行为的一致性；3）在依赖NEMU进行正确执行或沙箱化的系统中，可能造成拒绝服务。漏洞影响NEMU v2025.12.r2之前的所有版本，修复版本为v2025.12.r2。",
+            "classification_timestamp": "2026-04-22T10:54:14.662435"
+        },
+        {
+            "cve_id": "CVE-2026-29646",
+            "category": "Simulator",
+            "summary": "OpenXiangShan NEMU模拟器在启用RISC-V Hypervisor扩展时存在权限隔离漏洞。当VS模式（虚拟监管者模式）的访客尝试写入监管者中断使能CSR（sie）时，该操作可能错误地影响机器级中断使能状态（mie），破坏了特权级和虚拟化隔离。",
+            "key_points": [
+                "虚拟化隔离失效：VS模式访客能够影响机器级（M-mode）中断状态",
+                "CSR访问处理错误：对sie寄存器的写入操作传播到了mie寄存器",
+                "特权边界突破：打破了RISC-V标准定义的M-mode与VS-mode之间的隔离屏障"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞涉及RISC-V虚拟化扩展（H扩展）的实现缺陷。在正常的RISC-V虚拟化架构中，VS-mode（虚拟监管者模式）运行的操作系统应通过hypervisor进行中断虚拟化，其sie（Supervisor Interrupt Enable）寄存器的操作应被正确捕获和模拟，而不应直接影响物理硬件的mie（Machine Interrupt Enable）寄存器。NEMU在commit 55295c4之前的版本中，对VS-mode访问sie CSR的处理逻辑存在缺陷，导致写入操作错误地传播到了mie寄存器，从而破坏了M-mode与虚拟化层之间的隔离。这种隔离失效可能导致：1）访客系统通过控制中断使能状态造成系统拒绝服务；2）访客可能绕过hypervisor监控直接操作物理中断；3）在多租户虚拟化环境中，一个访客可能影响其他访客或宿主机的中断处理。修复需要确保所有VS-mode对sie的访问都经过完整的hypervisor模拟流程。",
+            "classification_timestamp": "2026-04-22T10:54:30.420818"
+        },
+        {
+            "cve_id": "CVE-2026-29647",
+            "category": "Simulator",
+            "summary": "OpenXiangShan NEMU模拟器中存在Smstateen权限验证不足漏洞。当mstateen0.IMSIC位被清除时，低权限代码仍可通过stopei/vstopei CSR访问IMSIC状态，可能导致跨上下文信息泄露或中断处理破坏。",
+            "key_points": [
+                "Smstateen扩展权限控制机制失效",
+                "低权限代码可越权访问IMSIC中断控制器状态",
+                "stopei/vstopei CSR未正确检查mstateen0.IMSIC权限位"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞涉及RISC-V特权架构中的Smstateen扩展（Machine State Enable），该扩展用于控制特定CSR和功能的访问权限。具体而言，mstateen0寄存器的IMSIC位应控制对IMSIC（Incoming Message Signaled Interrupt Controller）相关状态的访问权限。当该位为0时，低权限模式（如VS模式或U模式）不应通过stopei（Supervisor Trap Entry Interrupt）和vstopei（Virtual Supervisor Trap Entry Interrupt）CSR访问IMSIC状态。然而在OpenXiangShan NEMU实现中，权限检查存在缺陷，导致即使mstateen0.IMSIC=0，低权限代码仍能读取或修改IMSIC状态。这可能被利用进行：1）跨虚拟机或安全域的信息泄露（通过读取中断状态）；2）中断处理流程破坏（通过篡改中断状态）；3）潜在的特权提升向量。漏洞影响依赖于IMSIC实现的具体使用场景，在虚拟化环境中风险较高。",
+            "classification_timestamp": "2026-04-22T10:54:45.035432"
+        },
+        {
+            "cve_id": "CVE-2026-29648",
+            "category": "Simulator",
+            "summary": "OpenXiangShan NEMU模拟器存在Smstateen安全机制实现缺陷。当启用Smstateen时，清除mstateen0.ENVCFG位未能正确限制对henvcfg和senvcfg控制状态寄存器的访问，导致低权限代码可能绕过隔离控制。",
+            "key_points": [
+                "Smstateen扩展的安全机制实现存在缺陷",
+                "mstateen0.ENVCFG位清除后访问控制未正确生效",
+                "低权限代码可越权访问高权限CSR寄存器"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞涉及RISC-V特权架构中的状态使能扩展（Smstateen）。当Smstateen启用时，mstateen0寄存器的ENVCFG位本应控制对henvcfg（Hypervisor环境配置）和senvcfg（Supervisor环境配置）CSR的访问权限。然而在OpenXiangShan NEMU实现中，清除该位后，低权限模式（如VS-mode或U-mode）仍能直接读写这些本应受保护的寄存器，破坏了基于状态使能的隔离机制。这可能导致虚拟化环境中guest虚拟机绕过hypervisor的环境配置控制，或用户程序影响操作系统内核的环境设置，特别是在多特权级和虚拟化场景下构成安全威胁。",
+            "classification_timestamp": "2026-04-22T10:54:57.624973"
+        },
+        {
+            "cve_id": "CVE-2026-29649",
+            "category": "Simulator",
+            "summary": "NEMU模拟器在RISC-V虚拟化CSR处理中存在实现缺陷，机器模式对menvcfg寄存器的写入会错误地影响虚拟机监控程序的henvcfg配置。这可能导致虚拟化环境中的缓存块管理指令执行异常，引发意外陷阱或拒绝服务。",
+            "key_points": [
+                "CSR权限隔离缺陷：机器模式（M-mode）对menvcfg[7:4]的写入会隐式修改虚拟机监控程序（HS-mode）的henvcfg[7:4]字段",
+                "缓存管理指令异常：CBIE/CBCFE/CBZE相关配置被错误覆盖，影响虚拟化环境（V=1）下的缓存块操作指令执行",
+                "虚拟化配置失效：虚拟机监控程序对缓存管理策略的控制权被机器模式不当篡改"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞涉及RISC-V虚拟化扩展中的环境配置寄存器（envcfg）权限隔离机制。根据RISC-V特权架构规范，henvcfg（Hypervisor环境配置）应独立于menvcfg（机器模式环境配置）。但NEMU实现中存在逻辑缺陷：当机器模式写入menvcfg的位[7:4]（控制CBIE缓存块无效使能、CBCFE缓存块清空使能、CBZE缓存块零使能）时，模拟器错误地将这些修改同步到henvcfg的对应位。这导致：1）虚拟机监控程序失去对虚拟环境缓存管理策略的独立控制权；2）当虚拟机执行缓存管理指令（如cbo.inval, cbo.clean, cbo.zero）时，可能因配置不匹配触发意外异常；3）在嵌套虚拟化场景中，该缺陷可能被利用造成虚拟机逃逸或拒绝服务。漏洞影响范围限于使用NEMU模拟器且启用虚拟化扩展（H扩展）的环境。",
+            "classification_timestamp": "2026-04-22T10:55:15.319718"
+        },
+        {
+            "cve_id": "CVE-2026-34379",
+            "category": "Other",
+            "summary": "OpenEXR图像库在处理DWA/DWAB压缩的EXR文件时存在内存对齐漏洞。当解码包含FLOAT类型通道的图像时，解码器对未对齐的内存指针进行强制类型转换和写入操作，违反了C语言标准的内存对齐要求。该漏洞在ARM和RISC-V架构上会导致程序崩溃，在x86架构上可能被编译器优化利用。",
+            "key_points": [
+                "漏洞位于LossyDctDecoder_execute()函数的HALF→FLOAT转换过程中",
+                "将未对齐的uint8_t*指针强制转换为float*指针进行写入操作",
+                "RISC-V等严格内存对齐架构会立即崩溃，x86架构存在潜在可利用性"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞是OpenEXR图像处理库中的内存对齐违规问题。具体技术细节如下：\n\n1. 漏洞位置：src/lib/OpenEXRCore/internal_dwa_decoder.h第749行的LossyDctDecoder_execute()函数\n\n2. 触发条件：解码使用DWA或DWAB压缩的EXR文件，且文件中包含FLOAT类型通道时\n\n3. 根本原因：代码执行HALF→FLOAT类型转换时，直接将未对齐的uint8_t*行缓冲区指针强制转换为float*指针，然后通过该指针进行写入操作。根据C语言标准，访问未对齐的float指针是未定义行为。\n\n4. 架构差异影响：\n   - RISC-V和ARM架构严格执行内存对齐要求，会立即导致总线错误或对齐异常\n   - x86架构硬件上通常容忍未对齐访问，但编译器可能基于对齐假设进行优化，从而引入安全风险\n\n5. 修复方案：在3.2.7、3.3.9和3.4.9版本中，通过确保内存对齐或使用逐字节复制的方式修复了此问题\n\n6. RISC-V特定影响：由于RISC-V架构规范要求对齐的内存访问（特别是对于浮点操作），该漏洞在RISC-V平台上表现为确定性的崩溃，可能被用于拒绝服务攻击。",
+            "classification_timestamp": "2026-04-22T10:55:34.626907"
+        },
+        {
+            "cve_id": "CVE-2026-3579",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "wolfSSL 5.8.4在RISC-V RV32I架构上缺少恒定时间的64位乘法软件实现。编译器插入的__muldi3子程序执行时间随操作数值变化，影响了多个SP数学函数，导致时序侧信道漏洞，可能泄露敏感加密数据。",
+            "key_points": [
+                "RISC-V RV32I架构上64位乘法缺乏恒定时间实现",
+                "编译器生成的__muldi3函数执行时间与操作数值相关",
+                "影响sp_256_mul_9、sp_256_sqr_9等SP数学函数"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞源于RISC-V RV32I架构（32位整数指令集）在处理64位乘法时，wolfSSL库依赖编译器提供的__muldi3运行时函数。由于该函数采用常规乘法算法而非恒定时间算法，其执行周期数会随输入操作数的比特模式而变化。攻击者通过精确测量这些数学函数（特别是用于椭圆曲线密码学的sp_256系列函数）的执行时间，可能推导出私钥或中间计算值。虽然漏洞需要本地侧信道测量条件，但在共享物理环境或云服务器场景中风险较高。修复方案需要实现或集成恒定时间的64位乘法例程。",
+            "classification_timestamp": "2026-04-22T10:55:47.633003"
+        },
+        {
+            "cve_id": "CVE-2026-3580",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "wolfSSL 5.8.4版本中，针对RISC-V RV32I架构的sp_256_get_entry_256_9函数的常数时间掩码逻辑，在使用GCC的-O3优化级别时被转换为条件分支指令（bnez）。这种编译器优化破坏了ECC标量乘法操作的侧信道防护能力，可能导致本地攻击者通过时序分析恢复私钥。",
+            "key_points": [
+                "编译器优化破坏常数时间防护：GCC -O3优化将常数时间掩码操作转换为条件分支，破坏了侧信道防护",
+                "特定架构与优化组合：仅影响RISC-V RV32I架构且使用-O3优化编译的场景",
+                "密码学安全漏洞：影响ECC标量乘法的侧信道安全性，可能导致私钥泄露"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞的核心技术问题在于编译器优化与密码学安全代码的交互。sp_256_get_entry_256_9函数原本设计使用常数时间掩码操作来防止时序侧信道攻击，但在RISC-V RV32I目标架构下，GCC的-O3优化级别会识别并重写这些掩码操作为条件分支指令。具体表现为：编译器将原本无分支的位掩码选择（如使用掩码和位运算）优化为基于条件判断的bnez指令，这使得代码执行时间依赖于秘密数据值。攻击者可以通过精确测量ECC操作（如数字签名生成）的执行时间差异，逐步推导出私钥信息。这种漏洞特别危险，因为它出现在密码学基础库中，且影响的是侧信道防护机制——这种防护通常用于防止实际部署中的物理攻击。修复方案需要确保常数时间代码在编译器优化后仍保持无分支特性，通常通过编译器屏障或使用编译器内置函数来实现。",
+            "classification_timestamp": "2026-04-22T10:56:04.676189"
+        },
+        {
+            "cve_id": "CVE-2026-40323",
+            "category": "RISC-V Development Tools",
+            "summary": "SP1零知识虚拟机在6.0.0至6.0.2版本中存在递归分片验证器的完整性漏洞。恶意证明者可以构造一个本机验证器会拒绝的分片证明来生成递归证明，从而破坏系统的可靠性保证。该漏洞已在6.1.0版本中修复。",
+            "key_points": [
+                "影响SP1零知识虚拟机（RISC-V程序验证工具）",
+                "递归分片验证器存在完整性缺陷",
+                "允许恶意证明者构造无效但能通过验证的递归证明"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "SP1作为RISC-V架构的零知识证明虚拟机，其核心功能是验证程序执行的正确性。在受影响版本中，递归分片验证器（recursive shard verifier）存在逻辑缺陷，导致验证过程不健全（unsound）。具体而言，攻击者可以精心构造一个分片证明（shard proof），该证明在本地验证器（native verifier）层面会被拒绝，但却能通过递归验证流程生成有效的递归证明（recursive proof）。这种不一致性破坏了零知识证明系统的基本安全属性——可靠性（soundness），使得攻击者可能伪造程序执行正确性的证明。该漏洞直接影响基于SP1构建的所有安全应用和协议的可信度。",
+            "classification_timestamp": "2026-04-22T10:56:17.169458"
         }
     ]
 }
