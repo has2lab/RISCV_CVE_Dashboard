@@ -530,13 +530,18 @@ const App = {
    */
   async initCategories() {
     Utils.log('info', 'Initializing categories...');
-    
+
     try {
-      // 绑定分类标签事件
+      // 根据实际数据动态生成分类标签按钮
+      const defaultCategory = this.renderCategoryTabs();
+
+      // 绑定分类标签事件（使用事件代理以兼容动态生成的按钮）
       this.bindCategoryTabs();
-      
-      // 显示默认分类内容
-      this.showCategoryContent('Linux Kernel');
+
+      // 显示默认分类内容（默认为条数最多的分类）
+      if (defaultCategory) {
+        this.showCategoryContent(defaultCategory);
+      }
 
     } catch (error) {
       Utils.log('error', 'Failed to initialize categories', error);
@@ -544,20 +549,63 @@ const App = {
   },
 
   /**
-   * 绑定分类标签事件
+   * 按条数降序渲染所有存在 CVE 的分类标签
+   * @returns {string|null} 默认选中的分类（第一个 tab）
+   */
+  renderCategoryTabs() {
+    const container = document.getElementById('categoryTabs');
+    if (!container) return null;
+
+    const stats = DataLoader.getStatistics();
+    if (!stats || !stats.byCategory) {
+      container.innerHTML = '';
+      return null;
+    }
+
+    const sorted = Object.entries(stats.byCategory)
+      .filter(([, count]) => count > 0)
+      .sort(([, a], [, b]) => b - a);
+
+    if (sorted.length === 0) {
+      container.innerHTML = '';
+      return null;
+    }
+
+    const tabsHtml = sorted.map(([category, count], idx) => {
+      const name = Utils.getCategoryDisplayName(category);
+      const active = idx === 0 ? ' active' : '';
+      return `<button class="category-tab${active}" data-category="${category}">
+        <span class="tab-name">${name}</span>
+        <span class="tab-count">${count}</span>
+      </button>`;
+    }).join('');
+
+    const allTab = `<button class="category-tab" data-category="all">
+      <span class="tab-name">全部对比</span>
+    </button>`;
+
+    container.innerHTML = tabsHtml + allTab;
+    return sorted[0][0];
+  },
+
+  /**
+   * 绑定分类标签事件（事件代理，支持动态生成的按钮）
    */
   bindCategoryTabs() {
-    const categoryTabs = document.querySelectorAll('.category-tab');
-    categoryTabs.forEach(tab => {
-      tab.addEventListener('click', (e) => {
-        const category = e.currentTarget.dataset.category;
-        this.switchCategoryTab(category);
-        
-        // 更新标签状态
-        categoryTabs.forEach(t => t.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-      });
+    const container = document.getElementById('categoryTabs');
+    if (!container || container.dataset.bound === '1') return;
+
+    container.addEventListener('click', (e) => {
+      const tab = e.target.closest('.category-tab');
+      if (!tab) return;
+      const category = tab.dataset.category;
+      this.switchCategoryTab(category);
+
+      container.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
     });
+
+    container.dataset.bound = '1';
   },
 
   /**
@@ -575,9 +623,19 @@ const App = {
     if (!container) return;
 
     if (category === 'all') {
+      // 切换到对比视图时销毁之前的 stacked chart
+      if (this._categoryStackedChart) {
+        this._categoryStackedChart.destroy();
+        this._categoryStackedChart = null;
+      }
       container.innerHTML = this.buildAllCategoriesContent();
     } else {
       container.innerHTML = this.buildSingleCategoryContent(category);
+      // 内容插入 DOM 后再绘制 canvas 图表
+      if (this.state.data && this.state.data.summary) {
+        const cves = this.state.data.summary.classified_cves.filter(cve => cve.category === category);
+        this.renderCategoryYearSeverityChart(cves);
+      }
     }
   },
 
@@ -645,6 +703,26 @@ const App = {
           </div>
         </div>
 
+        <!-- 年份 × 严重程度 堆叠趋势 -->
+        <div class="content-section full-width">
+          <div class="section-header-simple">
+            <h3><i class="fas fa-chart-bar"></i> 年份 × 严重程度 趋势</h3>
+          </div>
+          <div class="year-severity-chart-wrapper">
+            <canvas id="categoryYearSeverityChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 核心关键词 -->
+        <div class="content-section full-width">
+          <div class="section-header-simple">
+            <h3><i class="fas fa-key"></i> 核心关键词 Top 12</h3>
+          </div>
+          <div class="top-keywords-cloud">
+            ${this.buildTopKeywords(cves)}
+          </div>
+        </div>
+
         <!-- CVE列表 -->
         <div class="content-section full-width">
           <div class="section-header-simple">
@@ -654,7 +732,10 @@ const App = {
             </button>
           </div>
           <div class="cve-list-simple">
-            ${cves.slice(0, 8).map(cve => this.buildCategoryCveItem(cve)).join('')}
+            ${[...cves]
+              .sort((a, b) => b.cve_id.localeCompare(a.cve_id, undefined, { numeric: true }))
+              .slice(0, 10)
+              .map(cve => this.buildCategoryCveItem(cve)).join('')}
           </div>
         </div>
       </div>
@@ -662,23 +743,143 @@ const App = {
   },
 
   /**
+   * 聚合该分类所有 CVE 的文本，提取 Top 12 关键词
+   * 同时利用 detailed JSON 中的英文 description 提升召回
+   */
+  buildTopKeywords(cves) {
+    if (!cves || cves.length === 0) {
+      return '<p class="empty-hint">暂无关键词数据</p>';
+    }
+
+    const detailed = (this.state.data && this.state.data.detailed)
+      ? this.state.data.detailed.classified_cves
+      : [];
+    const detailedMap = {};
+    detailed.forEach(c => { detailedMap[c.cve_id] = c; });
+
+    const pieces = [];
+    cves.forEach(cve => {
+      if (cve.summary) pieces.push(cve.summary);
+      if (cve.technical_details) pieces.push(cve.technical_details);
+      if (Array.isArray(cve.key_points)) pieces.push(cve.key_points.join(' '));
+
+      const d = detailedMap[cve.cve_id];
+      const desc = d && d.original_data && d.original_data.containers
+        && d.original_data.containers.cna
+        && d.original_data.containers.cna.descriptions
+        && d.original_data.containers.cna.descriptions[0]
+        && d.original_data.containers.cna.descriptions[0].value;
+      if (desc) pieces.push(desc);
+    });
+
+    const keywords = Utils.extractKeywords(pieces.join(' '), 12);
+    if (!keywords || keywords.length === 0) {
+      return '<p class="empty-hint">暂无可提取的英文技术术语</p>';
+    }
+
+    const maxCount = keywords[0].count;
+    const minCount = keywords[keywords.length - 1].count;
+    const range = Math.max(1, maxCount - minCount);
+
+    return keywords.map(({ word, count }) => {
+      const weight = (count - minCount) / range;
+      const fontSize = (0.85 + weight * 0.65).toFixed(2);
+      const opacity = (0.55 + weight * 0.45).toFixed(2);
+      return `<span class="keyword-chip" style="font-size:${fontSize}rem;opacity:${opacity}"
+        title="出现 ${count} 次">${word}
+        <em class="keyword-count">${count}</em>
+      </span>`;
+    }).join('');
+  },
+
+  /**
+   * 渲染年份 × 严重程度 堆叠条形图（Chart.js）
+   */
+  renderCategoryYearSeverityChart(cves) {
+    const canvas = document.getElementById('categoryYearSeverityChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    // 清理已有 chart（切换 tab 时避免叠加）
+    if (this._categoryStackedChart) {
+      this._categoryStackedChart.destroy();
+      this._categoryStackedChart = null;
+    }
+
+    // 聚合：{year -> {severity -> count}}
+    const byYear = {};
+    cves.forEach(cve => {
+      const year = Utils.extractYearFromCveId(cve.cve_id);
+      if (!year) return;
+      const severity = Utils.parseSeverity(cve.severity_assessment);
+      if (!byYear[year]) byYear[year] = {};
+      byYear[year][severity] = (byYear[year][severity] || 0) + 1;
+    });
+
+    const years = Object.keys(byYear).sort();
+    const severityOrder = ['Critical', 'High', 'Medium', 'Low', 'Unknown'];
+    const datasets = severityOrder
+      .filter(sev => years.some(y => byYear[y][sev]))
+      .map(sev => ({
+        label: CONFIG.SEVERITY_LEVELS[sev].label || sev,
+        data: years.map(y => byYear[y][sev] || 0),
+        backgroundColor: CONFIG.SEVERITY_LEVELS[sev].color,
+        borderWidth: 0,
+      }));
+
+    this._categoryStackedChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: { labels: years, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { mode: 'index', intersect: false },
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+  },
+
+  /**
    * 构建统计卡片
    */
   buildStatsCards(cves) {
     const severityStats = {};
-    const yearStats = {};
-    
+    const yearNumbers = [];
+
     cves.forEach(cve => {
       const severity = Utils.parseSeverity(cve.severity_assessment);
       severityStats[severity] = (severityStats[severity] || 0) + 1;
-      
+
       const year = Utils.extractYearFromCveId(cve.cve_id);
-      yearStats[year] = (yearStats[year] || 0) + 1;
+      if (typeof year === 'number' && !isNaN(year)) {
+        yearNumbers.push(year);
+      }
     });
 
-    const years = Object.keys(yearStats).sort();
-    const latestYear = years[years.length - 1];
+    const sortedYears = [...yearNumbers].sort((a, b) => a - b);
+    const minYear = sortedYears[0];
+    const maxYear = sortedYears[sortedYears.length - 1];
+    const yearRange = (minYear === maxYear) ? `${minYear || '-'}` : `${minYear} – ${maxYear}`;
+
     const criticalCount = (severityStats['Critical'] || 0) + (severityStats['High'] || 0);
+
+    // 最新 CVE：按 cve_id 排序取最后一个（CVE ID 单调递增足够近似）
+    const sortedByCve = [...cves].sort((a, b) => a.cve_id.localeCompare(b.cve_id, undefined, { numeric: true }));
+    const latestCve = sortedByCve[sortedByCve.length - 1];
+    const latestCveId = latestCve ? latestCve.cve_id : '-';
+
+    // 近 12 个月新增：CVE ID 年份 ≥ (今年-1)
+    const currentYear = new Date().getFullYear();
+    const recentCount = yearNumbers.filter(y => y >= currentYear - 1).length;
+
+    const clickLatest = latestCve
+      ? `onclick="CveDetails.showDetails('${latestCve.cve_id}')" style="cursor:pointer"`
+      : '';
 
     return `
       <div class="stat-card">
@@ -687,16 +888,7 @@ const App = {
         </div>
         <div class="stat-content">
           <div class="stat-number">${criticalCount}</div>
-          <div class="stat-label">漏洞</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon blue">
-          <i class="fas fa-calendar-check"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-number">${latestYear}</div>
-          <div class="stat-label">最新年份</div>
+          <div class="stat-label">高危/严重</div>
         </div>
       </div>
       <div class="stat-card">
@@ -704,17 +896,26 @@ const App = {
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">${years.length}</div>
-          <div class="stat-label">年度跨度</div>
+          <div class="stat-number stat-number-sm">${yearRange}</div>
+          <div class="stat-label">年份跨度</div>
+        </div>
+      </div>
+      <div class="stat-card" ${clickLatest}>
+        <div class="stat-icon blue">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number stat-number-sm">${latestCveId}</div>
+          <div class="stat-label">最新 CVE</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon purple">
-          <i class="fas fa-layer-group"></i>
+          <i class="fas fa-bolt"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">${Object.keys(severityStats).length}</div>
-          <div class="stat-label">严重等级</div>
+          <div class="stat-number">${recentCount}</div>
+          <div class="stat-label">近 12 月新增</div>
         </div>
       </div>
     `;
@@ -909,12 +1110,15 @@ const App = {
   },
 
   /**
-   * 构建CVE列表项（简化版）
+   * 构建CVE列表项（含关键要点预览）
    */
   buildCategoryCveItem(cve) {
     const severity = Utils.parseSeverity(cve.severity_assessment);
     const severityConfig = CONFIG.SEVERITY_LEVELS[severity];
     const year = Utils.extractYearFromCveId(cve.cve_id);
+    const firstPoint = Array.isArray(cve.key_points) && cve.key_points.length > 0
+      ? cve.key_points[0]
+      : '';
 
     return `
       <div class="cve-item-simple" onclick="CveDetails.showDetails('${cve.cve_id}')">
@@ -925,7 +1129,8 @@ const App = {
             ${severity}
           </span>
         </div>
-        <p class="cve-description">${Utils.truncateText(cve.description || cve.summary || '暂无描述', 120)}</p>
+        <p class="cve-description">${Utils.truncateText(cve.summary || '暂无描述', 120)}</p>
+        ${firstPoint ? `<div class="cve-keypoint"><i class="fas fa-lightbulb"></i> ${Utils.truncateText(firstPoint, 100)}</div>` : ''}
         <div class="cve-item-footer">
           <span class="cve-meta">
             <i class="fas fa-calendar"></i>
@@ -935,70 +1140,6 @@ const App = {
             查看详情 <i class="fas fa-chevron-right"></i>
           </span>
         </div>
-      </div>
-    `;
-  },
-
-  /**
-   * 构建年度分布
-   */
-  buildYearDistribution(cves) {
-    const yearData = {};
-    cves.forEach(cve => {
-      const year = Utils.extractYearFromCveId(cve.cve_id);
-      yearData[year] = (yearData[year] || 0) + 1;
-    });
-
-    const maxCount = Math.max(...Object.values(yearData));
-
-    return Object.entries(yearData)
-      .sort(([a], [b]) => parseInt(b) - parseInt(a))
-      .map(([year, count]) => `
-        <div class="year-item">
-          <span class="year-label">${year}</span>
-          <div class="year-bar">
-            <div class="year-fill" style="width: ${(count / maxCount) * 100}%"></div>
-          </div>
-          <span class="year-count">${count}</span>
-        </div>
-      `).join('');
-  },
-
-  /**
-   * 构建严重程度分布
-   */
-  buildSeverityDistribution(cves) {
-    const severityData = {};
-    cves.forEach(cve => {
-      const severity = Utils.parseSeverity(cve.severity_assessment);
-      severityData[severity] = (severityData[severity] || 0) + 1;
-    });
-
-    return Object.entries(severityData)
-      .map(([severity, count]) => {
-        const config = CONFIG.SEVERITY_LEVELS[severity];
-        return `
-          <div class="severity-item">
-            <span class="severity-label" style="color: ${config?.color || '#6B7280'}">
-              ${config?.label || severity}
-            </span>
-            <span class="severity-count">${count}</span>
-          </div>
-        `;
-      }).join('');
-  },
-
-  /**
-   * 构建分类CVE项目
-   */
-  buildCategoryCveItem(cve) {
-    return `
-      <div class="category-cve-item" data-cve="${cve.cve_id}">
-        <div class="cve-header">
-          <span class="cve-id">${cve.cve_id}</span>
-          <span class="cve-year">${Utils.extractYearFromCveId(cve.cve_id)}</span>
-        </div>
-        <div class="cve-summary">${Utils.truncateText(cve.summary, 80)}</div>
       </div>
     `;
   },
