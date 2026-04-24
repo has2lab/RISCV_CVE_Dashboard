@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 106,
-        "classification_date": "2026-04-22T10:56:18.169674",
+        "total_cves": 116,
+        "classification_date": "2026-04-24T11:13:10.809246",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,12 +16,12 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 106,
-        "successful": 106,
+        "total_processed": 116,
+        "successful": 116,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
-            "RISC-V CPU/SoC": 14,
+            "RISC-V CPU/SoC": 24,
             "RISC-V Instruction Set Manual": 1,
             "Linux Kernel": 73,
             "Simulator": 7,
@@ -19335,6 +19335,1610 @@
                 }
             },
             "classification_timestamp": "2026-04-22T10:56:17.169458"
+        },
+        {
+            "cve_id": "CVE-2026-29644",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2026-29644 涉及香山（XiangShan）开源高性能RISC-V处理器的一个漏洞，其分布式CSR写使能路径门控不当，导致非法CSR写入操作可能修改自定义PMA（物理内存属性）CSR状态。本地攻击者可利用此漏洞篡改内存属性强制机制，可能引发权限提升、信息泄露或拒绝服务。",
+            "key_points": [
+                "香山处理器分布式CSR写使能路径门控缺陷",
+                "非法CSR写入可修改PMA配置状态",
+                "违反RISC-V特权规范对非法CSR访问的异常要求"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞源于香山处理器（提交edb1dfaf7d290ae99724594507dc46c2c2125384，2024-11-28）中分布式CSR写使能路径的gating逻辑不完善。尽管RISC-V特权规范要求对不存在或非法的CSR访问触发非法指令异常，但受影响的香山版本仍可能将这些写入传播到复制的PMA配置状态。PMA用于控制内存属性（如可缓存性、可执行性、访问权限等），攻击者通过执行本地代码（权限上下文取决于系统集成）可篡改PMA，破坏平台安全隔离边界，导致权限提升、信息泄露或拒绝服务。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "cveMetadata": {
+                    "state": "PUBLISHED",
+                    "cveId": "CVE-2026-29644",
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "dateUpdated": "2026-04-21T17:59:06.506Z",
+                    "dateReserved": "2026-03-04T00:00:00.000Z",
+                    "datePublished": "2026-04-21T00:00:00.000Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre",
+                            "dateUpdated": "2026-04-21T14:06:05.088Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "XiangShan (open-source high-performance RISC-V processor) commit edb1dfaf7d290ae99724594507dc46c2c2125384 (2024-11-28) has improper gating of its distributed CSR write-enable path, allowing illegal CSR write attempts to alter custom PMA (Physical Memory Attribute) CSR state. Though the RISC-V privileged specification requires an illegal-instruction exception for non-existent/illegal CSR accesses, affected XiangShan versions may still propagate such writes to replicated PMA configuration state. Local attackers able to execute code on the core (privilege context depends on system integration) can exploit this to tamper with memory-attribute enforcement, potentially leading to privilege escalation, information disclosure, or denial of service depending on how PMA enforces platform security and isolation boundaries."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "n/a",
+                                "product": "n/a",
+                                "versions": [
+                                    {
+                                        "version": "n/a",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://github.com/OpenXiangShan/XiangShan/issues/3959"
+                            },
+                            {
+                                "url": "https://docs.riscv.org/reference/isa/priv/priv-csrs.html"
+                            },
+                            {
+                                "url": "https://github.com/OpenXiangShan/XiangShan/commit/2b1f9796aa98597e5eeac32e5bb1418496987ca4"
+                            },
+                            {
+                                "url": "https://github.com/OpenXiangShan/XiangShan/commit/edb1dfaf7d290ae99724594507dc46c2c2125384"
+                            },
+                            {
+                                "url": "https://xiangshan-doc-test.readthedocs.io/next/memory/mmu/pmp_pma/"
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "type": "text",
+                                        "lang": "en",
+                                        "description": "n/a"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "adp": [
+                        {
+                            "problemTypes": [
+                                {
+                                    "descriptions": [
+                                        {
+                                            "type": "CWE",
+                                            "cweId": "CWE-284",
+                                            "lang": "en",
+                                            "description": "CWE-284 Improper Access Control"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "references": [
+                                {
+                                    "url": "https://github.com/OpenXiangShan/XiangShan/issues/3959",
+                                    "tags": [
+                                        "exploit"
+                                    ]
+                                }
+                            ],
+                            "metrics": [
+                                {
+                                    "cvssV3_1": {
+                                        "scope": "UNCHANGED",
+                                        "version": "3.1",
+                                        "baseScore": 5.3,
+                                        "attackVector": "LOCAL",
+                                        "baseSeverity": "MEDIUM",
+                                        "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+                                        "integrityImpact": "LOW",
+                                        "userInteraction": "NONE",
+                                        "attackComplexity": "LOW",
+                                        "availabilityImpact": "LOW",
+                                        "privilegesRequired": "LOW",
+                                        "confidentialityImpact": "LOW"
+                                    }
+                                },
+                                {
+                                    "other": {
+                                        "type": "ssvc",
+                                        "content": {
+                                            "timestamp": "2026-04-21T17:58:59.548912Z",
+                                            "id": "CVE-2026-29644",
+                                            "options": [
+                                                {
+                                                    "Exploitation": "none"
+                                                },
+                                                {
+                                                    "Automatable": "no"
+                                                },
+                                                {
+                                                    "Technical Impact": "partial"
+                                                }
+                                            ],
+                                            "role": "CISA Coordinator",
+                                            "version": "2.0.3"
+                                        }
+                                    }
+                                }
+                            ],
+                            "title": "CISA ADP Vulnrichment",
+                            "providerMetadata": {
+                                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                                "shortName": "CISA-ADP",
+                                "dateUpdated": "2026-04-21T17:59:06.506Z"
+                            }
+                        }
+                    ]
+                },
+                "dataVersion": "5.2"
+            },
+            "classification_timestamp": "2026-04-24T11:12:19.602459"
+        },
+        {
+            "cve_id": "CVE-2022-33021",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2022-33021 涉及 RISC-V CVA6 处理器在读取 MHPMCOUNTER30 寄存器时访问无效内存，可能导致系统崩溃或信息泄露。该漏洞源于硬件设计缺陷，影响特定提交版本（909d85a）的 CVA6 实现。",
+            "key_points": [
+                "漏洞存在于 CVA6 处理器核的硬件实现中",
+                "触发条件为读取 MHPMCOUNTER30（硬件性能监视计数器）",
+                "可能导致非法内存访问，引发系统不稳定或安全风险"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于 CVA6 处理器核的 commit 909d85a 版本中，当软件尝试读取 MHPMCOUNTER30（一个硬件性能监视计数器）时，处理器会错误地访问无效内存地址。这可能是由于寄存器地址解码逻辑缺陷或边界检查缺失所致。攻击者若控制读取该寄存器的时机，可能利用此漏洞触发系统异常或获取敏感数据。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "CVA6 commit 909d85a accesses invalid memory when reading the value of MHPMCOUNTER30."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-06-29T11:54:20.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/884"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-33021",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "CVA6 commit 909d85a accesses invalid memory when reading the value of MHPMCOUNTER30."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/884",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/884"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T07:54:03.447Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/884"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-33021",
+                    "datePublished": "2022-06-29T11:54:20.000Z",
+                    "dateReserved": "2022-06-13T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T07:54:03.447Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:12:24.620761"
+        },
+        {
+            "cve_id": "CVE-2022-33023",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2022-33023 涉及 CVA6 RISC-V 处理器在提交 909d85a 后，因指令格式错误时错误地授予对特殊乘法单元的访问权限，可能导致未授权操作或信息泄露。该漏洞属于硬件设计缺陷，影响处理器的正确执行。",
+            "key_points": [
+                "漏洞源于 CVA6 处理器的乘法单元权限检查逻辑缺陷",
+                "当指令格式不正确时，错误允许使用特殊乘法单元",
+                "可能被利用进行权限提升或敏感信息访问"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞存在于 CVA6（原 Ariane）RISC-V 处理器核的提交 909d85a 中。具体而言，在指令解码阶段，对于乘法相关指令（如 MUL、MULH 等），权限检查机制未正确验证指令格式的合法性。当指令格式错误（例如操作数类型不匹配或保留位被设置）时，处理器仍错误地允许使用特殊乘法单元（如乘法器或除法器），这违反了预期的安全策略。攻击者可能通过精心构造的异常指令，绕过正常权限检查，执行未授权的乘法操作，进而导致数据泄露或系统行为异常。该漏洞影响 CVA6 的硬件实现，需通过修复硬件设计或添加软件补丁来缓解。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "CVA6 commit 909d85a gives incorrect permission to use special multiplication units when the format of instructions is wrong."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-06-29T11:54:21.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/885"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-33023",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "CVA6 commit 909d85a gives incorrect permission to use special multiplication units when the format of instructions is wrong."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/885",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/885"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T07:54:03.443Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/885"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-33023",
+                    "datePublished": "2022-06-29T11:54:21.000Z",
+                    "dateReserved": "2022-06-13T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T07:54:03.443Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:12:30.843144"
+        },
+        {
+            "cve_id": "CVE-2022-34633",
+            "category": "RISC-V CPU/SoC",
+            "summary": "该漏洞存在于RISC-V CPU核心CVA6的特定提交中，当执行精心构造或格式错误的sfence.vma指令时，处理器会执行该指令而非触发异常。这可能导致非预期行为或安全绕过，影响系统稳定性与隔离性。",
+            "key_points": [
+                "漏洞源于CVA6的sfence.vma指令处理逻辑缺陷",
+                "格式错误的指令未能触发异常，反而被错误执行",
+                "攻击者可能利用此漏洞绕过内存隔离或触发拒绝服务"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "CVE-2022-34633影响CVA6处理器（commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a）。sfence.vma指令用于同步内存管理单元（MMU）的转换缓存（TLB），但该实现未能正确验证指令格式。当指令格式无效或包含非法操作数时，处理器本应生成非法指令异常，却错误地执行了该指令。这可能导致TLB状态不一致、内存访问权限绕过或系统崩溃。攻击者需本地执行权限以触发此漏洞。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a executes crafted or incorrectly formatted sfence.vma instructions rather create an exception."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-07-18T22:45:43.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/876"
+                            },
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/pull/921"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-34633",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a executes crafted or incorrectly formatted sfence.vma instructions rather create an exception."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/876",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/876"
+                                    },
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/pull/921",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/pull/921"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T09:15:15.626Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/876"
+                                },
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/pull/921"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-34633",
+                    "datePublished": "2022-07-18T22:45:43.000Z",
+                    "dateReserved": "2022-06-26T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T09:15:15.626Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:12:36.117712"
+        },
+        {
+            "cve_id": "CVE-2022-34634",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2022-34634 涉及 CVA6 处理器在提交 d315ddd0f1be27c1b3f27eb0b8daf471a952299a 中，对于构造错误或格式不正确的 det 指令未正确触发异常，而是直接执行这些指令。这可能导致安全漏洞，例如未定义行为或潜在的攻击面。",
+            "key_points": [
+                "CVA6 处理器在特定提交版本中未能正确处理格式错误的 det 指令",
+                "本应触发异常，却直接执行了这些指令",
+                "可能引发未定义行为或安全风险"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "CVE-2022-34634 存在于 CVA6（也称为 Ariane）RISC-V 处理器的实现中。在 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a 版本中，当处理器遇到构造错误或格式不正确的 det 指令时，本应通过异常机制（如非法指令异常）来终止执行，但由于设计缺陷，处理器错误地继续执行这些指令。det 指令是用于调试和跟踪的指令，其错误处理不当可能导致处理器状态异常或安全策略绕过。该漏洞影响 CVA6 的硬件实现，需要更新处理器设计或微码来修复。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a executes crafted or incorrectly formatted det instructions rather create an exception."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-07-18T22:45:44.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/899"
+                            },
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/pull/922"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-34634",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a executes crafted or incorrectly formatted det instructions rather create an exception."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/899",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/899"
+                                    },
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/pull/922",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/pull/922"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T09:15:15.581Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/899"
+                                },
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/pull/922"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-34634",
+                    "datePublished": "2022-07-18T22:45:44.000Z",
+                    "dateReserved": "2022-06-26T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T09:15:15.581Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:12:41.991831"
+        },
+        {
+            "cve_id": "CVE-2022-34635",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2022-34635 涉及 CVA6 处理器中 mstatus.sd 字段未能正确更新，当 mstatus.fs 字段被设置为 Dirty 时，该漏洞可能导致状态跟踪不一致。此问题存在于 CVA6 的特定提交版本中，影响硬件安全机制的正确性。",
+            "key_points": [
+                "漏洞存在于 CVA6 处理器（RISC-V 核心）的特定提交版本（d315ddd0f1be27c1b3f27eb0b8daf471a952299a）中。",
+                "mstatus.sd 字段未在 mstatus.fs 字段设置为 Dirty 时同步更新，违反 RISC-V 特权架构规范。",
+                "可能导致浮点状态管理错误，影响上下文切换和异常处理的正确性。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "根据 RISC-V 特权架构规范，mstatus 寄存器中的 sd（State Dirty）位应反映任何扩展状态（如浮点 FS）是否处于 Dirty 状态。当 mstatus.fs 字段被设置为 Dirty（表示浮点单元状态已被修改）时，mstatus.sd 应自动置位。然而，在 CVA6 的实现中，该逻辑缺失，导致 sd 位未能同步更新。这可能导致操作系统或管理程序在检查全局状态是否脏时得到错误结果，进而影响状态保存/恢复的优化决策。虽然不直接导致安全漏洞，但可能引发功能异常或性能下降。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "The mstatus.sd field in CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a does not update when the mstatus.fs field is set to Dirty."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-07-18T22:45:45.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/917"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-34635",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "The mstatus.sd field in CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a does not update when the mstatus.fs field is set to Dirty."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/917",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/917"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T09:15:15.539Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/917"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-34635",
+                    "datePublished": "2022-07-18T22:45:45.000Z",
+                    "dateReserved": "2022-06-26T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T09:15:15.539Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:12:48.317725"
+        },
+        {
+            "cve_id": "CVE-2022-34637",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2022-34637 涉及 CVA6 处理器在加载非法虚拟地址时触发了错误的异常类型。该漏洞源于提交 d315ddd0f1be27c1b3f27eb0b8daf471a952299a 中的实现缺陷，可能导致系统行为异常或安全防护失效。",
+            "key_points": [
+                "漏洞存在于 CVA6（Ariane）RISC-V 处理器核中",
+                "当加载非法虚拟地址时，处理器抛出错误的异常类型",
+                "影响系统对内存访问错误的正确处理和隔离机制"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于 CVA6 处理器的异常处理逻辑中。当程序尝试加载一个非法虚拟地址时，处理器本应触发正确的异常类型（如页面错误或访问违例），但由于实现错误，可能触发了其他类型异常（如非法指令异常）。这会导致操作系统或管理程序无法正确识别和处理内存访问错误，可能被利用绕过内存保护或引发拒绝服务。具体影响取决于系统软件对异常类型的依赖程度。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a implements an incorrect exception type when an illegal virtual address is loaded."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-07-18T22:45:46.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/904"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-34637",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a implements an incorrect exception type when an illegal virtual address is loaded."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/904",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/904"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T09:15:15.663Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/904"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-34637",
+                    "datePublished": "2022-07-18T22:45:46.000Z",
+                    "dateReserved": "2022-06-26T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T09:15:15.663Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:12:53.280995"
+        },
+        {
+            "cve_id": "CVE-2022-34639",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2022-34639 涉及 RISC-V 处理器核心 CVA6 的一个提交，该提交将非标准的 fence 指令视为非法指令，导致应用程序功能异常。此漏洞可能影响依赖于特定 fence 指令的软件正确性。",
+            "key_points": [
+                "漏洞源于 CVA6 处理器核心的提交 d315ddd0f1be27c1b3f27eb0b8daf471a952299a",
+                "非标准 fence 指令被错误地当作非法指令处理",
+                "可能导致依赖这些指令的应用程序行为异常或功能失效"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "CVA6 是一个开源 RISC-V 处理器核心。在提交 d315ddd0f1be27c1b3f27eb0b8daf471a952299a 中，对 fence 指令的处理逻辑被修改，将非标准 fence 指令（例如自定义或扩展的 fence 操作）归类为非法指令。这违背了 RISC-V 规范中通常允许实现自定义 fence 指令的灵活性，导致使用这些指令的应用程序在 CVA6 上无法正常运行。该问题属于实现错误，而非规范缺陷，影响范围限于使用特定 CVA6 版本的硬件或仿真环境。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a treats non-standard fence instructions as illegal which can affect the function of the application."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-07-18T22:45:48.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/900"
+                            },
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/pull/923"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-34639",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a treats non-standard fence instructions as illegal which can affect the function of the application."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/900",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/900"
+                                    },
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/pull/923",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/pull/923"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T09:15:15.565Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/900"
+                                },
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/pull/923"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-34639",
+                    "datePublished": "2022-07-18T22:45:48.000Z",
+                    "dateReserved": "2022-06-26T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T09:15:15.565Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:12:58.705857"
+        },
+        {
+            "cve_id": "CVE-2022-34640",
+            "category": "RISC-V CPU/SoC",
+            "summary": "CVE-2022-34640 指出 RISC-V 处理器 CVA6 在特定提交版本中，ecall 和 ebreak 指令的 *tval 值被错误设置。该漏洞可能导致调试或异常处理流程异常，影响系统正确性。",
+            "key_points": [
+                "漏洞涉及 CVA6 处理器中 ecall 和 ebreak 指令的 *tval 寄存器值错误",
+                "影响范围为 CVA6 提交 d315ddd0f1be27c1b3f27eb0b8daf471a952299a 版本",
+                "可能造成异常处理时信息不准确，影响调试或安全机制"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "CVA6 是一款开源 RISC-V 应用级处理器。在特定提交版本中，当执行 ecall（环境调用）或 ebreak（断点）指令时，处理器错误地设置了 *tval（陷阱值）寄存器。根据 RISC-V 特权架构规范，*tval 应包含触发异常的指令编码或地址，但此处实现存在偏差，可能导致操作系统或调试器无法正确获取异常原因，从而影响系统稳定性和调试能力。",
+            "original_data": {
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "product": "n/a",
+                                "vendor": "n/a",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "n/a"
+                                    }
+                                ]
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "The *tval of ecall/ebreak in CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a was discovered to be incorrect."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "n/a",
+                                        "lang": "en",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "dateUpdated": "2022-07-18T22:45:50.000Z",
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre"
+                        },
+                        "references": [
+                            {
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/openhwgroup/cva6/issues/898"
+                            }
+                        ],
+                        "x_legacyV4Record": {
+                            "CVE_data_meta": {
+                                "ASSIGNER": "cve@mitre.org",
+                                "ID": "CVE-2022-34640",
+                                "STATE": "PUBLIC"
+                            },
+                            "affects": {
+                                "vendor": {
+                                    "vendor_data": [
+                                        {
+                                            "product": {
+                                                "product_data": [
+                                                    {
+                                                        "product_name": "n/a",
+                                                        "version": {
+                                                            "version_data": [
+                                                                {
+                                                                    "version_value": "n/a"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "vendor_name": "n/a"
+                                        }
+                                    ]
+                                }
+                            },
+                            "data_format": "MITRE",
+                            "data_type": "CVE",
+                            "data_version": "4.0",
+                            "description": {
+                                "description_data": [
+                                    {
+                                        "lang": "eng",
+                                        "value": "The *tval of ecall/ebreak in CVA6 commit d315ddd0f1be27c1b3f27eb0b8daf471a952299a was discovered to be incorrect."
+                                    }
+                                ]
+                            },
+                            "problemtype": {
+                                "problemtype_data": [
+                                    {
+                                        "description": [
+                                            {
+                                                "lang": "eng",
+                                                "value": "n/a"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "references": {
+                                "reference_data": [
+                                    {
+                                        "name": "https://github.com/openhwgroup/cva6/issues/898",
+                                        "refsource": "MISC",
+                                        "url": "https://github.com/openhwgroup/cva6/issues/898"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "adp": [
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-03T09:15:15.575Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "tags": [
+                                        "x_refsource_MISC",
+                                        "x_transferred"
+                                    ],
+                                    "url": "https://github.com/openhwgroup/cva6/issues/898"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "cveMetadata": {
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "cveId": "CVE-2022-34640",
+                    "datePublished": "2022-07-18T22:45:50.000Z",
+                    "dateReserved": "2022-06-26T00:00:00.000Z",
+                    "dateUpdated": "2024-08-03T09:15:15.575Z",
+                    "state": "PUBLISHED"
+                },
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:13:04.587093"
+        },
+        {
+            "cve_id": "CVE-2024-44067",
+            "category": "RISC-V CPU/SoC",
+            "summary": "该漏洞涉及平头哥玄铁C910和C920 CPU，允许非特权攻击者通过特定指令写入任意物理内存位置，命名为GhostWrite。受影响的产品包括TH1520 SoC和SOPHON SG2042处理器。这是一个严重的硬件级安全漏洞。",
+            "key_points": [
+                "漏洞影响平头哥玄铁C910（TH1520 SoC）和C920（SOPHON SG2042）CPU",
+                "非特权攻击者可通过特定指令直接写入任意物理内存",
+                "漏洞名称为GhostWrite，属于硬件设计缺陷"
+            ],
+            "severity_assessment": "Critical",
+            "technical_details": "该漏洞源于T-Head XuanTie C910和C920 CPU的指令集实现缺陷，非特权用户态程序可以执行特定指令绕过内存保护机制，直接对任意物理内存地址进行写操作。这允许攻击者完全控制系统内存，可能实现权限提升、数据篡改或执行任意代码。由于是硬件漏洞，软件补丁难以完全修复，可能需要禁用相关指令或通过微码更新缓解。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "cveMetadata": {
+                    "state": "PUBLISHED",
+                    "cveId": "CVE-2024-44067",
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "dateUpdated": "2024-08-20T19:45:07.970Z",
+                    "dateReserved": "2024-08-19T00:00:00.000Z",
+                    "datePublished": "2024-08-19T00:00:00.000Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre",
+                            "dateUpdated": "2024-08-19T00:45:50.028Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "The T-Head XuanTie C910 CPU in the TH1520 SoC and the T-Head XuanTie C920 CPU in the SOPHON SG2042 have instructions that allow unprivileged attackers to write to arbitrary physical memory locations, aka GhostWrite."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "n/a",
+                                "product": "n/a",
+                                "versions": [
+                                    {
+                                        "version": "n/a",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://ghostwriteattack.com"
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "type": "text",
+                                        "lang": "en",
+                                        "description": "n/a"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "adp": [
+                        {
+                            "problemTypes": [
+                                {
+                                    "descriptions": [
+                                        {
+                                            "type": "CWE",
+                                            "cweId": "CWE-119",
+                                            "lang": "en",
+                                            "description": "CWE-119 Improper Restriction of Operations within the Bounds of a Memory Buffer"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "descriptions": [
+                                        {
+                                            "type": "CWE",
+                                            "cweId": "CWE-123",
+                                            "lang": "en",
+                                            "description": "CWE-123 Write-what-where Condition"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "affected": [
+                                {
+                                    "vendor": "alibaba",
+                                    "product": "t-head_xuantie_c910",
+                                    "cpes": [
+                                        "cpe:2.3:o:alibaba:t-head_xuantie_c910:*:*:*:*:*:*:*:*"
+                                    ],
+                                    "defaultStatus": "unknown",
+                                    "versions": [
+                                        {
+                                            "version": "0",
+                                            "status": "affected",
+                                            "lessThan": "*",
+                                            "versionType": "custom"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "vendor": "alibaba",
+                                    "product": "t-head_xuantie_c920",
+                                    "cpes": [
+                                        "cpe:2.3:o:alibaba:t-head_xuantie_c920:*:*:*:*:*:*:*:*"
+                                    ],
+                                    "defaultStatus": "unknown",
+                                    "versions": [
+                                        {
+                                            "version": "0",
+                                            "status": "affected",
+                                            "lessThan": "*",
+                                            "versionType": "custom"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "metrics": [
+                                {
+                                    "cvssV3_1": {
+                                        "scope": "UNCHANGED",
+                                        "version": "3.1",
+                                        "baseScore": 8.4,
+                                        "attackVector": "LOCAL",
+                                        "baseSeverity": "HIGH",
+                                        "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                                        "integrityImpact": "HIGH",
+                                        "userInteraction": "NONE",
+                                        "attackComplexity": "LOW",
+                                        "availabilityImpact": "HIGH",
+                                        "privilegesRequired": "NONE",
+                                        "confidentialityImpact": "HIGH"
+                                    }
+                                },
+                                {
+                                    "other": {
+                                        "type": "ssvc",
+                                        "content": {
+                                            "timestamp": "2024-08-20T18:57:59.818059Z",
+                                            "id": "CVE-2024-44067",
+                                            "options": [
+                                                {
+                                                    "Exploitation": "none"
+                                                },
+                                                {
+                                                    "Automatable": "no"
+                                                },
+                                                {
+                                                    "Technical Impact": "total"
+                                                }
+                                            ],
+                                            "role": "CISA Coordinator",
+                                            "version": "2.0.3"
+                                        }
+                                    }
+                                }
+                            ],
+                            "title": "CISA ADP Vulnrichment",
+                            "providerMetadata": {
+                                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                                "shortName": "CISA-ADP",
+                                "dateUpdated": "2024-08-20T19:45:07.970Z"
+                            }
+                        }
+                    ]
+                },
+                "dataVersion": "5.1"
+            },
+            "classification_timestamp": "2026-04-24T11:13:09.808090"
         }
     ]
 }

@@ -48,6 +48,8 @@ class RISCVCVEUpdater:
         (r'\bopentitan\b', 'opentitan'),  # OpenTitan
         (r'\bSpike\b', 'Spike'),          # RISC-V ISA Simulator
         (r'\bNEMU\b', 'NEMU'),            # NEMU Emulator
+        (r'\bXuanTie\b', 'XuanTie'),      # 平头哥玄铁 RISC-V 处理器
+        (r'\bcva6\b', 'CORE-V CVA6'),     # CORE-V CVA6 RISC-V application processor
     ]
     
     def __init__(
@@ -620,6 +622,9 @@ Important notes:
 4. OpenTitan is an open-source secure chip project that typically uses RISC-V cores
 5. Spike is the official RISC-V ISA simulator
 6. NEMU is a RISC-V emulator
+7. CVA6 is an open-source RISC-V application processor (CORE-V family)
+8. XuanTie / T-Head refers to Alibaba T-Head's RISC-V processor family (e.g., C906/C910/C920)
+9. accel/rocket in the Linux kernel is the Rockchip NPU driver, NOT the RISC-V Rocket Chip
 
 Please judge carefully. If the CVE is clearly related to other technologies (such as unrelated software with the same name), it should be marked as not related."""
 

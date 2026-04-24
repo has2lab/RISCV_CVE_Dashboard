@@ -1,34 +1,36 @@
 {
-    "total_cves": 92,
+    "total_cves": 116,
     "by_year": {
-        "2024": 29,
         "2020": 1,
-        "2022": 17,
         "2021": 5,
-        "2025": 27,
-        "2023": 13
+        "2022": 25,
+        "2023": 13,
+        "2024": 30,
+        "2025": 29,
+        "2026": 13
     },
     "by_state": {
-        "PUBLISHED": 92
+        "PUBLISHED": 116
     },
     "by_severity": {
         "MEDIUM": 2,
         "CRITICAL": 1,
-        "LOW": 1
+        "LOW": 1,
+        "HIGH": 1
     },
     "common_keywords": {
-        "kernel": 71,
-        "linux": 70,
-        "memory": 24,
+        "kernel": 74,
+        "linux": 73,
+        "memory": 28,
         "module": 24,
         "overflow": 6,
-        "nommu": 3,
-        "vector": 3
+        "vector": 4,
+        "nommu": 3
     },
     "cvss_stats": {
-        "average": 6.275,
+        "average": 6.44,
         "max": 9.4,
         "min": 2.5,
-        "count": 4
+        "count": 5
     }
 }

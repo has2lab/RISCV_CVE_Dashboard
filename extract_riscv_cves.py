@@ -4,7 +4,7 @@ Extract RISC-V related CVEs from the cves directory.
 This script searches for various RISC-V keyword patterns and saves matching CVEs.
 
 Extended features:
-- Additional keyword matching (BOOM, rocket, XiangShan, opentitan, Spike, NEMU)
+- Additional keyword matching (BOOM, rocket, XiangShan, opentitan, Spike, NEMU, XuanTie/T-Head)
 - HDBSCAN clustering for candidate CVEs
 - LLM verification for RISC-V relevance
 - Exponential backoff retry for API calls
@@ -202,31 +202,60 @@ class LLMVerifier:
         
         return None
     
-    def verify_batch(self, cves: List[Dict]) -> List[Tuple[str, bool, str]]:
+    def verify_batch(self, cves: List[Dict]) -> List[Tuple[str, Optional[bool], str]]:
         """
         Verify a batch of CVEs for RISC-V relevance.
-        
+
         Args:
             cves: List of CVE data dictionaries (max 5)
-            
+
         Returns:
-            List of tuples: (cve_id, is_riscv_related, reason)
+            List of tuples: (cve_id, is_riscv_related, reason).
+            is_riscv_related is True/False for verified/rejected, or None
+            when the LLM response could not be parsed (kept as candidate
+            for manual review instead of being silently rejected).
         """
         if not self.client:
             print("⚠️  LLM client not initialized, skipping verification")
             return [(cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN'), False, "No LLM") for cve in cves]
-        
-        # Build prompt with CVE information
+
+        # First attempt: verify the whole batch in one LLM call.
+        parsed = self._verify_prompt(cves)
+        if parsed is not None:
+            return parsed
+
+        # Batch-level parse failed. Retry each CVE individually so a single
+        # malformed entry from the LLM doesn't drag the rest down with it.
+        if len(cves) > 1:
+            print(f"  ↻ Batch parse failed, retrying {len(cves)} CVEs individually...")
+            results: List[Tuple[str, Optional[bool], str]] = []
+            for cve in cves:
+                single = self._verify_prompt([cve])
+                if single is not None and len(single) == 1:
+                    results.append(single[0])
+                else:
+                    cve_id = cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN')
+                    results.append((cve_id, None, "Parse failed (pending review)"))
+            return results
+
+        # Single-CVE prompt also failed to parse — keep as pending review.
+        cve_id = cves[0].get('cveMetadata', {}).get('cveId', 'UNKNOWN')
+        return [(cve_id, None, "Parse failed (pending review)")]
+
+    def _verify_prompt(self, cves: List[Dict]) -> Optional[List[Tuple[str, Optional[bool], str]]]:
+        """
+        Issue a single LLM verification request for the given CVEs and parse
+        the JSON response. Returns None when the LLM call fails or the
+        response cannot be parsed — the caller decides how to fall back.
+        """
         criteria_str = "、".join(self.riscv_criteria)
         cve_info_list = []
-        
         for cve in cves:
             cve_id = cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN')
             description = self._get_description(cve)
             cve_info_list.append(f"CVE ID: {cve_id}\nDescription: {description[:500]}")
-        
         cve_info = "\n\n---\n\n".join(cve_info_list)
-        
+
         prompt = f"""Please determine whether the following CVE vulnerabilities are related to the RISC-V ecosystem.
 
 Criteria for RISC-V relevance include: {criteria_str}
@@ -249,30 +278,35 @@ Important notes:
 4. OpenTitan is an open-source secure chip project that typically uses RISC-V cores
 5. Spike is the official RISC-V ISA simulator
 6. NEMU is a RISC-V emulator
+7. CVA6 is an open-source RISC-V application processor (CORE-V family)
+8. XuanTie / T-Head refers to Alibaba T-Head's RISC-V processor family (e.g., C906/C910/C920)
+9. accel/rocket in the Linux kernel is the Rockchip NPU driver, NOT the RISC-V Rocket Chip
 
 Please judge carefully. If the CVE is clearly related to other technologies (such as unrelated software with the same name), it should be marked as not related."""
 
         response = self._call_with_retry(prompt)
-        
-        if response:
-            try:
-                # Parse JSON response
-                start_idx = response.find('{')
-                end_idx = response.rfind('}') + 1
-                if start_idx != -1 and end_idx > start_idx:
-                    result = json.loads(response[start_idx:end_idx])
-                    results = result.get("results", [])
-                    return [
-                        (r.get("cve_id", "UNKNOWN"), 
-                         r.get("is_riscv_related", False), 
-                         r.get("reason", ""))
-                        for r in results
-                    ]
-            except json.JSONDecodeError as e:
-                print(f"  ✗ Failed to parse LLM response: {e}")
-        
-        # Return default (not related) for all CVEs if parsing failed
-        return [(cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN'), False, "Parse failed") for cve in cves]
+        if not response:
+            return None
+
+        try:
+            start_idx = response.find('{')
+            end_idx = response.rfind('}') + 1
+            if start_idx == -1 or end_idx <= start_idx:
+                return None
+            result = json.loads(response[start_idx:end_idx])
+        except json.JSONDecodeError as e:
+            print(f"  ✗ Failed to parse LLM response: {e}")
+            return None
+
+        results = result.get("results", [])
+        if not results:
+            return None
+        return [
+            (r.get("cve_id", "UNKNOWN"),
+             r.get("is_riscv_related", False),
+             r.get("reason", ""))
+            for r in results
+        ]
     
     def _get_description(self, cve: Dict) -> str:
         """Extract description from CVE data."""
@@ -304,10 +338,11 @@ class RISCVCVEExtractor:
         (r'\bBOOM\b', 'BOOM'),           # Berkeley Out-of-Order Machine
         (r'\brocket\b', 'rocket'),        # Rocket Chip
         (r'\bXiangShan\b', 'XiangShan'),  # 香山处理器
-        (r'\b香山\b', 'XiangShan'),
         (r'\bopentitan\b', 'opentitan'),  # OpenTitan
         (r'\bSpike\b', 'Spike'),          # RISC-V ISA Simulator
         (r'\bNEMU\b', 'NEMU'),            # NEMU Emulator
+        (r'\bXuanTie\b', 'XuanTie'),      # 平头哥玄铁 RISC-V 处理器
+        (r'\bcva6\b', 'CORE-V CVA6'),      # 平头哥玄铁 RISC-V 处理器
     ]
     
     def __init__(self, cves_dir: str = "cves", output_dir: str = "riscv_cves",
@@ -345,13 +380,15 @@ class RISCVCVEExtractor:
         self.extended_candidates: Dict[str, Dict] = {}  # cve_id -> cve_data
         self.extended_match_keywords: Dict[str, Set[str]] = {}  # cve_id -> matched keywords
         self.verified_extended_cves: List[Dict] = []  # LLM-verified extended CVEs
-        
+        self.pending_review_cves: List[Dict] = []  # LLM parse failed -> manual review
+
         # Statistics
         self.stats = {
             "direct_match": 0,
             "extended_candidates": 0,
             "extended_verified": 0,
             "extended_rejected": 0,
+            "extended_pending_review": 0,
             "by_keyword": {}
         }
         
@@ -638,38 +675,52 @@ class RISCVCVEExtractor:
         total = len(candidates)
         verified_count = 0
         rejected_count = 0
-        
+        pending_count = 0
+        pending_dir = self.output_dir / "pending_review"
+
         for i in range(0, total, max_batch_size):
             batch = candidates[i:i + max_batch_size]
             batch_num = i // max_batch_size + 1
             total_batches = (total + max_batch_size - 1) // max_batch_size
-            
+
             print(f"  Verifying batch {batch_num}/{total_batches}...")
-            
+
             results = self.llm_verifier.verify_batch(batch)
-            
+
             for cve, (cve_id, is_related, reason) in zip(batch, results):
-                if is_related:
+                if is_related is True:
                     self.verified_extended_cves.append(cve)
                     self.matched_cves.append(cve)
                     verified_count += 1
                     print(f"    ✓ {cve_id}: RISC-V related - {reason}")
-                    
+
                     # Save individual CVE file
                     output_file = self.output_dir / f"{cve_id}.json"
                     with open(output_file, 'w', encoding='utf-8') as f:
                         json.dump(cve, f, indent=4, ensure_ascii=False)
-                else:
+                elif is_related is False:
                     rejected_count += 1
                     print(f"    ✗ {cve_id}: Not related - {reason}")
-            
+                else:
+                    # Parse failure: keep as candidate for manual review rather
+                    # than silently dropping. Saved to a pending_review/ subdir.
+                    self.pending_review_cves.append(cve)
+                    pending_count += 1
+                    print(f"    ? {cve_id}: Pending review - {reason}")
+                    pending_dir.mkdir(exist_ok=True)
+                    output_file = pending_dir / f"{cve_id}.json"
+                    with open(output_file, 'w', encoding='utf-8') as f:
+                        json.dump(cve, f, indent=4, ensure_ascii=False)
+
             # Rate limit between batches
             if i + max_batch_size < total:
                 time.sleep(rate_limit_delay)
-        
+
         self.stats["extended_verified"] += verified_count
         self.stats["extended_rejected"] += rejected_count
-        print(f"  Batch complete: {verified_count} verified, {rejected_count} rejected")
+        self.stats["extended_pending_review"] += pending_count
+        print(f"  Batch complete: {verified_count} verified, "
+              f"{rejected_count} rejected, {pending_count} pending review")
     
     def generate_summary(self) -> None:
         """Generate a summary report of extracted CVEs."""
@@ -681,6 +732,8 @@ class RISCVCVEExtractor:
             print(f"  - Extended keyword candidates: {self.stats['extended_candidates']}")
             print(f"  - LLM verified: {self.stats['extended_verified']}")
             print(f"  - LLM rejected: {self.stats['extended_rejected']}")
+            if self.stats.get("extended_pending_review", 0):
+                print(f"  - LLM parse failed (pending review): {self.stats['extended_pending_review']}")
             if self.stats["by_keyword"]:
                 print(f"  - By keyword:")
                 for kw, count in sorted(self.stats["by_keyword"].items()):
@@ -701,6 +754,7 @@ class RISCVCVEExtractor:
                 "extended_candidates": self.stats["extended_candidates"],
                 "extended_verified": self.stats["extended_verified"],
                 "extended_rejected": self.stats["extended_rejected"],
+                "extended_pending_review": self.stats.get("extended_pending_review", 0),
                 "by_keyword": self.stats["by_keyword"]
             },
             "cve_ids": [
@@ -711,6 +765,10 @@ class RISCVCVEExtractor:
             "extended_verified_ids": [
                 cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN')
                 for cve in self.verified_extended_cves
+            ],
+            "pending_review_ids": [
+                cve.get('cveMetadata', {}).get('cveId', 'UNKNOWN')
+                for cve in self.pending_review_cves
             ],
             "files_processed": list(self.matched_files)
         }
@@ -735,6 +793,8 @@ class RISCVCVEExtractor:
                 f.write(f"  Extended keyword candidates: {self.stats['extended_candidates']}\n")
                 f.write(f"  LLM verified: {self.stats['extended_verified']}\n")
                 f.write(f"  LLM rejected: {self.stats['extended_rejected']}\n")
+                if self.stats.get("extended_pending_review", 0):
+                    f.write(f"  LLM parse failed (pending review): {self.stats['extended_pending_review']}\n")
                 if self.stats["by_keyword"]:
                     f.write(f"  By keyword:\n")
                     for kw, count in sorted(self.stats["by_keyword"].items()):
