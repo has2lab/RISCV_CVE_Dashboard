@@ -1,14 +1,14 @@
 {
   "default": {
     "provider": "openai",
-    "model": "deepseek-chat"
+    "model": "deepseek-v4-pro"
   },
   "openai": {
     "api_key": "",
-    "base_url": "https://api.deepseek.com/v1",
+    "base_url": "https://api.deepseek.com",
     "models": [
-      "deepseek-chat",
-      "deepseek-reasoner"
+      "deepseek-v4-pro",
+      "deepseek-v4-flash"
     ],
     "default_model": "deepseek-chat",
     "temperature": 0.6,
