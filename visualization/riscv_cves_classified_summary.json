@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 116,
-        "classification_date": "2026-04-24T11:13:10.809246",
+        "total_cves": 117,
+        "classification_date": "2026-05-29T05:53:22.219204",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 116,
-        "successful": 116,
+        "total_processed": 117,
+        "successful": 117,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 24,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 73,
+            "Linux Kernel": 74,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 4,
@@ -1549,6 +1549,19 @@
             "severity_assessment": "Critical",
             "technical_details": "该漏洞源于T-Head XuanTie C910和C920 CPU的指令集实现缺陷，非特权用户态程序可以执行特定指令绕过内存保护机制，直接对任意物理内存地址进行写操作。这允许攻击者完全控制系统内存，可能实现权限提升、数据篡改或执行任意代码。由于是硬件漏洞，软件补丁难以完全修复，可能需要禁用相关指令或通过微码更新缓解。",
             "classification_timestamp": "2026-04-24T11:13:09.808090"
+        },
+        {
+            "cve_id": "CVE-2026-46171",
+            "category": "Linux Kernel",
+            "summary": "RISC-V KVM 在分配向量上下文时，若第二次内存分配失败，第一次分配的内存未释放，存在内存泄漏漏洞。该漏洞已在 Linux 内核中修复。",
+            "key_points": [
+                "在 kvm_riscv_vcpu_alloc_vector_context 函数中，guest_context.vector.datap 分配成功后，若 host_context.vector.datap 分配失败，未释放 guest 分配。",
+                "修复在分配 host_context.vector.datap 失败时，先 kfree 已分配的 guest_context.vector.datap，然后返回错误。",
+                "连续分配失败可导致内核内存泄漏，属于资源管理缺陷，但利用难度较低，影响有限。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于 Linux 内核 RISC-V KVM 模块的向量上下文分配函数。该函数首先通过 kzalloc 分配 guest_context.vector.datap，成功后再尝试分配 host_context.vector.datap。如果第二次分配失败，函数直接返回错误码，未释放第一次分配的内存，造成内存泄漏。修复方案是在第二次分配失败后增加 kfree(guest_context.vector.datap) 调用，确保资源正确释放。该泄漏可在创建 VCPU 时触发，需重复操作才会导致明显内存耗尽。",
+            "classification_timestamp": "2026-05-29T05:53:21.218995"
         }
     ]
 }
