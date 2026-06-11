@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 117,
-        "classification_date": "2026-05-29T05:53:22.219204",
+        "total_cves": 118,
+        "classification_date": "2026-06-11T06:19:42.229339",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 117,
-        "successful": 117,
+        "total_processed": 118,
+        "successful": 118,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -26,7 +26,7 @@
             "Linux Kernel": 74,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
-            "Device-Specific Firmware & Applications": 4,
+            "Device-Specific Firmware & Applications": 5,
             "Other": 2
         }
     },
@@ -21095,6 +21095,182 @@
                 }
             },
             "classification_timestamp": "2026-05-29T05:53:21.218995"
+        },
+        {
+            "cve_id": "CVE-2026-45329",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "该漏洞存在于乐鑫 ESP-IDF 物联网开发框架的 TEE 安全服务封装函数中，未对调用者提供的输入指针进行充分验证，导致 RISC-V M 模式下运行的外设可读取 TEE 独占内存并将数据返回给普通执行环境，造成敏感的 TEE 内存信息泄露。",
+            "key_points": [
+                "安全封装函数仅验证了部分指针参数，未检查输入指针是否指向受保护区域。",
+                "由于 RISC-V M 模式下外设（如 ECC、SHA、SPI）具有全地址空间访问能力，攻击者可通过构造输入指针读取 TEE 私有内存。",
+                "泄露方式包括直接返回原始字节、通过计算函数可恢复的数据或逐比特 oracle 泄露，严重威胁 TEE 中敏感数据机密性。"
+            ],
+            "severity_assessment": "Critical",
+            "technical_details": "ESP-IDF 的 TEE 安全服务包装器（esp_secure_services.c / iram.c）在验证调用者参数时存在逻辑缺陷，仅检查输出指针是否合法，而输入指针未做限制。底层受 TEE 保护的硬件外设运行在 RISC-V 机器模式（M-mode），拥有完全物理地址空间访问权限。攻击者在普通执行环境（REE）中可以调用受影响的安全服务并提供一个指向 TEE 独占内存区域的输入指针，外设就会将该地址的数据作为操作数，处理后将结果（如 ECC 签名、SHA 哈希、SPI 读取数据等）返回给 REE。利用不同包装器的特性，攻击者可通过单次调用直接获取 TEE 内存原始内容，或通过多次调用结合函数反演恢复出 TEE 中的机密数据，甚至可通过每次调用泄露 1 比特信息构建侧信道 oracle 逐步提取完整机密。受影响的版本为 5.5.4 和 6.0，已分别在 5.5.5 和 6.0.1 中修复。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-45329",
+                    "assignerOrgId": "a0819718-46f1-4df5-94e2-005712e83aaa",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "GitHub_M",
+                    "dateReserved": "2026-05-11T20:50:30.540Z",
+                    "datePublished": "2026-06-10T00:34:09.433Z",
+                    "dateUpdated": "2026-06-10T16:32:10.055Z"
+                },
+                "containers": {
+                    "cna": {
+                        "title": "ESF-IDF: Out-of-Bounds Read in ESP-TEE Secure Service Wrappers",
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-20",
+                                        "lang": "en",
+                                        "description": "CWE-20: Improper Input Validation",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            },
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-125",
+                                        "lang": "en",
+                                        "description": "CWE-125: Out-of-bounds Read",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            },
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-200",
+                                        "lang": "en",
+                                        "description": "CWE-200: Exposure of Sensitive Information to an Unauthorized Actor",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "attackComplexity": "LOW",
+                                    "attackVector": "LOCAL",
+                                    "availabilityImpact": "NONE",
+                                    "baseScore": 7.1,
+                                    "baseSeverity": "HIGH",
+                                    "confidentialityImpact": "HIGH",
+                                    "integrityImpact": "NONE",
+                                    "privilegesRequired": "NONE",
+                                    "scope": "CHANGED",
+                                    "userInteraction": "NONE",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N",
+                                    "version": "3.1"
+                                }
+                            }
+                        ],
+                        "references": [
+                            {
+                                "name": "https://github.com/espressif/esp-idf/security/advisories/GHSA-w82j-7q63-7pqm",
+                                "tags": [
+                                    "x_refsource_CONFIRM"
+                                ],
+                                "url": "https://github.com/espressif/esp-idf/security/advisories/GHSA-w82j-7q63-7pqm"
+                            },
+                            {
+                                "name": "https://github.com/espressif/esp-idf/commit/145ba4c42dc8283054cfde9a1c3470db7399192f",
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/espressif/esp-idf/commit/145ba4c42dc8283054cfde9a1c3470db7399192f"
+                            },
+                            {
+                                "name": "https://github.com/espressif/esp-idf/commit/7867f4a57560bf9fc4a931e37ba02b7a3e9f406b",
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/espressif/esp-idf/commit/7867f4a57560bf9fc4a931e37ba02b7a3e9f406b"
+                            },
+                            {
+                                "name": "https://github.com/espressif/esp-idf/commit/eebabaff2fdc273b1530fe66e55fb3bcd181dfd6",
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/espressif/esp-idf/commit/eebabaff2fdc273b1530fe66e55fb3bcd181dfd6"
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "espressif",
+                                "product": "esp-idf",
+                                "versions": [
+                                    {
+                                        "version": "= 6.0",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "= 5.5.4",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "orgId": "a0819718-46f1-4df5-94e2-005712e83aaa",
+                            "shortName": "GitHub_M",
+                            "dateUpdated": "2026-06-10T00:34:09.433Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.4 and 6.0, several ESP-TEE secure-service wrappers in esp_secure_services.c and esp_secure_services_iram.c validated only some of the caller-supplied pointer arguments, leaving input pointer arguments unchecked. Because the underlying TEE-protected hardware peripherals (e.g., ECC, SHA, SPI) run in RISC-V machine mode (M-mode) with full address-space access, a caller could supply pointers into TEE-exclusive memory as inputs, causing the peripheral to read TEE memory and return results derived from it to the REE. Depending on the wrapper, the result contains raw bytes from TEE memory, a computed function of TEE memory recoverable through repeated calls, or a single bit per call that forms an oracle for incremental disclosure of TEE-resident sensitive data. This issue has been patched in versions 5.5.5 and 6.0.1."
+                            }
+                        ],
+                        "source": {
+                            "advisory": "GHSA-w82j-7q63-7pqm",
+                            "discovery": "UNKNOWN"
+                        }
+                    },
+                    "adp": [
+                        {
+                            "metrics": [
+                                {
+                                    "other": {
+                                        "type": "ssvc",
+                                        "content": {
+                                            "timestamp": "2026-06-10T16:15:14.758555Z",
+                                            "id": "CVE-2026-45329",
+                                            "options": [
+                                                {
+                                                    "Exploitation": "none"
+                                                },
+                                                {
+                                                    "Automatable": "no"
+                                                },
+                                                {
+                                                    "Technical Impact": "partial"
+                                                }
+                                            ],
+                                            "role": "CISA Coordinator",
+                                            "version": "2.0.3"
+                                        }
+                                    }
+                                }
+                            ],
+                            "title": "CISA ADP Vulnrichment",
+                            "providerMetadata": {
+                                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                                "shortName": "CISA-ADP",
+                                "dateUpdated": "2026-06-10T16:32:10.055Z"
+                            }
+                        }
+                    ]
+                }
+            },
+            "classification_timestamp": "2026-06-11T06:19:41.229160"
         }
     ]
 }

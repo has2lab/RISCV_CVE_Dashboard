@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 117,
-        "classification_date": "2026-05-29T05:53:22.219204",
+        "total_cves": 118,
+        "classification_date": "2026-06-11T06:19:42.229339",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 117,
-        "successful": 117,
+        "total_processed": 118,
+        "successful": 118,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -26,7 +26,7 @@
             "Linux Kernel": 74,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
-            "Device-Specific Firmware & Applications": 4,
+            "Device-Specific Firmware & Applications": 5,
             "Other": 2
         }
     },
@@ -1562,6 +1562,19 @@
             "severity_assessment": "Medium",
             "technical_details": "漏洞位于 Linux 内核 RISC-V KVM 模块的向量上下文分配函数。该函数首先通过 kzalloc 分配 guest_context.vector.datap，成功后再尝试分配 host_context.vector.datap。如果第二次分配失败，函数直接返回错误码，未释放第一次分配的内存，造成内存泄漏。修复方案是在第二次分配失败后增加 kfree(guest_context.vector.datap) 调用，确保资源正确释放。该泄漏可在创建 VCPU 时触发，需重复操作才会导致明显内存耗尽。",
             "classification_timestamp": "2026-05-29T05:53:21.218995"
+        },
+        {
+            "cve_id": "CVE-2026-45329",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "该漏洞存在于乐鑫 ESP-IDF 物联网开发框架的 TEE 安全服务封装函数中，未对调用者提供的输入指针进行充分验证，导致 RISC-V M 模式下运行的外设可读取 TEE 独占内存并将数据返回给普通执行环境，造成敏感的 TEE 内存信息泄露。",
+            "key_points": [
+                "安全封装函数仅验证了部分指针参数，未检查输入指针是否指向受保护区域。",
+                "由于 RISC-V M 模式下外设（如 ECC、SHA、SPI）具有全地址空间访问能力，攻击者可通过构造输入指针读取 TEE 私有内存。",
+                "泄露方式包括直接返回原始字节、通过计算函数可恢复的数据或逐比特 oracle 泄露，严重威胁 TEE 中敏感数据机密性。"
+            ],
+            "severity_assessment": "Critical",
+            "technical_details": "ESP-IDF 的 TEE 安全服务包装器（esp_secure_services.c / iram.c）在验证调用者参数时存在逻辑缺陷，仅检查输出指针是否合法，而输入指针未做限制。底层受 TEE 保护的硬件外设运行在 RISC-V 机器模式（M-mode），拥有完全物理地址空间访问权限。攻击者在普通执行环境（REE）中可以调用受影响的安全服务并提供一个指向 TEE 独占内存区域的输入指针，外设就会将该地址的数据作为操作数，处理后将结果（如 ECC 签名、SHA 哈希、SPI 读取数据等）返回给 REE。利用不同包装器的特性，攻击者可通过单次调用直接获取 TEE 内存原始内容，或通过多次调用结合函数反演恢复出 TEE 中的机密数据，甚至可通过每次调用泄露 1 比特信息构建侧信道 oracle 逐步提取完整机密。受影响的版本为 5.5.4 和 6.0，已分别在 5.5.5 和 6.0.1 中修复。",
+            "classification_timestamp": "2026-06-11T06:19:41.229160"
         }
     ]
 }
