@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 118,
-        "classification_date": "2026-06-11T06:19:42.229339",
+        "total_cves": 119,
+        "classification_date": "2026-06-17T06:40:12.930651",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 118,
-        "successful": 118,
+        "total_processed": 119,
+        "successful": 119,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -27,7 +27,7 @@
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
-            "Other": 2
+            "Other": 3
         }
     },
     "classified_cves": [
@@ -1575,6 +1575,19 @@
             "severity_assessment": "Critical",
             "technical_details": "ESP-IDF 的 TEE 安全服务包装器（esp_secure_services.c / iram.c）在验证调用者参数时存在逻辑缺陷，仅检查输出指针是否合法，而输入指针未做限制。底层受 TEE 保护的硬件外设运行在 RISC-V 机器模式（M-mode），拥有完全物理地址空间访问权限。攻击者在普通执行环境（REE）中可以调用受影响的安全服务并提供一个指向 TEE 独占内存区域的输入指针，外设就会将该地址的数据作为操作数，处理后将结果（如 ECC 签名、SHA 哈希、SPI 读取数据等）返回给 REE。利用不同包装器的特性，攻击者可通过单次调用直接获取 TEE 内存原始内容，或通过多次调用结合函数反演恢复出 TEE 中的机密数据，甚至可通过每次调用泄露 1 比特信息构建侧信道 oracle 逐步提取完整机密。受影响的版本为 5.5.4 和 6.0，已分别在 5.5.5 和 6.0.1 中修复。",
             "classification_timestamp": "2026-06-11T06:19:41.229160"
+        },
+        {
+            "cve_id": "CVE-2025-69168",
+            "category": "Other",
+            "summary": "此漏洞属于ThemeREX公司开发的Spike WordPress主题，与RISC-V架构无关。攻击者无需认证即可利用本地文件包含漏洞，可能导致敏感信息泄露或远程代码执行。",
+            "key_points": [
+                "受影响产品为ThemeREX Spike WordPress主题，版本≤1.2，与RISC-V模拟器Spike无关",
+                "漏洞类型为未认证的本地文件包含(LFI)，可读取服务器任意本地文件",
+                "利用该漏洞可能暴露配置文件、密码等敏感信息，甚至结合其他技术实现RCE"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞存在于ThemeREX Spike主题的某个不安全文件引入机制中，参数过滤不足，允许攻击者构造恶意路径（如../../etc/passwd）包含任意本地文件。由于无需登录即可触发，且在默认安装下即可利用，导致信息泄漏风险显著。修复建议升级至1.3及以上版本或应用官方补丁。",
+            "classification_timestamp": "2026-06-17T06:40:11.930485"
         }
     ]
 }
