@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 119,
-        "classification_date": "2026-06-17T06:40:12.930651",
+        "total_cves": 120,
+        "classification_date": "2026-06-27T05:31:23.981956",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 119,
-        "successful": 119,
+        "total_processed": 120,
+        "successful": 120,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 24,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 74,
+            "Linux Kernel": 75,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -1588,6 +1588,19 @@
             "severity_assessment": "High",
             "technical_details": "该漏洞存在于ThemeREX Spike主题的某个不安全文件引入机制中，参数过滤不足，允许攻击者构造恶意路径（如../../etc/passwd）包含任意本地文件。由于无需登录即可触发，且在默认安装下即可利用，导致信息泄漏风险显著。修复建议升级至1.3及以上版本或应用官方补丁。",
             "classification_timestamp": "2026-06-17T06:40:11.930485"
+        },
+        {
+            "cve_id": "CVE-2026-53312",
+            "category": "Linux Kernel",
+            "summary": "RISC-V IOMMU驱动在地址范围终止为ULONG_MAX时，因整数溢出导致无限循环，该漏洞通过调整比较逻辑修复了溢出问题。",
+            "key_points": [
+                "RISC-V软件页表支持符号扩展，可能产生终止地址ULONG_MAX。",
+                "IOMMU invalidation路径中地址遍历时发生整数溢出，导致死循环。",
+                "修复将长度计算中的+1移至比较运算符右侧，避免溢出。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于Linux内核的RISC-V IOMMU驱动（drivers/iommu/riscv_iommu.c）。当请求使地址范围无效时，若范围结束地址为ULONG_MAX（64位系统中全1），原始代码在遍历地址时执行类似'addr < end+1'的比较，而end+1会溢出为0，导致无限循环。修复通过将计算调整为'addr-1 < end'或移动+1到比较左侧（如'addr <= end'）来避免溢出。同时，长度计算中也可能因+1溢出，修复一并处理。",
+            "classification_timestamp": "2026-06-27T05:31:22.981781"
         }
     ]
 }
