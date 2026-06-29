@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 120,
-        "classification_date": "2026-06-27T05:31:23.981956",
+        "total_cves": 121,
+        "classification_date": "2026-06-29T06:19:10.628826",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 120,
-        "successful": 120,
+        "total_processed": 121,
+        "successful": 121,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 24,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 75,
+            "Linux Kernel": 76,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -1601,6 +1601,19 @@
             "severity_assessment": "Medium",
             "technical_details": "漏洞位于Linux内核的RISC-V IOMMU驱动（drivers/iommu/riscv_iommu.c）。当请求使地址范围无效时，若范围结束地址为ULONG_MAX（64位系统中全1），原始代码在遍历地址时执行类似'addr < end+1'的比较，而end+1会溢出为0，导致无限循环。修复通过将计算调整为'addr-1 < end'或移动+1到比较左侧（如'addr <= end'）来避免溢出。同时，长度计算中也可能因+1溢出，修复一并处理。",
             "classification_timestamp": "2026-06-27T05:31:22.981781"
+        },
+        {
+            "cve_id": "CVE-2026-53057",
+            "category": "Linux Kernel",
+            "summary": "在 Linux 内核的 RISC-V IOMMU 驱动中，更新 DDT/PDT 表项后缺少必要的 IOTINVAL（I/O TLB 无效化）操作，违反 RISC-V IOMMU 规范，可能导致 IOMMU TLB 和上下文缓存中存在过时条目，从而引发设备访问非法内存或地址翻译错误。",
+            "key_points": [
+                "RISC-V IOMMU 规范第 6.3.1 和 6.3.2 节要求更新 DDT/PDT 后执行 IOTINVAL 命令以无效化 TLB 和上下文缓存。",
+                "缺失的无效化操作可能导致 IOMMU 缓存旧有映射，使设备通过 DMA 访问到错误或未授权的物理地址。",
+                "修复补丁添加了 riscv_iommu_iodir_iotinval() 函数，在 DDT/PDT 修改后正确执行缓存无效化。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在 RISC-V IOMMU 架构中，设备目录表（DDT）和进程目录表（PDT）存储着设备虚拟地址到物理地址的映射信息。当软件修改这些表项后，必须通过向 IOMMU 发送 IOTINVAL 命令来刷新内部的转换后备缓冲器（TLB）和上下文缓存，否则 IOMMU 可能仍使用旧的缓存条目进行地址翻译。此缺陷存在于 Linux 内核的 drivers/iommu/riscv/ 目录下，攻击者可能利用过时的映射绕过 IO 内存管理单元（IOMMU）的保护，实现 DMA 攻击或数据泄露。",
+            "classification_timestamp": "2026-06-29T06:19:09.628656"
         }
     ]
 }

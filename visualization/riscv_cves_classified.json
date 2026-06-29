@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 120,
-        "classification_date": "2026-06-27T05:31:23.981956",
+        "total_cves": 121,
+        "classification_date": "2026-06-29T06:19:10.628826",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 120,
-        "successful": 120,
+        "total_processed": 121,
+        "successful": 121,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 24,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 75,
+            "Linux Kernel": 76,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -21563,6 +21563,172 @@
                 }
             },
             "classification_timestamp": "2026-06-27T05:31:22.981781"
+        },
+        {
+            "cve_id": "CVE-2026-53057",
+            "category": "Linux Kernel",
+            "summary": "在 Linux 内核的 RISC-V IOMMU 驱动中，更新 DDT/PDT 表项后缺少必要的 IOTINVAL（I/O TLB 无效化）操作，违反 RISC-V IOMMU 规范，可能导致 IOMMU TLB 和上下文缓存中存在过时条目，从而引发设备访问非法内存或地址翻译错误。",
+            "key_points": [
+                "RISC-V IOMMU 规范第 6.3.1 和 6.3.2 节要求更新 DDT/PDT 后执行 IOTINVAL 命令以无效化 TLB 和上下文缓存。",
+                "缺失的无效化操作可能导致 IOMMU 缓存旧有映射，使设备通过 DMA 访问到错误或未授权的物理地址。",
+                "修复补丁添加了 riscv_iommu_iodir_iotinval() 函数，在 DDT/PDT 修改后正确执行缓存无效化。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在 RISC-V IOMMU 架构中，设备目录表（DDT）和进程目录表（PDT）存储着设备虚拟地址到物理地址的映射信息。当软件修改这些表项后，必须通过向 IOMMU 发送 IOTINVAL 命令来刷新内部的转换后备缓冲器（TLB）和上下文缓存，否则 IOMMU 可能仍使用旧的缓存条目进行地址翻译。此缺陷存在于 Linux 内核的 drivers/iommu/riscv/ 目录下，攻击者可能利用过时的映射绕过 IO 内存管理单元（IOMMU）的保护，实现 DMA 攻击或数据泄露。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-53057",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-06-09T07:44:35.381Z",
+                    "datePublished": "2026-06-24T16:30:02.571Z",
+                    "dateUpdated": "2026-06-28T06:38:48.750Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-06-28T06:38:48.750Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/riscv: Add IOTINVAL after updating DDT/PDT entries\n\nAdd riscv_iommu_iodir_iotinval() to perform required TLB and context cache\ninvalidations after updating DDT or PDT entries, as mandated by the RISC-V\nIOMMU specification (Section 6.3.1 and 6.3.2)."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+                                    "baseScore": 8.8,
+                                    "baseSeverity": "HIGH"
+                                }
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/iommu/riscv/iommu.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "488ffbf181718b9ad8c1838cb249d60973e78eda",
+                                        "lessThan": "3f917d9bff68600f77561900f3145bd4706dc840",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "488ffbf181718b9ad8c1838cb249d60973e78eda",
+                                        "lessThan": "d99d1c13faa793ff1abab0d20ab6473c838081b3",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "488ffbf181718b9ad8c1838cb249d60973e78eda",
+                                        "lessThan": "f5c262b544975e067ea265fc7403aefbbea8563e",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/iommu/riscv/iommu.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.13",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.13",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.33",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.0.10",
+                                        "lessThanOrEqual": "7.0.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "6.18.33"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.0.10"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/3f917d9bff68600f77561900f3145bd4706dc840"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/d99d1c13faa793ff1abab0d20ab6473c838081b3"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/f5c262b544975e067ea265fc7403aefbbea8563e"
+                            }
+                        ],
+                        "title": "iommu/riscv: Add IOTINVAL after updating DDT/PDT entries",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-06-29T06:19:09.628656"
         }
     ]
 }
