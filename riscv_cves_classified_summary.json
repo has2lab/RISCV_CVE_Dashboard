@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 121,
-        "classification_date": "2026-06-29T06:19:10.628826",
+        "total_cves": 122,
+        "classification_date": "2026-07-02T05:35:37.982282",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 121,
-        "successful": 121,
+        "total_processed": 122,
+        "successful": 122,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 24,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 76,
+            "Linux Kernel": 77,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -1614,6 +1614,19 @@
             "severity_assessment": "High",
             "technical_details": "在 RISC-V IOMMU 架构中，设备目录表（DDT）和进程目录表（PDT）存储着设备虚拟地址到物理地址的映射信息。当软件修改这些表项后，必须通过向 IOMMU 发送 IOTINVAL 命令来刷新内部的转换后备缓冲器（TLB）和上下文缓存，否则 IOMMU 可能仍使用旧的缓存条目进行地址翻译。此缺陷存在于 Linux 内核的 drivers/iommu/riscv/ 目录下，攻击者可能利用过时的映射绕过 IO 内存管理单元（IOMMU）的保护，实现 DMA 攻击或数据泄露。",
             "classification_timestamp": "2026-06-29T06:19:09.628656"
+        },
+        {
+            "cve_id": "CVE-2026-53351",
+            "category": "Linux Kernel",
+            "summary": "该漏洞修复了RISC-V架构Linux内核在核心转储（coredump）时因CFI寄存器集缺少.note_type定义而触发的警告，通过为REGIST_CFI设置USER_REGSET_NOTE_TYPE解决。",
+            "key_points": [
+                "问题出现在ptrace接口处理CFI（Control Flow Integrity）寄存器集时",
+                "缺少.note_type导致elf_core_dump路径产生警告，可能影响内核调试或信息完整性",
+                "补丁添加了正确的NOTE_TYPE定义以消除警告，恢复正常的核心转储功能"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "在RISC-V架构的ptrace实现中，REGSET_CFI（用于保存控制流完整性相关寄存器）未设置.note_type成员，导致在生成ELF核心转储文件时，函数elf_core_dump()检查.note_type为空而触发WARNING。该漏洞通过将REGSET_CFI的.note_type赋值为USER_REGSET_NOTE_TYPE修复，确保核心转储流程正确处理该寄存器集，避免警告并保证转储文件完整性。漏洞仅影响输出警告信息，不直接导致权限提升或系统崩溃。",
+            "classification_timestamp": "2026-07-02T05:35:36.982055"
         }
     ]
 }
