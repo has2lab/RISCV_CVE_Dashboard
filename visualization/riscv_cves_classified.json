@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 122,
-        "classification_date": "2026-07-02T05:35:37.982282",
+        "total_cves": 123,
+        "classification_date": "2026-07-18T04:28:51.240260",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,12 +16,12 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 122,
-        "successful": 122,
+        "total_processed": 123,
+        "successful": 123,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
-            "RISC-V CPU/SoC": 24,
+            "RISC-V CPU/SoC": 25,
             "RISC-V Instruction Set Manual": 1,
             "Linux Kernel": 77,
             "Simulator": 7,
@@ -21864,6 +21864,81 @@
                 }
             },
             "classification_timestamp": "2026-07-02T05:35:36.982055"
+        },
+        {
+            "cve_id": "CVE-2025-51678",
+            "category": "RISC-V CPU/SoC",
+            "summary": "RISC-V PicoRV32 处理器核心在 commit 87c89a 中存在缺陷，当 PCPI 协处理器接口的指令与内存地址不匹配时，可能导致处理器出现意外行为。",
+            "key_points": [
+                "漏洞位于 PicoRV32 的 PCPI（Pico Co-Processor Interface）接口实现中",
+                "指令编码与内存地址之间的不匹配可引发未定义行为",
+                "潜在导致内存访问越界、指令执行错误或安全机制绕过"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "PicoRV32 是一款开源的 RISC-V 精简核心，其 PCPI 接口用于扩展自定义指令。该漏洞源于对 PCPI 指令的解码与内存地址计算之间的同步错误，当协处理器执行内存操作时，指令中指定的地址与实际生成的物理地址不一致。这种不匹配可能使攻击者通过构造特定的指令序列访问非法内存区域，造成信息泄露或权限提升。由于该问题发生在处理器核心级，影响使用该版本 PicoRV32 的所有 SoC 设计。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "cveMetadata": {
+                    "state": "PUBLISHED",
+                    "cveId": "CVE-2025-51678",
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "dateUpdated": "2026-07-17T19:49:28.571Z",
+                    "dateReserved": "2025-06-16T00:00:00.000Z",
+                    "datePublished": "2026-07-17T00:00:00.000Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre",
+                            "dateUpdated": "2026-07-17T19:49:28.571Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "An issue was discovered in RISC-V PicoRV32 commit 87c89a. A mismatch in the PCPI INSN and memory address can lead to unexpected behavior."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "n/a",
+                                "product": "n/a",
+                                "versions": [
+                                    {
+                                        "version": "n/a",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://github.com/YosysHQ/picorv32/issues/269"
+                            },
+                            {
+                                "url": "https://www.arxiv.org/abs/2504.18812"
+                            },
+                            {
+                                "url": "https://mason.gmu.edu/~rsaravan/projects/synfuzz/cve/cve.html"
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "type": "text",
+                                        "lang": "en",
+                                        "description": "n/a"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "dataVersion": "5.2"
+            },
+            "classification_timestamp": "2026-07-18T04:28:50.240089"
         }
     ]
 }
