@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 123,
-        "classification_date": "2026-07-18T04:28:51.240260",
+        "total_cves": 125,
+        "classification_date": "2026-07-21T04:50:56.305351",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 123,
-        "successful": 123,
+        "total_processed": 125,
+        "successful": 125,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 25,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 77,
+            "Linux Kernel": 79,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -21939,6 +21939,362 @@
                 "dataVersion": "5.2"
             },
             "classification_timestamp": "2026-07-18T04:28:50.240089"
+        },
+        {
+            "cve_id": "CVE-2026-64134",
+            "category": "Linux Kernel",
+            "summary": "Linux内核ALSA PCM子系统在对静默数据填充（data=NULL）时错误设置iov_iter，导致在RISC-V架构上触发NULL指针解引用崩溃。该问题源于interleaved_copy()函数未对NULL数据做特殊处理，修复后已加入相应检查。",
+            "key_points": [
+                "ALSA PCM在静默处理（silencing）时数据指针为NULL，但仍被用于构造iov_iter",
+                "错误的iov_iter导致后续内存访问异常，在RISC-V上引发NULL指针解引用",
+                "漏洞仅在RISC-V触发，其他架构因内存访问特性未暴露问题",
+                "修复方法在interleaved_copy()中添加NULL数据检查，noninterleaved_copy()已有类似处理"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "ALSA PCM从传统缓冲区操作迁移到iov_iter接口时，静默操作（即将缓冲区填充为静音）传入data=NULL，但代码未区分该场景，直接使用NULL指针计算iov_iter。RISC-V架构对地址0的访问保护较为严格，导致内核oops。修复后，interleaved_copy()在data为NULL时直接调用silence填充函数，避免构造无效的iov_iter。该漏洞仅影响本地音频设备操作，需特定权限触发，但可能导致系统拒绝服务，因此评级为Medium。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-64134",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-07-19T07:54:57.036Z",
+                    "datePublished": "2026-07-19T15:40:28.974Z",
+                    "dateUpdated": "2026-07-20T13:43:40.344Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-07-20T13:43:40.344Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: pcm: Don't setup bogus iov_iter for silencing\n\nAt transition to the iov_iter for PCM data transfer, we blindly\napplied the iov_iter setup also for silencing (i.e. data = NULL), and\nit leads to a calculation of bogus iov_iter.  Fortunately this didn't\ncause troubles on most of architectures but it goes wrong on RISC-V\nnow, causing a NULL dereference.\n\nHandle the NULL data case to treat the silencing in interleaved_copy()\nfor addressing the bug above.  noninterleaved_copy() has already the\nNULL data handling, so it doesn't need changes."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 7.8,
+                                    "baseSeverity": "HIGH"
+                                }
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "sound/core/pcm_lib.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "cf393babb37a1679a1ec1d864df1090353465e23",
+                                        "lessThan": "41a766c647294842c9b17672449f8e011048cba9",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "cf393babb37a1679a1ec1d864df1090353465e23",
+                                        "lessThan": "ce836587e594af39ff048d9b29dee0f5f10692c9",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "cf393babb37a1679a1ec1d864df1090353465e23",
+                                        "lessThan": "feff0251386aa6bb180a0a1cf7c1f91ba868113d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "cf393babb37a1679a1ec1d864df1090353465e23",
+                                        "lessThan": "c9f6768515818d71bdfc20119a81f3332c53b9c6",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "cf393babb37a1679a1ec1d864df1090353465e23",
+                                        "lessThan": "e4d3386b74fba8e01280484b67ee481ece00201e",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "sound/core/pcm_lib.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.6",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.6",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.6.142",
+                                        "lessThanOrEqual": "6.6.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.92",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.34",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.0.11",
+                                        "lessThanOrEqual": "7.0.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "6.6.142"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "6.12.92"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "6.18.34"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "7.0.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "7.1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/41a766c647294842c9b17672449f8e011048cba9"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/ce836587e594af39ff048d9b29dee0f5f10692c9"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/feff0251386aa6bb180a0a1cf7c1f91ba868113d"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/c9f6768515818d71bdfc20119a81f3332c53b9c6"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/e4d3386b74fba8e01280484b67ee481ece00201e"
+                            }
+                        ],
+                        "title": "ALSA: pcm: Don't setup bogus iov_iter for silencing",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-07-21T04:50:39.410520"
+        },
+        {
+            "cve_id": "CVE-2026-64082",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V兼容层中，当从用户空间复制寄存器数据失败时，错误处理路径将未初始化的栈变量cregs写入任务的pt_regs，导致寄存器状态损坏并可能泄露内核栈数据。修复确保只在拷贝成功后才调用cregs_to_regs()。",
+            "key_points": [
+                "compat_riscv_gpr_set()和compat_restore_sigcontext()在copyin失败后仍调用cregs_to_regs()",
+                "cregs是未初始化的栈变量，其内容被写入目标任务的寄存器上下文",
+                "可能造成内核栈数据泄露和进程寄存器状态损坏"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于arch/riscv/kernel/ptrace.c的compat_riscv_gpr_set()函数和arch/riscv/kernel/signal_32.c的compat_restore_sigcontext()函数中。这些函数通过user_regset_copyin()或__copy_from_user()从用户空间复制数据到栈变量cregs。若拷贝失败（例如用户传入无效地址），cregs保持未初始化，但函数无条件调用cregs_to_regs(cregs, regs)将栈上的随机数据写入目标的pt_regs结构。这会导致任务寄存器状态被破坏，可能引发进程崩溃；更严重的是，未初始化栈数据可能包含先前函数调用遗留的内核地址或敏感信息，这些数据被复制到用户可访问的寄存器（如通过ptrace或信号帧）造成信息泄露。修复方法是在拷贝返回错误时直接跳转到标号out，避免调用cregs_to_regs。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-64082",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-07-19T07:54:57.031Z",
+                    "datePublished": "2026-07-19T15:39:54.074Z",
+                    "dateUpdated": "2026-07-20T13:43:08.413Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-07-20T13:43:08.413Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: Fix register corruption from uninitialized cregs on error\n\ncompat_riscv_gpr_set() calls cregs_to_regs() unconditionally, even when\nuser_regset_copyin() fails. Since cregs is an uninitialized stack\nvariable, a copyin failure causes uninitialized stack data to be written\ninto the target task's pt_regs, corrupting its register state and\npotentially leaking kernel stack contents.\n\ncompat_restore_sigcontext() has the same issue: it calls cregs_to_regs()\neven when __copy_from_user() fails, leading to the same corruption of\nthe signal-returning task's register state on error.\n\nOnly call cregs_to_regs() when the user copy succeeds."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 7.8,
+                                    "baseSeverity": "HIGH"
+                                }
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kernel/compat_signal.c",
+                                    "arch/riscv/kernel/ptrace.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "7383ee05314be58f8f9f018ee0ac53bef3808aea",
+                                        "lessThan": "9e020156833f1ad0d425a1e3d85b65639f1c1c50",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "7383ee05314be58f8f9f018ee0ac53bef3808aea",
+                                        "lessThan": "6ebcbb53fc9bc30843054ed99fd60b8e542628f4",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kernel/compat_signal.c",
+                                    "arch/riscv/kernel/ptrace.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.19",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.19",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.0.11",
+                                        "lessThanOrEqual": "7.0.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.19",
+                                                "versionEndExcluding": "7.0.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.19",
+                                                "versionEndExcluding": "7.1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/9e020156833f1ad0d425a1e3d85b65639f1c1c50"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/6ebcbb53fc9bc30843054ed99fd60b8e542628f4"
+                            }
+                        ],
+                        "title": "riscv: Fix register corruption from uninitialized cregs on error",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-07-21T04:50:55.305202"
         }
     ]
 }

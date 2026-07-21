@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 123,
-        "classification_date": "2026-07-18T04:28:51.240260",
+        "total_cves": 125,
+        "classification_date": "2026-07-21T04:50:56.305351",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 123,
-        "successful": 123,
+        "total_processed": 125,
+        "successful": 125,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 25,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 77,
+            "Linux Kernel": 79,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -1640,6 +1640,33 @@
             "severity_assessment": "High",
             "technical_details": "PicoRV32 是一款开源的 RISC-V 精简核心，其 PCPI 接口用于扩展自定义指令。该漏洞源于对 PCPI 指令的解码与内存地址计算之间的同步错误，当协处理器执行内存操作时，指令中指定的地址与实际生成的物理地址不一致。这种不匹配可能使攻击者通过构造特定的指令序列访问非法内存区域，造成信息泄露或权限提升。由于该问题发生在处理器核心级，影响使用该版本 PicoRV32 的所有 SoC 设计。",
             "classification_timestamp": "2026-07-18T04:28:50.240089"
+        },
+        {
+            "cve_id": "CVE-2026-64134",
+            "category": "Linux Kernel",
+            "summary": "Linux内核ALSA PCM子系统在对静默数据填充（data=NULL）时错误设置iov_iter，导致在RISC-V架构上触发NULL指针解引用崩溃。该问题源于interleaved_copy()函数未对NULL数据做特殊处理，修复后已加入相应检查。",
+            "key_points": [
+                "ALSA PCM在静默处理（silencing）时数据指针为NULL，但仍被用于构造iov_iter",
+                "错误的iov_iter导致后续内存访问异常，在RISC-V上引发NULL指针解引用",
+                "漏洞仅在RISC-V触发，其他架构因内存访问特性未暴露问题",
+                "修复方法在interleaved_copy()中添加NULL数据检查，noninterleaved_copy()已有类似处理"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "ALSA PCM从传统缓冲区操作迁移到iov_iter接口时，静默操作（即将缓冲区填充为静音）传入data=NULL，但代码未区分该场景，直接使用NULL指针计算iov_iter。RISC-V架构对地址0的访问保护较为严格，导致内核oops。修复后，interleaved_copy()在data为NULL时直接调用silence填充函数，避免构造无效的iov_iter。该漏洞仅影响本地音频设备操作，需特定权限触发，但可能导致系统拒绝服务，因此评级为Medium。",
+            "classification_timestamp": "2026-07-21T04:50:39.410520"
+        },
+        {
+            "cve_id": "CVE-2026-64082",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V兼容层中，当从用户空间复制寄存器数据失败时，错误处理路径将未初始化的栈变量cregs写入任务的pt_regs，导致寄存器状态损坏并可能泄露内核栈数据。修复确保只在拷贝成功后才调用cregs_to_regs()。",
+            "key_points": [
+                "compat_riscv_gpr_set()和compat_restore_sigcontext()在copyin失败后仍调用cregs_to_regs()",
+                "cregs是未初始化的栈变量，其内容被写入目标任务的寄存器上下文",
+                "可能造成内核栈数据泄露和进程寄存器状态损坏"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于arch/riscv/kernel/ptrace.c的compat_riscv_gpr_set()函数和arch/riscv/kernel/signal_32.c的compat_restore_sigcontext()函数中。这些函数通过user_regset_copyin()或__copy_from_user()从用户空间复制数据到栈变量cregs。若拷贝失败（例如用户传入无效地址），cregs保持未初始化，但函数无条件调用cregs_to_regs(cregs, regs)将栈上的随机数据写入目标的pt_regs结构。这会导致任务寄存器状态被破坏，可能引发进程崩溃；更严重的是，未初始化栈数据可能包含先前函数调用遗留的内核地址或敏感信息，这些数据被复制到用户可访问的寄存器（如通过ptrace或信号帧）造成信息泄露。修复方法是在拷贝返回错误时直接跳转到标号out，避免调用cregs_to_regs。",
+            "classification_timestamp": "2026-07-21T04:50:55.305202"
         }
     ]
 }
