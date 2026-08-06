@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 125,
-        "classification_date": "2026-07-21T04:50:56.305351",
+        "total_cves": 130,
+        "classification_date": "2026-08-06T04:48:12.560824",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 125,
-        "successful": 125,
+        "total_processed": 130,
+        "successful": 130,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 25,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 79,
+            "Linux Kernel": 84,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -22295,6 +22295,1184 @@
                 }
             },
             "classification_timestamp": "2026-07-21T04:50:55.305202"
+        },
+        {
+            "cve_id": "CVE-2024-40970",
+            "category": "Linux Kernel",
+            "summary": "Linux内核dw-axi-dmac驱动中存在hw_desc数组越界漏洞，当DMA描述符由多个段组成且nr_buffers较大时，axi_desc_put()可能访问越界内存导致内核崩溃。修复通过记录实际分配的hw_desc数量并调整数组操作逻辑，同时移除导致状态不平衡的队列启动调用。",
+            "key_points": [
+                "当nr_buffers=3且每个描述符含3个段时，descs_allocated为9，axi_desc_put()中以该值为长度处理hw_desc数组造成越界",
+                "通过在axi_dma_desc结构中新增成员保存分配的hw_desc实际数量，并在xi_desc_put()中使用该成员避免越界",
+                "移除axi_chan_start_first_queued()调用，修复因DMA通道未启用导致已启动描述符被中断与忽略而造成的描述符不平衡问题"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "漏洞存在于drivers/dma/dw-axi-dmac/dw-axi-dmac-platform.c的axi_desc_put函数中，该函数循环遍历hw_desc数组时使用descs_allocated作为循环上限，但descs_allocated是所有已分配描述符的总数（等于nr_buffers * segments_per_desc），而单个axi_dma_desc结构对应的hw_desc数量仅为segments_per_desc，因此当多描述符场景下会访问到不属于该描述符的hw_desc指针，从而触发数组越界和内核panic。修复在axi_dma_desc中引入num_hw_desc成员，在axi_desc_alloc时记录实际分配的hw_desc个数，并在axi_desc_put中基于该成员进行释放操作。同时修复了因axi_chan_start_first_queued在传输完成后可能重新启动已中断的传输，导致已启动描述符计数失衡的问题，移除了该调用。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2024-40970",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2024-07-12T12:17:45.603Z",
+                    "datePublished": "2024-07-12T12:32:08.788Z",
+                    "dateUpdated": "2026-08-05T11:34:18.464Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-05T11:34:18.464Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nAvoid hw_desc array overrun in dw-axi-dmac\n\nI have a use case where nr_buffers = 3 and in which each descriptor is composed by 3\nsegments, resulting in the DMA channel descs_allocated to be 9. Since axi_desc_put()\nhandles the hw_desc considering the descs_allocated, this scenario would result in a\nkernel panic (hw_desc array will be overrun).\n\nTo fix this, the proposal is to add a new member to the axi_dma_desc structure,\nwhere we keep the number of allocated hw_descs (axi_desc_alloc()) and use it in\naxi_desc_put() to handle the hw_desc array correctly.\n\nAdditionally I propose to remove the axi_chan_start_first_queued() call after completing\nthe transfer, since it was identified that unbalance can occur (started descriptors can\nbe interrupted and transfer ignored due to DMA channel not being enabled)."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 7.8,
+                                    "baseSeverity": "HIGH"
+                                },
+                                "scenarios": [
+                                    {
+                                        "lang": "en",
+                                        "value": "AV:L - The overrun is reached only by driving a local peripheral (audio/serial/SPI device node) whose driver queues multiple DMA descriptors on a dw-axi-dmac channel; no network- or peer-supplied data influences the descriptor accounting. Physical access is not required, so this is local.\nAC:L - The overrun is deterministic whenever two or more descriptors are outstanding on the same channel, a state the attacker arranges simply by queueing several buffers/transfers before stopping the stream. No race or unfavorable memory layout beyond the attacker's control is needed to trigger the panic.\nPR:L - A local unprivileged user with access to a device node backed by this DMA controller (e.g. /dev/snd/pcm*, tty, spidev on the affected RISC-V/ARC/Agilex5/Keem Bay platforms) can drive the prep/terminate cycle. No root or capability check guards the dmaengine client path.\nUI:N - The attacker performs the buffer queueing and stream teardown itself; no action by another user or administrator is required.\nS:U - The out-of-bounds access, the corrupted dma_pool free list, and any resulting DMA writes all occur within the kernel's own security authority. No VM, IOMMU, or sandbox boundary is crossed.\nC:H - The loop reads well past the end of the kmalloc-96 hw_desc array into adjacent slab objects, and the resulting free-list poisoning lets a later dma_pool_alloc() return an attacker-chosen address usable as a read primitive over arbitrary kernel memory. The leak is not bounded to a few bytes.\nI:H - pool_block_push() writes the dma address and next-block pointer at the out-of-bounds-derived vaddr with no validation in the non-DMAPOOL_DEBUG path, and links that address into the pool free list so the DMA engine subsequently writes hardware LLI data there. This yields an arbitrary kernel write suitable for control-flow hijacking.\nA:H - The commit explicitly documents a kernel panic from the hw_desc array overrun, and freeing a NULL/garbage vaddr into the dma pool oopses immediately. The counter underflow from atomic_sub() further corrupts channel state, so the crash is repeatable."
+                                    }
+                                ]
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/dma/dw-axi-dmac/dw-axi-dmac-platform.c",
+                                    "drivers/dma/dw-axi-dmac/dw-axi-dmac.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "ef6fb2d6f1abd56cc067c694253ea362159b5ac3",
+                                        "lessThan": "7c3bb96a20cd8db3b8824b2ff08b6cde4505c7e5",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "ef6fb2d6f1abd56cc067c694253ea362159b5ac3",
+                                        "lessThan": "dd42570018f5962c10f215ad9c21274ed5d3541e",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "ef6fb2d6f1abd56cc067c694253ea362159b5ac3",
+                                        "lessThan": "e151ae1ee065cf4b8ce4394ddb9d9c8df6370c66",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "ef6fb2d6f1abd56cc067c694253ea362159b5ac3",
+                                        "lessThan": "9004784e8d68bcd1ac1376407ba296fa28f04dbe",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "ef6fb2d6f1abd56cc067c694253ea362159b5ac3",
+                                        "lessThan": "333e11bf47fa8d477db90e2900b1ed3c9ae9b697",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/dma/dw-axi-dmac/dw-axi-dmac-platform.c",
+                                    "drivers/dma/dw-axi-dmac/dw-axi-dmac.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.12",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.12",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "5.15.162",
+                                        "lessThanOrEqual": "5.15.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.1.96",
+                                        "lessThanOrEqual": "6.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.6.36",
+                                        "lessThanOrEqual": "6.6.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.9.7",
+                                        "lessThanOrEqual": "6.9.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.10",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.12",
+                                                "versionEndExcluding": "5.15.162"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.12",
+                                                "versionEndExcluding": "6.1.96"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.12",
+                                                "versionEndExcluding": "6.6.36"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.12",
+                                                "versionEndExcluding": "6.9.7"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.12",
+                                                "versionEndExcluding": "6.10"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/7c3bb96a20cd8db3b8824b2ff08b6cde4505c7e5"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/dd42570018f5962c10f215ad9c21274ed5d3541e"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/e151ae1ee065cf4b8ce4394ddb9d9c8df6370c66"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/9004784e8d68bcd1ac1376407ba296fa28f04dbe"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/333e11bf47fa8d477db90e2900b1ed3c9ae9b697"
+                            }
+                        ],
+                        "title": "Avoid hw_desc array overrun in dw-axi-dmac",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    },
+                    "adp": [
+                        {
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "url": "https://git.kernel.org/stable/c/7c3bb96a20cd8db3b8824b2ff08b6cde4505c7e5",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/dd42570018f5962c10f215ad9c21274ed5d3541e",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/e151ae1ee065cf4b8ce4394ddb9d9c8df6370c66",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/9004784e8d68bcd1ac1376407ba296fa28f04dbe",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/333e11bf47fa8d477db90e2900b1ed3c9ae9b697",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://lists.debian.org/debian-lts-announce/2025/01/msg00001.html"
+                                }
+                            ],
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2025-11-03T21:58:34.724Z"
+                            }
+                        },
+                        {
+                            "metrics": [
+                                {
+                                    "other": {
+                                        "type": "ssvc",
+                                        "content": {
+                                            "id": "CVE-2024-40970",
+                                            "role": "CISA Coordinator",
+                                            "options": [
+                                                {
+                                                    "Exploitation": "none"
+                                                },
+                                                {
+                                                    "Automatable": "no"
+                                                },
+                                                {
+                                                    "Technical Impact": "partial"
+                                                }
+                                            ],
+                                            "version": "2.0.3",
+                                            "timestamp": "2024-09-10T17:02:57.618240Z"
+                                        }
+                                    }
+                                }
+                            ],
+                            "title": "CISA ADP Vulnrichment",
+                            "providerMetadata": {
+                                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                                "shortName": "CISA-ADP",
+                                "dateUpdated": "2024-09-11T17:34:22.651Z"
+                            }
+                        }
+                    ]
+                }
+            },
+            "classification_timestamp": "2026-08-06T04:47:17.142601"
+        },
+        {
+            "cve_id": "CVE-2024-56573",
+            "category": "Linux Kernel",
+            "summary": "该漏洞存在于Linux内核的EFI stub代码中，在失败路径上错误地释放了一个输出参数而非实际分配的内存池指针，可能导致内存损坏或信息泄露。",
+            "key_points": [
+                "漏洞位于efi/libstub中，cmdline_ptr是输出参数（指向调用者栈），不应被释放",
+                "应释放的指针是cmdline（池分配），但原代码将cmdline_ptr传给了free_pool()",
+                "修复方法是将cmdline传递给free_pool()以避免释放栈内存"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "在EFI stub的失败清理路径中，由于错误的指针被传递给free_pool()，可能导致释放属于调用者栈的无效地址，引发内核崩溃或利用。攻击者需能够触发该失败路径才能造成影响，利用复杂度较高，但可导致内核态内存损坏。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2024-56573",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2024-12-27T14:03:05.998Z",
+                    "datePublished": "2024-12-27T14:23:16.231Z",
+                    "dateUpdated": "2026-08-05T11:45:08.677Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-05T11:45:08.677Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nefi/libstub: Free correct pointer on failure\n\ncmdline_ptr is an out parameter, which is not allocated by the function\nitself, and likely points into the caller's stack.\n\ncmdline refers to the pool allocation that should be freed when cleaning\nup after a failure, so pass this instead to free_pool()."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 7,
+                                    "baseSeverity": "HIGH"
+                                },
+                                "scenarios": [
+                                    {
+                                        "lang": "en",
+                                        "value": "AV:L - The vulnerable code is the EFI stub entry point (`efi_pe_entry`/`efi_zboot_entry`), which executes only in the UEFI pre-boot environment on arm64/ARM/RISC-V/LoongArch; it is not bound to any network stack. An attacker needs local access to the machine to influence the boot environment and cause the kernel image to be loaded.\nAC:H - The `fail_free_cmdline` path is only reachable when `efi_parse_options()`'s `allocate_pool` of a ≤COMMAND_LINE_SIZE buffer fails, i.e. UEFI boot-services pool exhaustion — a firmware memory state the attacker cannot reliably influence, since the immediately preceding `efi_convert_cmdline()` allocation of comparable size already succeeded.\nPR:L - Reaching the stub requires a local foothold sufficient to influence the boot (boot entry/command line, chainloaded image, or a reboot on an embedded/kiosk arm64 device); no OS root or CAP_SYS_ADMIN in the running kernel is required.\nUI:N - No victim action is needed — the attacker with local access triggers the boot themselves, and the faulty path executes automatically inside the stub with no user prompt or interaction.\nS:U - The EFI stub already runs with full UEFI boot-services privilege by design, so corrupting the firmware pool does not cross into a different security authority; this is the standard \"same privilege domain\" case rather than a VM/IOMMU boundary escape.\nC:H - Firmware `FreePool()` on a stack address links stub stack memory into the boot-services free list, so that memory can later be handed to other allocations and read back; allocator-metadata corruption in the pre-boot environment is leverageable as an arbitrary-read primitive.\nI:H - Corrupting the UEFI pool allocator's free list yields attacker-influenced writes into fully privileged pre-boot memory, which is exploitable for control-flow hijack before any kernel hardening or Secure Boot lockdown is in effect.\nA:H - The invalid free hangs the boot outright on firmware that asserts on a bad pool signature (EDK2 DEBUG deadloop), and otherwise corrupts firmware heap state; the real `cmdline` pool allocation is additionally leaked on every occurrence."
+                                    }
+                                ]
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/firmware/efi/libstub/efi-stub.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "42c8ea3dca094ab82776ca706fb7a9cbe8ac3dc9",
+                                        "lessThan": "d173aee5709bd0994d216d60589ec67f8b11376a",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "42c8ea3dca094ab82776ca706fb7a9cbe8ac3dc9",
+                                        "lessThan": "eaafbcf0a5782ae412ca7de12ef83fc48ccea4cf",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "42c8ea3dca094ab82776ca706fb7a9cbe8ac3dc9",
+                                        "lessThan": "06d39d79cbd5a91a33707951ebf2512d0e759847",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/firmware/efi/libstub/efi-stub.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.2",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.2",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.6.64",
+                                        "lessThanOrEqual": "6.6.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.4",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.13",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.2",
+                                                "versionEndExcluding": "6.6.64"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.2",
+                                                "versionEndExcluding": "6.12.4"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.2",
+                                                "versionEndExcluding": "6.13"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/d173aee5709bd0994d216d60589ec67f8b11376a"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/eaafbcf0a5782ae412ca7de12ef83fc48ccea4cf"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/06d39d79cbd5a91a33707951ebf2512d0e759847"
+                            }
+                        ],
+                        "title": "efi/libstub: Free correct pointer on failure",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-06T04:47:27.221374"
+        },
+        {
+            "cve_id": "CVE-2024-35872",
+            "category": "Linux Kernel",
+            "summary": "Linux内核secretmem功能中，folio_is_secretmem()依赖不可靠的LRU标志检测秘密内存页，导致GUP-fast可能成功获取秘密内存页。由于秘密内存页已从直接映射中取消映射，后续读取/写入会触发内核崩溃。修复移除了对LRU标志的依赖。",
+            "key_points": [
+                "秘密内存（secretmem）页面从直接映射中取消映射，普通访问应被拒绝",
+                "folio_is_secretmem() 错误地依赖LRU标志来识别秘密内存页面，当页面处于每CPU批量队列或LRU标志被暂时清除时检测失败",
+                "GUP-fast 绕过检测成功获取秘密内存页面，导致后续访问时内核崩溃"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "秘密内存（secretmem）机制用于在进程私有匿名内存中存储敏感数据，其物理页从内核直接映射区取消映射，防止内核通过线性映射访问。GUP（Get User Pages）快速路径（GUP-fast）会尝试固定用户内存页，但应被阻止获取秘密内存页面。漏洞源于 folio_is_secretmem() 使用 folio 的 LRU 标志作为快捷判断依据，但该标志不可靠：folio 可能驻留在 per-CPU 批量队列中尚未设置 LRU 标志，或者 LRU 标志可能被临时清除。在 secretmem_fault() 分配新页面后通过 filemap_add_folio() -> folio_add_lru() 添加时，页面可能进入批量队列而未立即获得 LRU 标志。此时 GUP-fast 检查 folio_is_secretmem() 可能返回 false，从而允许获取该秘密内存页面。由于该页面已从直接映射取消映射，后续内核尝试访问该页面（例如通过 core dump、ptrace 或各种直接内存访问）将触发页表项无效导致的内核崩溃。修复直接移除了对 LRU 标志的检查，改用更可靠的 secretmem 特定标记。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2024-35872",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2024-05-17T13:50:33.108Z",
+                    "datePublished": "2024-05-19T08:34:30.096Z",
+                    "dateUpdated": "2026-08-05T11:30:33.747Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-05T11:30:33.747Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/secretmem: fix GUP-fast succeeding on secretmem folios\n\nfolio_is_secretmem() currently relies on secretmem folios being LRU\nfolios, to save some cycles.\n\nHowever, folios might reside in a folio batch without the LRU flag set, or\ntemporarily have their LRU flag cleared.  Consequently, the LRU flag is\nunreliable for this purpose.\n\nIn particular, this is the case when secretmem_fault() allocates a fresh\npage and calls filemap_add_folio()->folio_add_lru().  The folio might be\nadded to the per-cpu folio batch and won't get the LRU flag set until the\nbatch was drained using e.g., lru_add_drain().\n\nConsequently, folio_is_secretmem() might not detect secretmem folios and\nGUP-fast can succeed in grabbing a secretmem folio, crashing the kernel\nwhen we would later try reading/writing to the folio, because the folio\nhas been unmapped from the directmap.\n\nFix it by removing that unreliable check."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 7.8,
+                                    "baseSeverity": "HIGH"
+                                },
+                                "scenarios": [
+                                    {
+                                        "lang": "en",
+                                        "value": "AV:L - The whole path is local syscalls — `memfd_secret(2)`, `mmap(2)` to fault the folio into the per-CPU batch, then any GUP-fast consumer such as `vmsplice(2)`, O_DIRECT, or io_uring buffer registration. No remote peer data reaches `folio_is_secretmem()`.\nAC:L - The window is not a race the attacker must win but a state the attacker creates: faulting a fresh secretmem page deterministically leaves it in the per-CPU folio batch without `PG_lru`, and the immediately following GUP-fast call on the same CPU always sees the stale flag — the upstream selftest reproduces it every run, with unlimited retries available.\nPR:L - Only an unprivileged local account is needed: `memfd_secret(2)` performs no capability check, `CONFIG_SECRETMEM` is `default y` on x86/arm64/riscv, and `secretmem.enable` defaults to 1 since v6.5, with `secretmem_mmap()` needing only default RLIMIT_MEMLOCK headroom for a single page.\nUI:N - The attacking process performs every step itself — create the fd, fault the page, invoke the GUP-fast consumer. No victim action, mount, or file open is involved.\nS:U - The bypassed check and the resulting oops/exposure are both inside the kernel's own memory-management authority; there is no VM, IOMMU, or sandbox boundary crossed.\nC:H - It defeats secretmem's core confidentiality guarantee — pages deliberately removed from the kernel direct map become pinnable and reachable by kernel subsystems and DMA engines (splice→socket, O_DIRECT, and even read-only longterm pins passed in the vulnerable tree), so key material secretmem exists to keep out of kernel reach can be read out to a file or the wire, and the resulting oops additionally dumps kernel addresses and stack state.\nI:H - The same bypass works with `FOLL_WRITE`, letting kernel copies and device DMA write into memory the design guarantees is unwritable from kernel context and corrupt the protected secret; the unhandled kernel fault also aborts operations mid-way, leaving pinned folios and held mm/pipe/filesystem locks behind.\nA:H - Any subsequent CPU access to the pinned folio through the cleared direct-map entry is an unhandled kernel page fault — `page_fault_oops()` in process context, and a fatal `Fatal exception in interrupt` panic when it lands in softirq (e.g. skb copy after splice to a socket) — and an unprivileged user can trigger it on demand and repeatedly."
+                                    }
+                                ]
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "include/linux/secretmem.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "1507f51255c9ff07d75909a84e7c0d7f3c4b2f49",
+                                        "lessThan": "6564b014af92b677c1f07c44d7f5b595d589cf6e",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1507f51255c9ff07d75909a84e7c0d7f3c4b2f49",
+                                        "lessThan": "9c2b4b657739ecda38e3b383354a29566955ac48",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1507f51255c9ff07d75909a84e7c0d7f3c4b2f49",
+                                        "lessThan": "43fad1d0284de30159661d0badfc3cbaf7e6f8f8",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1507f51255c9ff07d75909a84e7c0d7f3c4b2f49",
+                                        "lessThan": "201e4aaf405dfd1308da54448654053004c579b5",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1507f51255c9ff07d75909a84e7c0d7f3c4b2f49",
+                                        "lessThan": "65291dcfcf8936e1b23cfd7718fdfde7cfaf7706",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "include/linux/secretmem.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.14",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.14",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "5.15.154",
+                                        "lessThanOrEqual": "5.15.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.1.85",
+                                        "lessThanOrEqual": "6.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.6.26",
+                                        "lessThanOrEqual": "6.6.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.8.5",
+                                        "lessThanOrEqual": "6.8.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.9",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.14",
+                                                "versionEndExcluding": "5.15.154"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.14",
+                                                "versionEndExcluding": "6.1.85"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.14",
+                                                "versionEndExcluding": "6.6.26"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.14",
+                                                "versionEndExcluding": "6.8.5"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.14",
+                                                "versionEndExcluding": "6.9"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/6564b014af92b677c1f07c44d7f5b595d589cf6e"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/9c2b4b657739ecda38e3b383354a29566955ac48"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/43fad1d0284de30159661d0badfc3cbaf7e6f8f8"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/201e4aaf405dfd1308da54448654053004c579b5"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/65291dcfcf8936e1b23cfd7718fdfde7cfaf7706"
+                            }
+                        ],
+                        "title": "mm/secretmem: fix GUP-fast succeeding on secretmem folios",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    },
+                    "adp": [
+                        {
+                            "title": "CISA ADP Vulnrichment",
+                            "metrics": [
+                                {
+                                    "other": {
+                                        "type": "ssvc",
+                                        "content": {
+                                            "id": "CVE-2024-35872",
+                                            "role": "CISA Coordinator",
+                                            "options": [
+                                                {
+                                                    "Exploitation": "none"
+                                                },
+                                                {
+                                                    "Automatable": "no"
+                                                },
+                                                {
+                                                    "Technical Impact": "partial"
+                                                }
+                                            ],
+                                            "version": "2.0.3",
+                                            "timestamp": "2024-05-20T15:13:36.224766Z"
+                                        }
+                                    }
+                                }
+                            ],
+                            "providerMetadata": {
+                                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                                "shortName": "CISA-ADP",
+                                "dateUpdated": "2024-06-04T17:34:09.055Z"
+                            }
+                        },
+                        {
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2024-08-02T03:21:48.571Z"
+                            },
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "url": "https://git.kernel.org/stable/c/6564b014af92b677c1f07c44d7f5b595d589cf6e",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/9c2b4b657739ecda38e3b383354a29566955ac48",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/43fad1d0284de30159661d0badfc3cbaf7e6f8f8",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/201e4aaf405dfd1308da54448654053004c579b5",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                },
+                                {
+                                    "url": "https://git.kernel.org/stable/c/65291dcfcf8936e1b23cfd7718fdfde7cfaf7706",
+                                    "tags": [
+                                        "x_transferred"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "classification_timestamp": "2026-08-06T04:47:41.037413"
+        },
+        {
+            "cve_id": "CVE-2026-43274",
+            "category": "Linux Kernel",
+            "summary": "Linux内核Microchip IPC mailbox驱动中，mchp_ipc_get_cluster_aggr_irq()函数以hartid索引动态分配的cluster_cfg数组，hartid可能不连续或超出数组边界，导致越界访问。修复改用在线CPU连续的cpuid作为索引。",
+            "key_points": [
+                "漏洞函数：mchp_ipc_get_cluster_aggr_irq()",
+                "cluster_cfg数组按在线CPU数量分配，但原使用hartid索引，hartid可能不连续或大于在线CPU数，引发越界",
+                "修复将索引从hartid改为由for_each_online_cpu()遍历得到的cpuid，确保索引安全"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在Microchip的RISC-V平台mailbox驱动中，cluster_cfg数组通过kcalloc分配，长度num_possible_cpus()或num_online_cpus()。原代码使用hartid作为索引存取该数组，但RISC-V的hartid可能不连续（例如系统存在非对称多核或热插拔），导致访问到未分配内存。攻击者可能通过触发内核路径造成越界读取或写入，导致信息泄露或系统崩溃。补丁将遍历改为for_each_online_cpu()获取连续cpuid，用cpuid替代hartid索引数组，彻底消除越界风险。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-43274",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-05-01T14:12:55.998Z",
+                    "datePublished": "2026-05-06T11:28:57.503Z",
+                    "dateUpdated": "2026-08-05T12:26:59.090Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-05T12:26:59.090Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nmailbox: mchp-ipc-sbi: fix out-of-bounds access in mchp_ipc_get_cluster_aggr_irq()\n\nThe cluster_cfg array is dynamically allocated to hold per-CPU\nconfiguration structures, with its size based on the number of online\nCPUs. Previously, this array was indexed using hartid, which may be\nnon-contiguous or exceed the bounds of the array, leading to\nout-of-bounds access.\nSwitch to using cpuid as the index, as it is guaranteed to be within\nthe valid range provided by for_each_online_cpu()."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 8.4,
+                                    "baseSeverity": "HIGH"
+                                },
+                                "scenarios": [
+                                    {
+                                        "lang": "en",
+                                        "value": "AV:L - The vulnerable code is reached through local platform-driver probe and the local Microchip IPC/IHC interrupt path, not through network packets. A plausible attacker would need local control of the affected platform/IPC peer or firmware configuration to trigger the bad hart/IRQ condition.\nAC:L - The bug is a direct non-contiguous hart ID versus CPU index mismatch with no race or timing requirement. Such hart mappings are plausible for this Microchip RISC-V platform, so triggering does not depend on conditions outside the attacker's control once the affected path is reachable.\nPR:N - The vulnerable probe and IRQ handler perform no Linux credential, capability, or authentication checks. An attacker able to drive the local IPC peer/firmware-triggered path does not need privileges inside the vulnerable Linux instance.\nUI:N - No victim action is required after the affected platform path is reachable. Probe-time setup or an IPC interrupt can hit the vulnerable access automatically.\nS:U - The corruption occurs in the Linux kernel driver and impacts the same kernel security authority. There is no VM escape, IOMMU bypass, or cross-authority boundary shown.\nC:H - The out-of-bounds index can read adjacent kernel memory/pointer fields and feed invalid buffer addresses into the SBI status path. Conservatively, this kernel OOB access can expose sensitive memory.\nI:H - The vulnerable probe path writes `irq`, `buf_base`, and `buf_base_addr` through an out-of-bounds `cluster_cfg[hartid]` index. This is kernel heap memory corruption and can plausibly be leveraged for control-flow or data integrity compromise.\nA:H - The same out-of-bounds access can corrupt kernel memory or dereference/copy through invalid pointers in interrupt context. A kernel oops, panic, or boot-time failure is a high availability impact."
+                                    }
+                                ]
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/mailbox/mailbox-mchp-ipc-sbi.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "e4b1d67e71419c4af581890ecea84b04920d4116",
+                                        "lessThan": "95438699c92947155823dcd3918049a07f3cd867",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e4b1d67e71419c4af581890ecea84b04920d4116",
+                                        "lessThan": "0442b6229e2eedc95a6d3d18ce75dec7f5b5377c",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e4b1d67e71419c4af581890ecea84b04920d4116",
+                                        "lessThan": "f7c330a8c83c9b0332fd524097eaf3e69148164d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/mailbox/mailbox-mchp-ipc-sbi.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.14",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.14",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.16",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.19.6",
+                                        "lessThanOrEqual": "6.19.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.0",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.14",
+                                                "versionEndExcluding": "6.18.16"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.14",
+                                                "versionEndExcluding": "6.19.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.14",
+                                                "versionEndExcluding": "7.0"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/95438699c92947155823dcd3918049a07f3cd867"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/0442b6229e2eedc95a6d3d18ce75dec7f5b5377c"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/f7c330a8c83c9b0332fd524097eaf3e69148164d"
+                            }
+                        ],
+                        "title": "mailbox: mchp-ipc-sbi: fix out-of-bounds access in mchp_ipc_get_cluster_aggr_irq()",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-06T04:47:56.073383"
+        },
+        {
+            "cve_id": "CVE-2024-53125",
+            "category": "Linux Kernel",
+            "summary": "Linux内核BPF验证器在范围传播时未保留子寄存器定义标记，导致在开启BPF_F_TEST_RND_HI32标志时可能错误生成随机高位值，影响需要零扩展的RISC-V等架构，造成寄存器高位信息泄露。",
+            "key_points": [
+                "sync_linked_regs()在范围传播时错误覆盖了子寄存器定义(subreg_def)标记",
+                "当BPF_F_TEST_RND_HI32标志设置时，验证器为w寄存器插入随机高位值，但缺失零扩展标记导致寄存器高位未被正确清除",
+                "攻击者可能利用该漏洞通过精心构造的BPF程序泄露内核栈上的随机数据，影响RISC-V等需要零扩展的架构"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "在BPF验证器的sync_linked_regs()函数中，范围传播逻辑未保留寄存器状态的子寄存器定义(subreg_def)标记。当w寄存器（32位）被标记为子寄存器且其值被范围传播重写后，subreg_def丢失，导致mark_insn_zext()无法识别需要零扩展。在BPF_F_TEST_RND_HI32标志下，验证器为32位操作的高32位插入随机值，若零扩展缺失，这些随机值将污染后续的64位读取，可能造成信息泄露。对于RISC-V等强制要求32位运算零扩展高位架构，该漏洞会导致错误代码生成。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2024-53125",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2024-11-19T17:17:24.995Z",
+                    "datePublished": "2024-12-04T14:11:09.326Z",
+                    "dateUpdated": "2026-08-05T11:43:55.135Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-05T11:43:55.135Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: sync_linked_regs() must preserve subreg_def\n\nRange propagation must not affect subreg_def marks, otherwise the\nfollowing example is rewritten by verifier incorrectly when\nBPF_F_TEST_RND_HI32 flag is set:\n\n  0: call bpf_ktime_get_ns                   call bpf_ktime_get_ns\n  1: r0 &= 0x7fffffff       after verifier   r0 &= 0x7fffffff\n  2: w1 = w0                rewrites         w1 = w0\n  3: if w0 < 10 goto +0     -------------->  r11 = 0x2f5674a6     (r)\n  4: r1 >>= 32                               r11 <<= 32           (r)\n  5: r0 = r1                                 r1 |= r11            (r)\n  6: exit;                                   if w0 < 0xa goto pc+0\n                                             r1 >>= 32\n                                             r0 = r1\n                                             exit\n\n(or zero extension of w1 at (2) is missing for architectures that\n require zero extension for upper register half).\n\nThe following happens w/o this patch:\n- r0 is marked as not a subreg at (0);\n- w1 is marked as subreg at (2);\n- w1 subreg_def is overridden at (3) by copy_register_state();\n- w1 is read at (5) but mark_insn_zext() does not mark (2)\n  for zero extension, because w1 subreg_def is not set;\n- because of BPF_F_TEST_RND_HI32 flag verifier inserts random\n  value for hi32 bits of (2) (marked (r));\n- this random value is read at (5)."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 7.8,
+                                    "baseSeverity": "HIGH"
+                                },
+                                "scenarios": [
+                                    {
+                                        "lang": "en",
+                                        "value": "AV:L - The flaw is in the BPF verifier and is reached only by loading a crafted eBPF program through the local `bpf(BPF_PROG_LOAD)` syscall. There is no remote or adjacent path to `check_cond_jmp_op()`/`sync_linked_regs()`.\nAC:L - The attacker authors the entire BPF instruction sequence, so the register-linking, conditional jump, and the stale upper-32-bit value are fully deterministic and under their control. On the affected architectures (ppc64, s390x, riscv, sparc64, mips, arm32, parisc, x86-32 — all major deployment targets from cloud mainframes to embedded/automotive) the missing zero-extension is emitted reliably on every run.\nPR:L - An unprivileged local user can load BPF_PROG_TYPE_SOCKET_FILTER/CGROUP_SKB programs whenever `kernel.unprivileged_bpf_disabled=0`, and container users can load programs via delegated BPF tokens; otherwise only CAP_BPF, not real root, is needed. No administrative privilege in the init namespace is required.\nUI:N - The attacker loads and runs their own BPF program end-to-end; no action by any other user or administrator is involved.\nS:U - The corruption stays within the kernel's own security authority — it is a standard local privilege-escalation primitive with no VM, IOMMU, or sandbox boundary crossed.\nC:H - The verifier believes the register is zero-extended and range-bounded while at runtime its upper 32 bits hold an attacker-supplied value, so bounds checks on map-value/stack accesses are bypassed with an attacker-chosen 64-bit displacement, yielding arbitrary kernel memory disclosure.\nI:H - The same verifier/runtime divergence permits out-of-bounds *writes* at an attacker-controlled offset, providing an arbitrary kernel write primitive suitable for control-flow hijacking and privilege escalation.\nA:H - Out-of-bounds accesses at an unbounded attacker-controlled offset trivially fault on unmapped or protected kernel memory, causing an oops or panic; the incorrectly JITed program also executes with garbage register state."
+                                    }
+                                ]
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "kernel/bpf/verifier.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "75748837b7e56919679e02163f45d5818c644d03",
+                                        "lessThan": "dadf82c1b2608727bcc306843b540cd7414055a7",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "75748837b7e56919679e02163f45d5818c644d03",
+                                        "lessThan": "b57ac2d92c1f565743f6890a5b9cf317ed856b09",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "75748837b7e56919679e02163f45d5818c644d03",
+                                        "lessThan": "60fd3538d2a8fd44c41d25088c0ece3e1fd30659",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "75748837b7e56919679e02163f45d5818c644d03",
+                                        "lessThan": "bfe9446ea1d95f6cb7848da19dfd58d2eec6fd84",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "75748837b7e56919679e02163f45d5818c644d03",
+                                        "lessThan": "e2ef0f317a52e678fe8fa84b94d6a15b466d6ff0",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "75748837b7e56919679e02163f45d5818c644d03",
+                                        "lessThan": "e9bd9c498cb0f5843996dbe5cbce7a1836a83c70",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "kernel/bpf/verifier.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.10",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.10",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "5.10.232",
+                                        "lessThanOrEqual": "5.10.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "5.15.175",
+                                        "lessThanOrEqual": "5.15.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.1.121",
+                                        "lessThanOrEqual": "6.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.6.67",
+                                        "lessThanOrEqual": "6.6.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.11.6",
+                                        "lessThanOrEqual": "6.11.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.10",
+                                                "versionEndExcluding": "5.10.232"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.10",
+                                                "versionEndExcluding": "5.15.175"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.10",
+                                                "versionEndExcluding": "6.1.121"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.10",
+                                                "versionEndExcluding": "6.6.67"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.10",
+                                                "versionEndExcluding": "6.11.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.10",
+                                                "versionEndExcluding": "6.12"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/dadf82c1b2608727bcc306843b540cd7414055a7"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/b57ac2d92c1f565743f6890a5b9cf317ed856b09"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/60fd3538d2a8fd44c41d25088c0ece3e1fd30659"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/bfe9446ea1d95f6cb7848da19dfd58d2eec6fd84"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/e2ef0f317a52e678fe8fa84b94d6a15b466d6ff0"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/e9bd9c498cb0f5843996dbe5cbce7a1836a83c70"
+                            }
+                        ],
+                        "title": "bpf: sync_linked_regs() must preserve subreg_def",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    },
+                    "adp": [
+                        {
+                            "title": "CVE Program Container",
+                            "references": [
+                                {
+                                    "url": "https://lists.debian.org/debian-lts-announce/2025/03/msg00001.html"
+                                },
+                                {
+                                    "url": "https://lists.debian.org/debian-lts-announce/2025/03/msg00002.html"
+                                }
+                            ],
+                            "providerMetadata": {
+                                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                                "shortName": "CVE",
+                                "dateUpdated": "2025-11-03T20:46:07.020Z"
+                            }
+                        }
+                    ]
+                }
+            },
+            "classification_timestamp": "2026-08-06T04:48:11.560657"
         }
     ]
 }
