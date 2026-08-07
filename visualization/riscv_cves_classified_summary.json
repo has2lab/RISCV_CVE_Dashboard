@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 130,
-        "classification_date": "2026-08-06T04:48:12.560824",
+        "total_cves": 131,
+        "classification_date": "2026-08-07T04:13:39.727381",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 130,
-        "successful": 130,
+        "total_processed": 131,
+        "successful": 131,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 25,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 84,
+            "Linux Kernel": 85,
             "Simulator": 7,
             "RISC-V Development Tools": 5,
             "Device-Specific Firmware & Applications": 5,
@@ -1732,6 +1732,19 @@
             "severity_assessment": "Medium",
             "technical_details": "在BPF验证器的sync_linked_regs()函数中，范围传播逻辑未保留寄存器状态的子寄存器定义(subreg_def)标记。当w寄存器（32位）被标记为子寄存器且其值被范围传播重写后，subreg_def丢失，导致mark_insn_zext()无法识别需要零扩展。在BPF_F_TEST_RND_HI32标志下，验证器为32位操作的高32位插入随机值，若零扩展缺失，这些随机值将污染后续的64位读取，可能造成信息泄露。对于RISC-V等强制要求32位运算零扩展高位架构，该漏洞会导致错误代码生成。",
             "classification_timestamp": "2026-08-06T04:48:11.560657"
+        },
+        {
+            "cve_id": "CVE-2026-64592",
+            "category": "Linux Kernel",
+            "summary": "RISC-V的Svvptc扩展不保证页表项更新后的立即一致性，若在虚假页错误处理中省略sfence.vma指令直接返回，可能导致再次触发错误并引发系统崩溃。修复通过无条件执行sfence.vma强制同步，牺牲少许性能以确保可靠性。",
+            "key_points": [
+                "RISC-V Svvptc扩展不提供页面属性更新后的即时一致性保证，存在不确定的生效延迟。",
+                "在虚假页错误（spurious fault）处理中，内核清除已访问位后若直接sret返回，硬件可能仍未使页面变为有效，导致再次错误并可能崩溃。",
+                "无条件插入sfence.vma屏障指令，强制刷新TLB和页表缓存，消除竞态条件，即使增加性能开销。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞涉及Linux内核RISC-V架构的内存管理模块。当发生虚假页错误（硬件已设置访问位但仍产生的错误）时，原处理流程可能仅清除访问位后即返回用户空间，未执行sfence.vma同步指令。但根据Svvptc（Supervisor Virtual Memory Page Table Coherence）扩展定义，硬件更新页表项后存在一个有限但非零的生效时间窗口，若在该窗口内异常返回，后续内存访问可能因页表项未完全生效而再次触发错误，导致系统崩溃。修复方案将原本的条件执行改为无条件执行sfence.vma，确保在清除访问位后彻底刷新本地TLB和页表缓存，从而避免因一致性延迟引发的二次故障。尽管这会对性能产生轻微影响，但鉴于虚假错误本身较为罕见，此开销被认为是可接受的。",
+            "classification_timestamp": "2026-08-07T04:13:38.727185"
         }
     ]
 }
