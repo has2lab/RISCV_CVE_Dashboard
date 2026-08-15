@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 131,
-        "classification_date": "2026-08-07T04:13:39.727381",
+        "total_cves": 132,
+        "classification_date": "2026-08-15T02:36:19.187256",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 131,
-        "successful": 131,
+        "total_processed": 132,
+        "successful": 132,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -25,7 +25,7 @@
             "RISC-V Instruction Set Manual": 1,
             "Linux Kernel": 85,
             "Simulator": 7,
-            "RISC-V Development Tools": 5,
+            "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
             "Other": 3
         }
@@ -23650,6 +23650,131 @@
                 }
             },
             "classification_timestamp": "2026-08-07T04:13:38.727185"
+        },
+        {
+            "cve_id": "CVE-2026-49282",
+            "category": "RISC-V Development Tools",
+            "summary": "Capstone 反汇编框架在 6.0.0-Alpha9 之前，公共 API cs_insn_name() 将调用者提供的指令 ID 直接传给后端；M68K 和 RISC-V 后端缺少或不完整的边界检查，攻击者控制的非法指令 ID 可导致越界读取和进程崩溃。该漏洞主要影响可用性，未证实代码执行或数据泄露，已在 6.0.0-Alpha9 修复。",
+            "key_points": [
+                "受影响组件：capstone-engine capstone，版本早于 6.0.0-Alpha9",
+                "根因：cs_insn_name() 对调用者提供的指令 ID 缺少充分校验，M68K 和 RISCV 后端边界检查缺失或不完整",
+                "影响：攻击者构造非法指令 ID 可触发越界读取并导致进程崩溃，造成拒绝服务",
+                "修复：Capstone 6.0.0-Alpha9 已修复该问题"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "在 Capstone 的 cs_insn_name() API 中，传入的指令 ID 被直接转发给所选架构后端。多数后端会先验证 ID 再索引指令名称表，但 M68K 和 RISCV 后端缺少或仅有不完整的上界检查。在打开 M68K 或 RISCV 架构的 Capstone 句柄上，攻击者可控的无效指令 ID 会导致数组越界读取，进而使进程崩溃。该问题未证明可导致代码执行或数据泄露，主要造成可用性丧失。修复版本 6.0.0-Alpha9 为相关后端增加了边界检查。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-49282",
+                    "assignerOrgId": "a0819718-46f1-4df5-94e2-005712e83aaa",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "GitHub_M",
+                    "dateReserved": "2026-05-28T20:07:58.861Z",
+                    "datePublished": "2026-08-14T17:44:44.818Z",
+                    "dateUpdated": "2026-08-14T17:44:44.818Z"
+                },
+                "containers": {
+                    "cna": {
+                        "title": "Capstone M68K and RISCV `cs_insn_name()` invalid IDs can trigger out-of-bounds reads and process crashes",
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-125",
+                                        "lang": "en",
+                                        "description": "CWE-125: Out-of-bounds Read",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            },
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-129",
+                                        "lang": "en",
+                                        "description": "CWE-129: Improper Validation of Array Index",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            },
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-191",
+                                        "lang": "en",
+                                        "description": "CWE-191: Integer Underflow (Wrap or Wraparound)",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "attackComplexity": "LOW",
+                                    "attackVector": "LOCAL",
+                                    "availabilityImpact": "LOW",
+                                    "baseScore": 5.1,
+                                    "baseSeverity": "MEDIUM",
+                                    "confidentialityImpact": "LOW",
+                                    "integrityImpact": "NONE",
+                                    "privilegesRequired": "NONE",
+                                    "scope": "UNCHANGED",
+                                    "userInteraction": "NONE",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:L",
+                                    "version": "3.1"
+                                }
+                            }
+                        ],
+                        "references": [
+                            {
+                                "name": "https://github.com/capstone-engine/capstone/security/advisories/GHSA-jrw4-wj52-2vw8",
+                                "tags": [
+                                    "x_refsource_CONFIRM"
+                                ],
+                                "url": "https://github.com/capstone-engine/capstone/security/advisories/GHSA-jrw4-wj52-2vw8"
+                            },
+                            {
+                                "name": "https://github.com/capstone-engine/capstone/blob/251c5bb4bc9bb92973e738ae3c5f4ef86f103356/ChangeLog#L102",
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/capstone-engine/capstone/blob/251c5bb4bc9bb92973e738ae3c5f4ef86f103356/ChangeLog#L102"
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "capstone-engine",
+                                "product": "capstone",
+                                "versions": [
+                                    {
+                                        "version": "< 6.0.0-Alpha9",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "orgId": "a0819718-46f1-4df5-94e2-005712e83aaa",
+                            "shortName": "GitHub_M",
+                            "dateUpdated": "2026-08-14T17:44:44.818Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "Capstone is a disassembly framework. Prior to version 6.0.0-Alpha9, Capstone's public `cs_insn_name()` API forwards caller-supplied instruction IDs directly to the selected architecture backend. Most backends validate the ID before indexing instruction-name tables, but the M68K and RISCV backends have missing or incomplete bounds checks. On a Capstone handle opened for M68K or RISCV, a caller-controlled invalid instruction ID can trigger an out-of-bounds read and crash the process. The demonstrated impact is availability loss in applications or bindings that expose instruction-name lookup to untrusted IDs. No code execution or data disclosure was demonstrated. Version 6.0.0-Alpha9 patches the issue."
+                            }
+                        ],
+                        "source": {
+                            "advisory": "GHSA-jrw4-wj52-2vw8",
+                            "discovery": "UNKNOWN"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-15T02:36:18.187079"
         }
     ]
 }
