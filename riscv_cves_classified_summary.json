@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 132,
-        "classification_date": "2026-08-15T02:36:19.187256",
+        "total_cves": 138,
+        "classification_date": "2026-08-16T02:47:48.722010",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 132,
-        "successful": 132,
+        "total_processed": 138,
+        "successful": 138,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 25,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 85,
+            "Linux Kernel": 91,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -1759,6 +1759,85 @@
             "severity_assessment": "Medium",
             "technical_details": "在 Capstone 的 cs_insn_name() API 中，传入的指令 ID 被直接转发给所选架构后端。多数后端会先验证 ID 再索引指令名称表，但 M68K 和 RISCV 后端缺少或仅有不完整的上界检查。在打开 M68K 或 RISCV 架构的 Capstone 句柄上，攻击者可控的无效指令 ID 会导致数组越界读取，进而使进程崩溃。该问题未证明可导致代码执行或数据泄露，主要造成可用性丧失。修复版本 6.0.0-Alpha9 为相关后端增加了边界检查。",
             "classification_timestamp": "2026-08-15T02:36:18.187079"
+        },
+        {
+            "cve_id": "CVE-2026-72179",
+            "category": "Linux Kernel",
+            "summary": "CVE-2026-72179 是 Linux 内核 RISC-V cacheinfo 驱动中的设备树节点引用计数泄漏漏洞。populate_cache_leaves() 在解析 CPU 缓存节点时，当循环因 np == NULL 正常退出时未释放最后一个有效节点 prev 的引用，可造成内存泄漏。修复方法是将最后的 of_node_put(np) 改为 of_node_put(prev)。",
+            "key_points": [
+                "漏洞位于 arch/riscv/kernel/cacheinfo.c 的 populate_cache_leaves() 函数。",
+                "循环每次迭代会释放 prev 的引用，但当 np 最终为 NULL 正常退出时，最后的 of_node_put(np) 不生效，导致 prev 节点引用泄漏。",
+                "修复将函数末尾的 of_node_put(np) 替换为 of_node_put(prev)，确保最后一个有效节点被正确释放。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "该函数遍历 CPU 设备树缓存节点：np 表示下一个节点，prev 保存当前有效节点。循环正常结束时 np == NULL，循环体不会再次执行来释放 prev；原先末尾的 of_node_put(np) 因参数为 NULL 而成为空操作，因此 prev 的引用被泄漏。若循环通过 break 提前退出，np 仍指向当前节点，且 prev 与 np 相同，原来的 of_node_put(np) 可正确释放。改为 of_node_put(prev) 后，正常结束和提前退出都能释放最后的有效节点。",
+            "classification_timestamp": "2026-08-16T02:45:38.170362"
+        },
+        {
+            "cve_id": "CVE-2026-72028",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核 RISC-V 架构的 rethook 蹦床处理代码中：arch_rethook_trampoline 未将原始栈指针 sp 保存到 pt_regs，导致 kretprobe 读取栈参数时使用任意 sp 值并访问非法地址，造成内核崩溃。修复使用 a0 作为临时寄存器保存原始 sp，避免 regs->sp 被污染。",
+            "key_points": [
+                "arch_rethook_trampoline 在保存被探测函数寄存器时未保存原始 sp，只对 sp 做局部栈偏移。",
+                "启用 kretprobe 并抓取 $stack0 时，process_fetch_insn -> regs_get_kernel_stack_nth 会使用 pt_regs 中的任意 sp 访问栈，触发内核 paging request 崩溃。",
+                "修复使用 a0 临时寄存器保存原始 sp，并补充 Fixes 标签、合入稳定分支。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "在 RISC-V 架构的 arch_rethook_trampoline 中，被探测函数的寄存器被保存到 struct pt_regs，但 sp 未被保存，只被递减以分配 trampoline 局部栈空间。当通过 /sys/kernel/tracing/ 执行 echo 'r n_tty_write $stack0' > dynamic_events 并启用 kprobe 后，kretprobe_trace_func 调用 process_fetch_insn 来获取栈参数，最终调用 regs_get_kernel_stack_nth。由于 regs->sp 是任意值，访问 0000000200000128 等非法地址，导致 Unable to handle kernel paging request 崩溃。修复将原始 sp 保存到 pt_regs，并使用 a0 作为临时寄存器（该寄存器本身会被覆盖），避免 kretprobe 栈读取错误。",
+            "classification_timestamp": "2026-08-16T02:46:05.696001"
+        },
+        {
+            "cve_id": "CVE-2026-72026",
+            "category": "Linux Kernel",
+            "summary": "本漏洞是 Linux 内核 RISC-V IMSIC 早期 ACPI 初始化路径中的固件节点泄漏：imsic_early_acpi_init() 分配 fwnode 后，如果 imsic_setup_state() 设置中断控制器状态失败，函数会直接返回而不释放该节点。补丁在错误路径上释放 fwnode 并清空全局指针，与 imsic_early_probe() 失败时的清理保持一致。",
+            "key_points": [
+                "漏洞位于 irqchip/irq-riscv-imsic-early.c 的 imsic_early_acpi_init() 函数中。",
+                "当 imsic_setup_state() 失败时，已分配的 fwnode 未被释放，全局指针也未清空。",
+                "修复采用统一清理路径，释放 fwnode 并清空全局指针，避免资源泄漏。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "该缺陷位于 drivers/irqchip/irq-riscv-imsic-early.c。imsic_early_acpi_init() 在调用 imsic_setup_state() 之前分配固件节点；若 imsic_setup_state() 返回错误，原函数直接返回，导致已分配 fwnode 的引用计数泄漏，相关全局指针仍指向已泄漏对象。修复通过统一 cleanup 标签，在错误路径调用 fwnode_handle_put() 释放引用并将全局指针置空，与 imsic_early_probe() 失败时的清理逻辑一致。该问题仅在早期 ACPI 初始化失败路径触发，通常不可由远程攻击者控制，实际影响为资源泄漏和潜在的后续初始化异常，严重程度较低。",
+            "classification_timestamp": "2026-08-16T02:46:23.740663"
+        },
+        {
+            "cve_id": "CVE-2026-72013",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核 RISC-V 架构的 kexec 实现中，machine_kexec_prepare() 在复制 kexec 段缓冲区时未检查 image->segment[i].buf 是否为 NULL，可能导致空指针解引用。恶意或异常构造的 kexec_file_load 流程可触发内核崩溃。",
+            "key_points": [
+                "漏洞函数为 RISC-V 架构的 machine_kexec_prepare()，在 memcpy 前缺少对 segment->buf 的 NULL 检查。",
+                "NULL 缓冲区可来自 ima_add_kexec_buffer()，其中 kexec_add_buffer() 可能添加 buffer 为 NULL 的 kbuf，随后被无条件复制。",
+                "修复方式是在数据复制前增加对 buf 是否为 NULL 的判断，避免空指针解引用。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "触发路径为：kexec_file_load -> kimage_file_alloc_init() -> kimage_file_prepare_segments() -> ima_add_kexec_buffer() -> kexec_add_buffer() -> machine_kexec_prepare() -> memcpy()。由于 ima_add_kexec_buffer() 添加的 kbuf.buffer 可能为 NULL，而 RISC-V 的 machine_kexec_prepare() 未验证 segment[i].buf 就直接执行 memcpy，导致从空指针源地址复制数据，引发内核 Oops/崩溃。该问题需要较高权限调用 kexec_file_load，因此主要造成本地拒绝服务风险。",
+            "classification_timestamp": "2026-08-16T02:46:39.923165"
+        },
+        {
+            "cve_id": "CVE-2026-74524",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V内存热移除路径中存在页表遍历越界漏洞。由于RISC-V运行时折叠页表级别，remove_pud_mapping()/remove_p4d_mapping()在获取子表基址时先以索引0解析，再叠加实际索引，当P4D/PUD被折叠时会越过父级页表。这可能使内存热移除将无效页面传入__free_pages()，触发内核BUG或导致内存损坏。",
+            "key_points": [
+                "remove_pud_mapping()和remove_p4d_mapping()使用pud_offset(p4dp,0)/p4d_offset(pgd,0)获取子表基址后直接加上地址索引，未考虑RISC-V页表级别折叠。",
+                "Sv48折叠P4D，Sv39折叠P4D和PUD；折叠时偏移辅助函数返回父项自身，非零索引会指向父表之外的内存。",
+                "内存热移除可因此遍历到无关内存并向__free_pages()传入无效页面，触发VM_BUG_ON_PAGE(page_ref_count(page)==0)等内核BUG。",
+                "修复要点：仅在对应页表级别启用时才添加索引，与p4d_offset()/pud_offset()语义一致。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "Linux内核RISC-V内存热移除路径中存在越界页表遍历：remove_pud_mapping()和remove_p4d_mapping()需要根据地址定位下一级页表。原代码先通过pud_offset(p4dp,0)/p4d_offset(pgd,0)获得子表基地址，然后将地址对应的索引加在基地址上。RISC-V支持运行时折叠页表级别：Sv48将P4D折叠，Sv39将P4D和PUD折叠。折叠时offset辅助函数返回父表项本身，但索引仍可能不为零，直接相加会越过父表边界并解引用无关内存。因此内存热移除可能读取或操作错误页面，并把无效page传给__free_pages()。若启用CONFIG_DEBUG_VM，会触发VM_BUG_ON_PAGE(page_ref_count(page)==0)；否则可导致错误释放、内存状态被破坏，甚至内核崩溃。修复方案是只有当对应页表级别实际启用时才累加索引，与p4d_offset()/pud_offset()的折叠处理保持一致。利用条件通常需要具备内存热移除权限（如root），但错误释放造成的内存破坏影响较高。",
+            "classification_timestamp": "2026-08-16T02:47:28.005553"
+        },
+        {
+            "cve_id": "CVE-2026-72341",
+            "category": "Linux Kernel",
+            "summary": "Linux 内核 mlx5e 驱动在发布 channel_stats 数组条目时，先写入数组元素再递增 stats_nch 作为发布标记，但缺少内存屏障；在 RISC-V、ARM、PowerPC 等弱内存序架构上，读者可能看到新的 stats_nch 却仍读到 NULL 的 channel_stats 条目，导致内核空指针解引用。修复通过 smp_store_release/smp_load_acquire 封装 stats_nch 的读写，建立正确的发布/获取同步。",
+            "key_points": [
+                "写者 mlx5e_channel_stats_alloc() 先设置 priv->channel_stats[ix]，随后递增 priv->stats_nch，但两个写操作均无内存屏障。",
+                "读者以 priv->stats_nch 作为循环上界，并直接用普通访问读取 priv->channel_stats[i]，在弱内存序 CPU 上可能观察到新 stats_nch 但 channel_stats 对应条目仍为 NULL。",
+                "修复在 en.h 中新增 mlx5e_stats_nch_write()/mlx5e_stats_nch_read()，使用 smp_store_release() 和 smp_load_acquire() 保证 stats_nch==N 时 channel_stats[0..N-1] 可见且非空。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞存在于 net/mlx5e 驱动的统计通道发布路径。发布方先写入 priv->channel_stats[ix]，再通过 priv->stats_nch++ 发布，但二者缺少 release/acquire 语义；读取方先读取 stats_nch 作为循环边界，再直接访问 channel_stats 数组。在 RISC-V 等弱一致性架构下，CPU 可乱序观察这些存储，导致 stats_nch 已被更新而 channel_stats[N-1] 仍为 NULL，引发内核空指针解引用崩溃。修复对所有 stats_nch 读者使用 smp_load_acquire()，写者使用 smp_store_release()，涉及 mlx5e RX/TX 队列统计、mlx5e_get_base_stats、ethtool 通道统计、IPoIB 统计、sw_stats 汇总以及 HV VHCA stats agent 等路径。该问题已在 BlueField-3 arm64 DPU 上被实际触发，ovs-vswitchd 在网卡 bringup 期间通过 netlink 查询 netdev 统计，与 mlx5e_open_channel() 竞争导致崩溃。",
+            "classification_timestamp": "2026-08-16T02:47:47.721848"
         }
     ]
 }
