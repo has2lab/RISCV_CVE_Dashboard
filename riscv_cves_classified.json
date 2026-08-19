@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 138,
-        "classification_date": "2026-08-16T02:47:48.722010",
+        "total_cves": 139,
+        "classification_date": "2026-08-19T02:42:00.172623",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,12 +16,12 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 138,
-        "successful": 138,
+        "total_processed": 139,
+        "successful": 139,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
-            "RISC-V CPU/SoC": 25,
+            "RISC-V CPU/SoC": 26,
             "RISC-V Instruction Set Manual": 1,
             "Linux Kernel": 91,
             "Simulator": 7,
@@ -24989,6 +24989,81 @@
                 }
             },
             "classification_timestamp": "2026-08-16T02:47:47.721848"
+        },
+        {
+            "cve_id": "CVE-2026-67846",
+            "category": "RISC-V CPU/SoC",
+            "summary": "该漏洞影响 Berkeley Out-of-Order Machine (BOOM) 的 v3/v4 NBDTLB 实现，涉及特权级权限检查缺陷。由于在使用点未对 satp.MODE 有效性进行显式检查，原始 mstatus.SUM 值直接参与读写权限逻辑，可能导致错误的访问权限授予。攻击者可能利用该缺陷绕过 RISC-V 特权隔离机制。",
+            "key_points": [
+                "受影响组件为 BOOM 处理器的 v3 和 v4 NBDTLB（非阻塞数据 TLB）实现。",
+                "mstatus.SUM 位被直接用于读写权限判断，但未检查 satp.MODE 是否处于有效地址翻译模式。",
+                "该缺陷可能导致在 Bare 模式或非 S 模式下错误地放宽或收紧访问权限，破坏特权级隔离。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在 BOOM v3/v4 NBDTLB 中，mstatus.SUM 位（允许 S 模式访问用户页）被作为读写权限逻辑的直接输入。RISC-V 规范规定 SUM 仅在特定地址翻译模式（如 Sv39/Sv48）且当前处于 S 模式时才有意义；当 satp.MODE 为 Bare 或当前处于 M/HS 等非 S 模式时，SUM 不应影响权限判断。然而该实现未在使用点显式检查 satp.MODE 的有效性，导致原始的 mstatus.SUM 值可能在无效上下文中参与权限计算，从而产生错误的特权赋值，存在权限提升或访问控制绕过的风险。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "cveMetadata": {
+                    "state": "PUBLISHED",
+                    "cveId": "CVE-2026-67846",
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "dateUpdated": "2026-08-18T17:53:40.822Z",
+                    "dateReserved": "2026-07-30T00:00:00.000Z",
+                    "datePublished": "2026-08-18T00:00:00.000Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre",
+                            "dateUpdated": "2026-08-18T17:53:40.822Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "Berkeley Out-of-Order Machine (BOOM) commit 5223e44cfeb26f41380057a2eb4d651197475f69 contains a potential incorrect privilege assignment issue in the v3 and v4 NBDTLB implementations. The raw mstatus.SUM value participates in the read and write permission logic without an explicit local satp.MODE validity check at the use site"
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "n/a",
+                                "product": "n/a",
+                                "versions": [
+                                    {
+                                        "version": "n/a",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://github.com/riscv-boom/riscv-boom"
+                            },
+                            {
+                                "url": "https://github.com/riscv-boom/riscv-boom/commit/5223e44cfeb26f41380057a2eb4d651197475f69"
+                            },
+                            {
+                                "url": "https://github.com/duan528/CVE-2026-67846-BOOM-NBDTLB"
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "type": "text",
+                                        "lang": "en",
+                                        "description": "n/a"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "dataVersion": "5.2"
+            },
+            "classification_timestamp": "2026-08-19T02:41:59.172430"
         }
     ]
 }

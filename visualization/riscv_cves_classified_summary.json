@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 138,
-        "classification_date": "2026-08-16T02:47:48.722010",
+        "total_cves": 139,
+        "classification_date": "2026-08-19T02:42:00.172623",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,12 +16,12 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 138,
-        "successful": 138,
+        "total_processed": 139,
+        "successful": 139,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
-            "RISC-V CPU/SoC": 25,
+            "RISC-V CPU/SoC": 26,
             "RISC-V Instruction Set Manual": 1,
             "Linux Kernel": 91,
             "Simulator": 7,
@@ -1838,6 +1838,19 @@
             "severity_assessment": "High",
             "technical_details": "该漏洞存在于 net/mlx5e 驱动的统计通道发布路径。发布方先写入 priv->channel_stats[ix]，再通过 priv->stats_nch++ 发布，但二者缺少 release/acquire 语义；读取方先读取 stats_nch 作为循环边界，再直接访问 channel_stats 数组。在 RISC-V 等弱一致性架构下，CPU 可乱序观察这些存储，导致 stats_nch 已被更新而 channel_stats[N-1] 仍为 NULL，引发内核空指针解引用崩溃。修复对所有 stats_nch 读者使用 smp_load_acquire()，写者使用 smp_store_release()，涉及 mlx5e RX/TX 队列统计、mlx5e_get_base_stats、ethtool 通道统计、IPoIB 统计、sw_stats 汇总以及 HV VHCA stats agent 等路径。该问题已在 BlueField-3 arm64 DPU 上被实际触发，ovs-vswitchd 在网卡 bringup 期间通过 netlink 查询 netdev 统计，与 mlx5e_open_channel() 竞争导致崩溃。",
             "classification_timestamp": "2026-08-16T02:47:47.721848"
+        },
+        {
+            "cve_id": "CVE-2026-67846",
+            "category": "RISC-V CPU/SoC",
+            "summary": "该漏洞影响 Berkeley Out-of-Order Machine (BOOM) 的 v3/v4 NBDTLB 实现，涉及特权级权限检查缺陷。由于在使用点未对 satp.MODE 有效性进行显式检查，原始 mstatus.SUM 值直接参与读写权限逻辑，可能导致错误的访问权限授予。攻击者可能利用该缺陷绕过 RISC-V 特权隔离机制。",
+            "key_points": [
+                "受影响组件为 BOOM 处理器的 v3 和 v4 NBDTLB（非阻塞数据 TLB）实现。",
+                "mstatus.SUM 位被直接用于读写权限判断，但未检查 satp.MODE 是否处于有效地址翻译模式。",
+                "该缺陷可能导致在 Bare 模式或非 S 模式下错误地放宽或收紧访问权限，破坏特权级隔离。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在 BOOM v3/v4 NBDTLB 中，mstatus.SUM 位（允许 S 模式访问用户页）被作为读写权限逻辑的直接输入。RISC-V 规范规定 SUM 仅在特定地址翻译模式（如 Sv39/Sv48）且当前处于 S 模式时才有意义；当 satp.MODE 为 Bare 或当前处于 M/HS 等非 S 模式时，SUM 不应影响权限判断。然而该实现未在使用点显式检查 satp.MODE 的有效性，导致原始的 mstatus.SUM 值可能在无效上下文中参与权限计算，从而产生错误的特权赋值，存在权限提升或访问控制绕过的风险。",
+            "classification_timestamp": "2026-08-19T02:41:59.172430"
         }
     ]
 }
