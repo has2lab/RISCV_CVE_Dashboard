@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 139,
-        "classification_date": "2026-08-19T02:42:00.172623",
+        "total_cves": 140,
+        "classification_date": "2026-08-20T02:41:11.252634",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,12 +16,12 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 139,
-        "successful": 139,
+        "total_processed": 140,
+        "successful": 140,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
-            "RISC-V CPU/SoC": 26,
+            "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
             "Linux Kernel": 91,
             "Simulator": 7,
@@ -25064,6 +25064,84 @@
                 "dataVersion": "5.2"
             },
             "classification_timestamp": "2026-08-19T02:41:59.172430"
+        },
+        {
+            "cve_id": "CVE-2026-71694",
+            "category": "RISC-V CPU/SoC",
+            "summary": "该漏洞位于 Berkeley BOOM/BoomTile RTL v1.2 的 CSR 陷阱返回状态恢复逻辑中，涉及 MRET 处理与 mstatus.MPRV 更新路径。攻击者可通过构造恶意 CSR 状态或陷阱返回序列破坏特权级边界，导致任意代码执行。受影响组件为 ProcessorFuzz BOOM 基准中的 SmallBoomTile_v1.2_state.v，需重点关注 CSRFile 相关状态机。",
+            "key_points": [
+                "漏洞根因：MRET 处理期间 CSR 陷阱返回状态恢复逻辑存在缺陷，导致 mstatus 等关键 CSR 恢复不正确。",
+                "MPRV 路径问题：mstatus.MPRV 可能在返回后仍保留错误值或更新条件有误，使 load/store 使用错误的特权级进行地址翻译与权限检查。",
+                "影响：攻击者可构造特定陷阱返回序列，绕过低特权级与机器模式之间的隔离，最终实现任意代码执行或权限提升。"
+            ],
+            "severity_assessment": "Critical",
+            "technical_details": "SmallBoomTile_v1.2_state.v 中的 CSRFile 逻辑在 MRET 指令执行时会恢复陷阱发生前的处理器状态，包括 mstatus.MPRV 和特权级上下文。如果状态恢复顺序或 MPRV 更新条件存在缺陷，攻击者可以构造一个陷阱返回序列，使处理器在低特权级下仍保持 MPRV=1 或恢复错误的权限上下文。MPRV 用于强制 load/store 以 mstatus.MPP 指定的特权模式执行，一旦被错误更新，用户模式代码可能以机器模式权限访问内存，从而破坏内存隔离并实现任意代码执行。该问题可通过 ProcessorFuzz 生成的特殊 CSR/指令序列触发。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "cveMetadata": {
+                    "state": "PUBLISHED",
+                    "cveId": "CVE-2026-71694",
+                    "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                    "assignerShortName": "mitre",
+                    "dateUpdated": "2026-08-19T13:53:09.559Z",
+                    "dateReserved": "2026-08-07T00:00:00.000Z",
+                    "datePublished": "2026-08-19T00:00:00.000Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+                            "shortName": "mitre",
+                            "dateUpdated": "2026-08-19T13:53:09.559Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "An issue in Berkeley Out-of-Order Machine (BOOM) / BoomTile RTL benchmark v1.2 2d08d0d8b4563212175212f9db0e69f6e68c9619 allows a remote attacker to execute arbitrary code via the CSR trap-return state restoration logic, MRET handling logic, mstatus.MPRV update path, CSRFile logic in ProcessorFuzz BOOM benchmark Benchmarks/Verilog/SmallBoomTile_v1.2_state.v"
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "n/a",
+                                "product": "n/a",
+                                "versions": [
+                                    {
+                                        "version": "n/a",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://github.com/riscv-boom/riscv-boom"
+                            },
+                            {
+                                "url": "https://github.com/bu-icsg/ProcessorFuzz"
+                            },
+                            {
+                                "url": "https://github.com/riscv/riscv-isa-manual"
+                            },
+                            {
+                                "url": "https://github.com/duan528/BOOM-MRET-MPRV-Vulnerability-Report"
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "type": "text",
+                                        "lang": "en",
+                                        "description": "n/a"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "dataVersion": "5.2"
+            },
+            "classification_timestamp": "2026-08-20T02:41:10.252460"
         }
     ]
 }
