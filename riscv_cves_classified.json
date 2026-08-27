@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 140,
-        "classification_date": "2026-08-20T02:41:11.252634",
+        "total_cves": 142,
+        "classification_date": "2026-08-27T11:57:57.038753",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 140,
-        "successful": 140,
+        "total_processed": 142,
+        "successful": 142,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 91,
+            "Linux Kernel": 93,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -25142,6 +25142,277 @@
                 "dataVersion": "5.2"
             },
             "classification_timestamp": "2026-08-20T02:41:10.252460"
+        },
+        {
+            "cve_id": "CVE-2026-74751",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V ZBB优化版strnlen存在越界读取缺陷：循环在边界检查前预取一个机器字，当地址对齐且count为机器字整数倍时可能读取超出count边界。若s+count恰好位于未映射页边界，会触发缺页异常。修复改为以最后一个有效字节计算对齐边界并增加前置保护。",
+            "key_points": [
+                "ZBB优化strnlen的循环顺序是先加载下一个字、再检查对齐边界，导致可能越过count读取。",
+                "当s对齐且count为SZREG整数倍、s+count落在页面边界且下一页未映射时，会触发页错误，造成内核崩溃或拒绝服务。",
+                "修复使用(s+count-1)计算对齐边界，使循环停在包含最后一个有效字节的字，并增加bgeu前置保护。",
+                "最终minu clamp确保返回值仍被限制在count范围内，不会包含超出部分。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于arch/riscv/lib/strnlen.S的ZBB优化路径。原循环体为：REG_L t1, SZREG(t0)（预取下一个字）；addi t0, t0, SZREG；orc.b t1, t1；bgeu t0, t4, 4f（边界检查在加载之后）。其中t4=(s+count)&-SZREG。当s对齐且count为SZREG整数倍时，t4=s+count，循环会加载起始地址正好为s+count的整字。如果s+count为页边界且下一页未映射，该预取加载会触发缺页异常。修复通过将边界从s+count改为由s+count-1推导，使循环停在包含最后一个有效字节的字；同时增加前置保护bgeu t0,t4，处理所有有效字节都在第一个字内的情况；最后的minu clamp保证超出部分的字节不会影响返回长度。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-74751",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-08-15T05:44:03.931Z",
+                    "datePublished": "2026-08-26T14:36:58.954Z",
+                    "dateUpdated": "2026-08-26T14:36:58.954Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-26T14:36:58.954Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: lib: Fix ZBB strnlen reading past count boundary\n\nThe ZBB-optimized strnlen loop loads one word ahead before checking the\naligned boundary:\n\n    REG_L   t1, SZREG(t0)       // load next word\n    addi    t0, t0, SZREG       // advance\n    orc.b   t1, t1\n    bgeu    t0, t4, 4f          // boundary check AFTER load\n\nwhere t4 = (s + count) & -SZREG.  When s is aligned and count is a\nmultiple of SZREG, t4 equals s + count and the loop loads a full word\nstarting at exactly s + count.  If s + count falls on a page boundary\nwith the next page unmapped, this faults.\n\nFix by computing the aligned boundary from the last valid byte\n(s + count - 1) instead of s + count.  This makes the loop stop at the\nword containing the last valid byte rather than potentially loading the\nword after it.  The count == 0 case is already handled by the beqz\nearly exit.\n\nAlso add a pre-loop guard (bgeu t0, t4) for the case where all valid\nbytes fit within the first word.  With the adjusted boundary, t4 can\nequal t0, and entering the loop with stale register state from the\nfirst-word processing would produce incorrect results.\n\nThe final minu clamp ensures the result is still correct when the last\nloaded word extends past s + count - 1 within the same aligned word."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/lib/strnlen.S"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5ba15d419fab848a3813eb56bbcad00e291fbc49",
+                                        "lessThan": "e697e30f3dd2da3a1df7dc0980546d5b53aea4b6",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "5ba15d419fab848a3813eb56bbcad00e291fbc49",
+                                        "lessThan": "5d588c684833e678a0008eb69c33190f01a65f4b",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/lib/strnlen.S"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "7.1",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "7.1",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1.10",
+                                        "lessThanOrEqual": "7.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "7.1",
+                                                "versionEndExcluding": "7.1.10"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "7.1",
+                                                "versionEndExcluding": "7.2"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/e697e30f3dd2da3a1df7dc0980546d5b53aea4b6"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/5d588c684833e678a0008eb69c33190f01a65f4b"
+                            }
+                        ],
+                        "title": "riscv: lib: Fix ZBB strnlen reading past count boundary",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-27T11:57:25.892616"
+        },
+        {
+            "cve_id": "CVE-2026-80523",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核的 Spacemit K3 时钟驱动中，HDMA 时钟负责 X100 RISC-V 内核内部 TCM 访问路径。由于未将该时钟标记为 critical，它可能被关闭，导致系统在向量指令访问触发缺页异常等场景下挂死。修复通过设置 CLK_IS_CRITICAL 标志防止时钟被关闭。",
+            "key_points": [
+                "HDMA 时钟控制 Spacemit K3 平台上 X100 RISC-V 内核的内部 TCM 访问路径。",
+                "缺少 CLK_IS_CRITICAL 标志会使通用时钟框架在时钟看似未使用时将其关闭。",
+                "向量指令访问产生缺页异常时可能触发该问题，导致 Linux 系统挂起；修复将 HDMA 时钟设为 critical，禁止关闭。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于 Linux 内核 Spacemit K3 平台的时钟驱动 clk-spacemit-k3 中。HDMA 时钟不仅用于 HDMA 控制器，还负责 X100 RISC-V 内核访问内部 TCM（紧耦合存储器）的路径。若未设置 CLK_IS_CRITICAL 标志，Linux 通用时钟框架（CCF）可能在没有其他用户时自动关闭该时钟。一旦 HDMA 时钟被关闭，RISC-V 核访问 TCM 的路径就会失效，例如当向量指令访问发生缺页异常并进入相关处理流程时，系统会因无法访问 TCM 而死机。修复方法是在时钟初始化时将 HDMA 时钟标记为 critical，确保其在系统运行期间始终保持开启状态。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-80523",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-08-26T14:34:25.763Z",
+                    "datePublished": "2026-08-26T14:37:03.779Z",
+                    "dateUpdated": "2026-08-26T14:37:03.779Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-26T14:37:03.779Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nclk: spacemit: k3: set hdma clock as critical\n\nHDMA clock is responsible for the internal TCM access path of X100 RISC-V\ncore, so set the clock flag as critical to prevent it from being shut off,\notherwise the Linux system will hang, for example in the case of a vector\ninstruction access generates a page fault."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/clk/spacemit/ccu-k3.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "e371a77255b837f5d64c9d2520f87e41ea5350b9",
+                                        "lessThan": "bb81b608db6342e5adccb6aabe900d739dc7cddb",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e371a77255b837f5d64c9d2520f87e41ea5350b9",
+                                        "lessThan": "eb525edd48907795c0d4e498ff57ad168070b289",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/clk/spacemit/ccu-k3.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "7.0",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "7.0",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1.10",
+                                        "lessThanOrEqual": "7.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "7.0",
+                                                "versionEndExcluding": "7.1.10"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "7.0",
+                                                "versionEndExcluding": "7.2"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/bb81b608db6342e5adccb6aabe900d739dc7cddb"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/eb525edd48907795c0d4e498ff57ad168070b289"
+                            }
+                        ],
+                        "title": "clk: spacemit: k3: set hdma clock as critical",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-27T11:57:56.038627"
         }
     ]
 }
