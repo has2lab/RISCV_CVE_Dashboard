@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 142,
-        "classification_date": "2026-08-27T11:57:57.038753",
+        "total_cves": 145,
+        "classification_date": "2026-08-29T08:16:36.019758",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 142,
-        "successful": 142,
+        "total_processed": 145,
+        "successful": 145,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 93,
+            "Linux Kernel": 96,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -25413,6 +25413,510 @@
                 }
             },
             "classification_timestamp": "2026-08-27T11:57:56.038627"
+        },
+        {
+            "cve_id": "CVE-2026-80611",
+            "category": "Linux Kernel",
+            "summary": "Linux内核ACPI低功耗空闲(LPI)路径中，acpi_idle_lpi_enter()在RCU关闭后被调用，启用ftrace/kprobes时会触发RCU警告。修复通过__cpuidle注解相关函数（包括RISC-V实现）将其移入.cpuidle.text并禁用跟踪，避免空闲进入期间的RCU警告。",
+            "key_points": [
+                "acpi_idle_lpi_enter()在cpuidle路径中于本地CPU RCU关闭后执行，ftrace的function_trace_call()要求RCU处于监视状态，否则报“RCU not on”警告。",
+                "修复为acpi_idle_lpi_enter()、通用__weak桩以及RISC-V的acpi_processor_ffh_lpi_enter()添加__cpuidle注解。",
+                "__cpuidle使这些函数进入.cpuidle.text段并隐含notrace，从而关闭ftrace/kprobes插桩，避免空闲进入路径的RCU警告。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "在启用函数跟踪或Kprobes时，进入ACPI LPI状态会触发RCU警告，因为acpi_idle_lpi_enter()在cpuidle路径中调用时当前CPU已关闭RCU监视。ftrace的function_trace_call()在记录跟踪数据前检查RCU是否处于活动状态，若不活动则发出WARNING。修复方法是将acpi_idle_lpi_enter()、通用__weak stub以及RISC-V实现的acpi_processor_ffh_lpi_enter()标记为__cpuidle，这会将函数放入.cpuidle.text段，并隐式禁用ftrace插桩（notrace），从而避免在敏感的空闲进入路径上进行跟踪并消除RCU警告。该问题主要影响启用内核跟踪/调试功能的场景，默认配置下风险较低。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-80611",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-08-26T14:34:25.773Z",
+                    "datePublished": "2026-08-28T06:48:33.934Z",
+                    "dateUpdated": "2026-08-28T06:48:33.934Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-28T06:48:33.934Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nACPI: processor_idle: Mark LPI enter functions as __cpuidle\n\nWhen function tracing or Kprobes is enabled, entering an ACPI Low\nPower Idle (LPI) state triggers the following RCU splat:\n\n  RCU not on for: acpi_idle_lpi_enter+0x4/0xd8\n  WARNING: CPU: 8 PID: 0 at include/linux/trace_recursion.h:162 function_trace_call+0x1e8/0x228\n\nThe acpi_idle_lpi_enter() function is invoked within the cpuidle\npath after RCU has already been disabled for the current local CPU.\nConsequently, ftrace's function_trace_call() expects RCU to be\nactively watching before recording trace data, emitting a warning\nif it is not.\n\nFix this by annotating acpi_idle_lpi_enter(), the generic __weak\nstub, and the RISC-V implementation of acpi_processor_ffh_lpi_enter()\nwith __cpuidle. This moves these functions into the '.cpuidle.text'\nsection, implicitly disabling ftrace instrumentation (notrace) along\nthis sensitive path and preventing trace-induced RCU warnings during\nidle entry."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/acpi/processor_idle.c",
+                                    "drivers/acpi/riscv/cpuidle.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "a36a7fecfe6071732075ad5aa31196adce13181b",
+                                        "lessThan": "10f675902a5fc88ccfe34bb8aa37de50806b03b1",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "a36a7fecfe6071732075ad5aa31196adce13181b",
+                                        "lessThan": "5b6165d7ec38477e8cfa41bfa464959957953822",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "a36a7fecfe6071732075ad5aa31196adce13181b",
+                                        "lessThan": "8bbe4dd7964552f74c271c3a8d95a4331a8ab5f9",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "a36a7fecfe6071732075ad5aa31196adce13181b",
+                                        "lessThan": "956ca5d72c76504824c8eb601879da9476973e15",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/acpi/processor_idle.c",
+                                    "drivers/acpi/riscv/cpuidle.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "4.8",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "4.8",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.97",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.40",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1.5",
+                                        "lessThanOrEqual": "7.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "4.8",
+                                                "versionEndExcluding": "6.12.97"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "4.8",
+                                                "versionEndExcluding": "6.18.40"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "4.8",
+                                                "versionEndExcluding": "7.1.5"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "4.8",
+                                                "versionEndExcluding": "7.2"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/10f675902a5fc88ccfe34bb8aa37de50806b03b1"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/5b6165d7ec38477e8cfa41bfa464959957953822"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/8bbe4dd7964552f74c271c3a8d95a4331a8ab5f9"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/956ca5d72c76504824c8eb601879da9476973e15"
+                            }
+                        ],
+                        "title": "ACPI: processor_idle: Mark LPI enter functions as __cpuidle",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-29T08:15:48.795920"
+        },
+        {
+            "cve_id": "CVE-2026-80682",
+            "category": "Linux Kernel",
+            "summary": "Linux 内核 RISC-V 架构的 vmemmap 起始页帧计算存在单位不匹配：将 struct page 存储字节对齐值直接用于物理地址对齐，导致 pfn_to_page(0) 在 DRAM 基址未对齐时无法满足 compound_info 掩码编码要求，触发 sparse_init 警告。该漏洞影响 QEMU virt 等平台，修复方法是将 MAX_FOLIO_VMEMMAP_ALIGN 转换为等效物理地址对齐后再使用。",
+            "key_points": [
+                "RISC-V 的 vmemmap_start_pfn 通过将 phys_ram_base 向下对齐到 VMEMMAP_ADDR_ALIGN 来计算。",
+                "VMEMMAP_ADDR_ALIGN 被错误设置为 MAX_FOLIO_VMEMMAP_ALIGN，但前者用于物理地址对齐，后者单位是 struct page 存储字节数，二者单位不匹配。",
+                "单位不匹配导致 DRAM 基址未按最大 folio 物理页数对齐时，pfn_to_page(0) 不满足 compound_info 掩码编码的自然对齐要求，触发 sparse_init 警告。",
+                "修复将 MAX_FOLIO_VMEMMAP_ALIGN 转换为等效的物理地址对齐值后再赋给 VMEMMAP_ADDR_ALIGN。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于 Linux 内核 arch/riscv/mm 的 vmemmap 初始化逻辑。commit 476849b0fba4 为满足最大 folio 对齐需求，将 MAX_FOLIO_VMEMMAP_ALIGN 直接作为 VMEMMAP_ADDR_ALIGN 使用；但 MAX_FOLIO_VMEMMAP_ALIGN 以 struct page 数组的字节数衡量，而 VMEMMAP_ADDR_ALIGN 用于对 phys_ram_base 物理地址做 round_down 对齐。两者单位不同，导致物理地址对齐量错误。之后 commit 9f94db4c7eaa 增加 compound_info_has_mask() 对齐检查，在 QEMU virt 等 DRAM 基址不是 MAX_FOLIO_NR_PAGES * PAGE_SIZE 对齐的系统上暴露该问题，内核启动时在 sparse_init 产生 WARNING。修复通过将 MAX_FOLIO_VMEMMAP_ALIGN 除以 sizeof(struct page)（或等效转换）得到物理地址对齐值，再用于 VMEMMAP_ADDR_ALIGN，从而保持原 round_down 逻辑并满足掩码对齐要求，避免潜在的内存映射不一致。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-80682",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-08-26T14:34:25.784Z",
+                    "datePublished": "2026-08-28T06:52:49.498Z",
+                    "dateUpdated": "2026-08-28T06:52:49.498Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-28T06:52:49.498Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv/mm: use physical alignment for vmemmap_start_pfn\n\nRISC-V computes vmemmap_start_pfn by rounding phys_ram_base down to\nVMEMMAP_ADDR_ALIGN.  That alignment must therefore be expressed in the\nphysical-address domain.\n\nCommit 476849b0fba4 (\"riscv/mm: align vmemmap to maximal folio size\")\nattempted to account for the maximal folio alignment by feeding\nMAX_FOLIO_VMEMMAP_ALIGN directly into VMEMMAP_ADDR_ALIGN.  However,\nMAX_FOLIO_VMEMMAP_ALIGN is measured in bytes of struct page storage,\nwhereas VMEMMAP_ADDR_ALIGN is used to align a physical address.\n\nThe mask-based compound_info encoding requires pfn_to_page(0) to be\nnaturally aligned to MAX_FOLIO_VMEMMAP_ALIGN.  Commit 9f94db4c7eaa\n(\"mm/sparse: check memmap alignment for compound_info_has_mask()\") added a\ncheck for that requirement and exposed the unit mismatch on systems such\nas QEMU virt, where the DRAM base is not aligned to MAX_FOLIO_NR_PAGES *\nPAGE_SIZE.\n\nHere is the log:\n[    0.000000][    C0] ------------[ cut here ]------------\n[    0.000000][    C0] WARNING: mm/sparse.c:365 at sparse_init+0x58a/0x6fe, CPU#0: swapper/0\n[    0.000000][    C0] Modules linked in:\n[    0.000000][    C0] CPU: 0 UID: 0 PID: 0 Comm: swapper Not tainted 7.2.0-rc3-g1d8304bdd65f #2 PREEMPT \n[    0.000000][    C0] Hardware name: riscv-virtio,qemu (DT)\n[    0.000000][    C0] epc : sparse_init+0x58a/0x6fe\n[    0.000000][    C0]  ra : sparse_init+0x58a/0x6fe\n[    0.000000][    C0] epc : ffffffff86851c88 ra : ffffffff86851c88 sp : ffffffff88807a30\n[    0.000000][    C0]  gp : ffffffff8a3bf240 tp : ffffffff88842080 t0 : ff600000ffab6000\n[    0.000000][    C0]  t1 : 000000017fab6000 t2 : 65203a6573726363 s0 : ffffffff88807bc0\n[    0.000000][    C0]  s1 : 000000000e000000 a0 : 0000000000000007 a1 : 0000000000000000\n[    0.000000][    C0]  a2 : 0000000000000002 a3 : ffffffff86851c88 a4 : 0000000000000000\n[    0.000000][    C0]  a5 : ffffffff88843080 a6 : 0000000000000003 a7 : 0000000000000000\n[    0.000000][    C0]  s2 : ff60000000000000 s3 : 0040000000000000 s4 : 0004000000000000\n[    0.000000][    C0]  s5 : ffffffff8a4d92e0 s6 : ff600000ffab55e0 s7 : ffffffff88384d00\n[    0.000000][    C0]  s8 : 0000000000000003 s9 : ffffffff88384cc1 s10: ffffffff88384cc0\n[    0.000000][    C0]  s11: ffffffff8a4daae0 t3 : ffffffff915e8b20 t4 : ffffffff915e8b20\n[    0.000000][    C0]  t5 : ffffffff915e8b20 t6 : ffffffff915e8bc8 ssp : 0000000000000000\n[    0.000000][    C0] status: 0000000200000100 badaddr: ffffffff86851c88 cause: 0000000000000003\n[    0.000000][    C0] [<ffffffff86851c88>] sparse_init+0x58a/0x6fe\n[    0.000000][    C0] [<ffffffff8683d396>] mm_core_init_early+0x116/0x1e30\n[    0.000000][    C0] [<ffffffff86801edc>] start_kernel+0xd2/0x848\n\nConvert MAX_FOLIO_VMEMMAP_ALIGN to the equivalent physical alignment\nbefore using it in VMEMMAP_ADDR_ALIGN.  This keeps the existing\nround_down() logic while making the resulting vmemmap base satisfy the\nmask-alignment requirement."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/mm/init.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "476849b0fba4450f5adf22196bcff9c24c673bc4",
+                                        "lessThan": "11ad86830a78ea4e1942afc73c10e4ca8e69e03f",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "476849b0fba4450f5adf22196bcff9c24c673bc4",
+                                        "lessThan": "45ebe4540817cb540a59e4dc04014ac5dddc9990",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/mm/init.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "7.1",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "7.1",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1.8",
+                                        "lessThanOrEqual": "7.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "7.1",
+                                                "versionEndExcluding": "7.1.8"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "7.1",
+                                                "versionEndExcluding": "7.2"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/11ad86830a78ea4e1942afc73c10e4ca8e69e03f"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/45ebe4540817cb540a59e4dc04014ac5dddc9990"
+                            }
+                        ],
+                        "title": "riscv/mm: use physical alignment for vmemmap_start_pfn",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-29T08:16:17.501211"
+        },
+        {
+            "cve_id": "CVE-2026-80688",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V架构中，vec_check_unaligned_access_speed_all_cpus函数被错误标记为__init，但它运行在内核线程中，可能在启动完成后仍在执行；当free_initmem()释放.init.text段后，该线程若继续取指会触发指令页错误并导致内核oops。修复方式是移除该函数的__init标记。",
+            "key_points": [
+                "该函数运行在名为vec_check_unali的内核线程中，并非启动阶段同步完成。",
+                "__init修饰的函数位于.init.text段，内核启动完成后该段会被free_initmem()释放并取消映射。",
+                "函数通过SBI探测非对齐访问速度，若SBI响应较慢（如添加了调试输出），线程可能在.init.text段被释放后仍尝试执行该代码，导致指令页错误。",
+                "修复方法是从vec_check_unaligned_access_speed_all_cpus函数签名中删除__init。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "崩溃日志显示epc和ra均为ffffffff80a04ef8，属于vec_check_unaligned_access_speed_all_cpus+0x18/0x2c，错误cause为0xc（instruction page fault），badaddr为ffffffff80a04ef8。该地址位于.init.text段，启动完成后被释放。由于该函数运行在kthread中，若SBI探测过程延迟，线程可能在内核释放.init.text后仍然运行，导致取指时访问已取消映射的虚拟地址，触发内核oops。补丁通过移除__init标记使函数常驻内核，避免此类竞态。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-80688",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-08-26T14:34:25.784Z",
+                    "datePublished": "2026-08-28T06:52:53.126Z",
+                    "dateUpdated": "2026-08-28T06:52:53.126Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-28T06:52:53.126Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: drop __init from vec_check_unaligned_access_speed_all_cpus\n\nThis function runs within a kthread and need not necessarily finish\nbefore system finishes boot and free_initmem() unmaps the .init.text\nsection. This function makes calls to SBI for probing unaligned access\nspeed, and if this is slow for some reason (say some debug prints were\nadded to SBI), the kthread can still be running at this point and result\nin an instruction page fault when trying to fetch from the freed region.\n\n[   25.642087] Unable to handle kernel paging request at virtual address ffffffff80a04ef8\n[   25.646694] Current vec_check_unali pgtable: 4K pagesize, 48-bit VAs, pgdp=0x00004000316e9000\n[   25.653170] [ffffffff80a04ef8] pgd=000010004be7e401, p4d=000010004be7e401, pud=000010004be7e001, pmd=000010000c3000e3\n[   25.661244] Oops [#1]\n[   25.662997] Modules linked in:\n[   25.665357] CPU: 3 UID: 0 PID: 42 Comm: vec_check_unali Not tainted 7.0.0-tt-blackhole-asrinivasan-00007-g30ff73f18211 #570 PREEMPTLAZY\n[   25.674669] Hardware name: Tenstorrent Blackhole (DT)\n[   25.678545] epc : vec_check_unaligned_access_speed_all_cpus+0x18/0x2c\n[   25.683458]  ra : vec_check_unaligned_access_speed_all_cpus+0x18/0x2c\n[   25.688372] epc : ffffffff80a04ef8 ra : ffffffff80a04ef8 sp : ffff8f8000203e20\n[   25.693874]  gp : ffffffff814dc168 tp : ffffaf8001ad9900 t0 : 0000000000000000\n[   25.699401]  t1 : fffffffffffffff0 t2 : ffffaf8001ad9a10 s0 : ffff8f8000203e30\n[   25.704912]  s1 : ffffaf80018dc780 a0 : 0000000000000000 a1 : 0000000000000002\n[   25.710407]  a2 : 00000000000001f0 a3 : 0000000000000018 a4 : 0000000000000000\n[   25.715917]  a5 : 0000000000000000 a6 : ffffaf8001c03d98 a7 : ffffaf8001c03e30\n[   25.721419]  s2 : ffff8f8000023c98 s3 : ffffaf8001aa1240 s4 : ffffffff80a04ee0\n[   25.726937]  s5 : 0000000000000000 s6 : 0000000000000000 s7 : 0000000000000000\n[   25.732450]  s8 : 0000000000000000 s9 : 0000000000000000 s10: 0000000000000000\n[   25.737944]  s11: 0000000000000000 t3 : 0000000000000002 t4 : 0000000000000402\n[   25.743481]  t5 : 0000000000000040 t6 : 0000000000000004 ssp : 0000000000000000\n[   25.749024] status: 0000000200000120 badaddr: ffffffff80a04ef8 cause: 000000000000000c\n[   25.755060] [<ffffffff80a04ef8>] vec_check_unaligned_access_speed_all_cpus+0x18/0x2c\n[   25.760964] [<ffffffff80047a10>] kthread+0xd8/0xfc\n[   25.764660] [<ffffffff80010c48>] ret_from_fork_kernel+0x18/0x1c4\n[   25.769220] [<ffffffff80895fe6>] ret_from_fork_kernel_asm+0x16/0x18\n[   25.774018] Code: cccc cccc cccc cccc cccc cccc cccc cccc cccc cccc (cccc) cccc\n\nDrop __init from its signature so that this doesn't happen."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kernel/unaligned_access_speed.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "a00e022be5315c5a1f47521a1cc6d3b71c8e9c44",
+                                        "lessThan": "01bd01b61ad9ea917e5629a7f14f57a8af0543bb",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "a00e022be5315c5a1f47521a1cc6d3b71c8e9c44",
+                                        "lessThan": "25f228e6ac573884a3d7078cc2b3312b8db59eea",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "a00e022be5315c5a1f47521a1cc6d3b71c8e9c44",
+                                        "lessThan": "f51fed61eea0daba2f95f1a6074085e4cd513c7b",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "86c19f641cfadcd7023bc8ee74849e85b1fdf187",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "dfef32cf33f4e09a5bfdc8a57603e0de506bed47",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "6.13.11",
+                                        "lessThan": "6.14",
+                                        "status": "affected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.14.2",
+                                        "lessThan": "6.15",
+                                        "status": "affected",
+                                        "versionType": "semver"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kernel/unaligned_access_speed.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.15",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.15",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.44",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1.8",
+                                        "lessThanOrEqual": "7.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.15",
+                                                "versionEndExcluding": "6.18.44"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.15",
+                                                "versionEndExcluding": "7.1.8"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.15",
+                                                "versionEndExcluding": "7.2"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.14.2"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/01bd01b61ad9ea917e5629a7f14f57a8af0543bb"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/25f228e6ac573884a3d7078cc2b3312b8db59eea"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/f51fed61eea0daba2f95f1a6074085e4cd513c7b"
+                            }
+                        ],
+                        "title": "riscv: drop __init from vec_check_unaligned_access_speed_all_cpus",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-29T08:16:35.019585"
         }
     ]
 }

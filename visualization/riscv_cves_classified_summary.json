@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 142,
-        "classification_date": "2026-08-27T11:57:57.038753",
+        "total_cves": 145,
+        "classification_date": "2026-08-29T08:16:36.019758",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 142,
-        "successful": 142,
+        "total_processed": 145,
+        "successful": 145,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 93,
+            "Linux Kernel": 96,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -1891,6 +1891,47 @@
             "severity_assessment": "Medium",
             "technical_details": "该漏洞位于 Linux 内核 Spacemit K3 平台的时钟驱动 clk-spacemit-k3 中。HDMA 时钟不仅用于 HDMA 控制器，还负责 X100 RISC-V 内核访问内部 TCM（紧耦合存储器）的路径。若未设置 CLK_IS_CRITICAL 标志，Linux 通用时钟框架（CCF）可能在没有其他用户时自动关闭该时钟。一旦 HDMA 时钟被关闭，RISC-V 核访问 TCM 的路径就会失效，例如当向量指令访问发生缺页异常并进入相关处理流程时，系统会因无法访问 TCM 而死机。修复方法是在时钟初始化时将 HDMA 时钟标记为 critical，确保其在系统运行期间始终保持开启状态。",
             "classification_timestamp": "2026-08-27T11:57:56.038627"
+        },
+        {
+            "cve_id": "CVE-2026-80611",
+            "category": "Linux Kernel",
+            "summary": "Linux内核ACPI低功耗空闲(LPI)路径中，acpi_idle_lpi_enter()在RCU关闭后被调用，启用ftrace/kprobes时会触发RCU警告。修复通过__cpuidle注解相关函数（包括RISC-V实现）将其移入.cpuidle.text并禁用跟踪，避免空闲进入期间的RCU警告。",
+            "key_points": [
+                "acpi_idle_lpi_enter()在cpuidle路径中于本地CPU RCU关闭后执行，ftrace的function_trace_call()要求RCU处于监视状态，否则报“RCU not on”警告。",
+                "修复为acpi_idle_lpi_enter()、通用__weak桩以及RISC-V的acpi_processor_ffh_lpi_enter()添加__cpuidle注解。",
+                "__cpuidle使这些函数进入.cpuidle.text段并隐含notrace，从而关闭ftrace/kprobes插桩，避免空闲进入路径的RCU警告。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "在启用函数跟踪或Kprobes时，进入ACPI LPI状态会触发RCU警告，因为acpi_idle_lpi_enter()在cpuidle路径中调用时当前CPU已关闭RCU监视。ftrace的function_trace_call()在记录跟踪数据前检查RCU是否处于活动状态，若不活动则发出WARNING。修复方法是将acpi_idle_lpi_enter()、通用__weak stub以及RISC-V实现的acpi_processor_ffh_lpi_enter()标记为__cpuidle，这会将函数放入.cpuidle.text段，并隐式禁用ftrace插桩（notrace），从而避免在敏感的空闲进入路径上进行跟踪并消除RCU警告。该问题主要影响启用内核跟踪/调试功能的场景，默认配置下风险较低。",
+            "classification_timestamp": "2026-08-29T08:15:48.795920"
+        },
+        {
+            "cve_id": "CVE-2026-80682",
+            "category": "Linux Kernel",
+            "summary": "Linux 内核 RISC-V 架构的 vmemmap 起始页帧计算存在单位不匹配：将 struct page 存储字节对齐值直接用于物理地址对齐，导致 pfn_to_page(0) 在 DRAM 基址未对齐时无法满足 compound_info 掩码编码要求，触发 sparse_init 警告。该漏洞影响 QEMU virt 等平台，修复方法是将 MAX_FOLIO_VMEMMAP_ALIGN 转换为等效物理地址对齐后再使用。",
+            "key_points": [
+                "RISC-V 的 vmemmap_start_pfn 通过将 phys_ram_base 向下对齐到 VMEMMAP_ADDR_ALIGN 来计算。",
+                "VMEMMAP_ADDR_ALIGN 被错误设置为 MAX_FOLIO_VMEMMAP_ALIGN，但前者用于物理地址对齐，后者单位是 struct page 存储字节数，二者单位不匹配。",
+                "单位不匹配导致 DRAM 基址未按最大 folio 物理页数对齐时，pfn_to_page(0) 不满足 compound_info 掩码编码的自然对齐要求，触发 sparse_init 警告。",
+                "修复将 MAX_FOLIO_VMEMMAP_ALIGN 转换为等效的物理地址对齐值后再赋给 VMEMMAP_ADDR_ALIGN。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞位于 Linux 内核 arch/riscv/mm 的 vmemmap 初始化逻辑。commit 476849b0fba4 为满足最大 folio 对齐需求，将 MAX_FOLIO_VMEMMAP_ALIGN 直接作为 VMEMMAP_ADDR_ALIGN 使用；但 MAX_FOLIO_VMEMMAP_ALIGN 以 struct page 数组的字节数衡量，而 VMEMMAP_ADDR_ALIGN 用于对 phys_ram_base 物理地址做 round_down 对齐。两者单位不同，导致物理地址对齐量错误。之后 commit 9f94db4c7eaa 增加 compound_info_has_mask() 对齐检查，在 QEMU virt 等 DRAM 基址不是 MAX_FOLIO_NR_PAGES * PAGE_SIZE 对齐的系统上暴露该问题，内核启动时在 sparse_init 产生 WARNING。修复通过将 MAX_FOLIO_VMEMMAP_ALIGN 除以 sizeof(struct page)（或等效转换）得到物理地址对齐值，再用于 VMEMMAP_ADDR_ALIGN，从而保持原 round_down 逻辑并满足掩码对齐要求，避免潜在的内存映射不一致。",
+            "classification_timestamp": "2026-08-29T08:16:17.501211"
+        },
+        {
+            "cve_id": "CVE-2026-80688",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V架构中，vec_check_unaligned_access_speed_all_cpus函数被错误标记为__init，但它运行在内核线程中，可能在启动完成后仍在执行；当free_initmem()释放.init.text段后，该线程若继续取指会触发指令页错误并导致内核oops。修复方式是移除该函数的__init标记。",
+            "key_points": [
+                "该函数运行在名为vec_check_unali的内核线程中，并非启动阶段同步完成。",
+                "__init修饰的函数位于.init.text段，内核启动完成后该段会被free_initmem()释放并取消映射。",
+                "函数通过SBI探测非对齐访问速度，若SBI响应较慢（如添加了调试输出），线程可能在.init.text段被释放后仍尝试执行该代码，导致指令页错误。",
+                "修复方法是从vec_check_unaligned_access_speed_all_cpus函数签名中删除__init。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "崩溃日志显示epc和ra均为ffffffff80a04ef8，属于vec_check_unaligned_access_speed_all_cpus+0x18/0x2c，错误cause为0xc（instruction page fault），badaddr为ffffffff80a04ef8。该地址位于.init.text段，启动完成后被释放。由于该函数运行在kthread中，若SBI探测过程延迟，线程可能在内核释放.init.text后仍然运行，导致取指时访问已取消映射的虚拟地址，触发内核oops。补丁通过移除__init标记使函数常驻内核，避免此类竞态。",
+            "classification_timestamp": "2026-08-29T08:16:35.019585"
         }
     ]
 }
