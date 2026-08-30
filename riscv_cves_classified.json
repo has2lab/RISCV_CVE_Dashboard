@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 145,
-        "classification_date": "2026-08-29T08:16:36.019758",
+        "total_cves": 146,
+        "classification_date": "2026-08-30T07:15:55.198401",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 145,
-        "successful": 145,
+        "total_processed": 146,
+        "successful": 146,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 96,
+            "Linux Kernel": 97,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -25917,6 +25917,205 @@
                 }
             },
             "classification_timestamp": "2026-08-29T08:16:35.019585"
+        },
+        {
+            "cve_id": "CVE-2026-80723",
+            "category": "Linux Kernel",
+            "summary": "Linux内核在启动解析设备树保留内存节点时，fdt_scan_reserved_mem()将动态放置的/reserved-memory子节点保存到固定大小数组，若设备树定义超过MAX_RESERVED_REGIONS个区域会越界写。该漏洞已通过增加边界检查修复，记录错误并跳过超出部分。",
+            "key_points": [
+                "漏洞位于内核启动阶段设备树解析函数 fdt_scan_reserved_mem()，使用固定大小数组保存动态保留内存区域。",
+                "当设备树中动态保留内存区域数量超过 MAX_RESERVED_REGIONS 时，发生数组越界写，可能破坏内核内存。",
+                "修复增加边界检查，对超出数量记录错误并跳过，恢复原有安全行为。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在启动时，fdt_scan_reserved_mem() 会遍历设备树 /reserved-memory 节点，并将每个动态放置的子节点信息保存到本地数组 reserved_mem[MAX_RESERVED_REGIONS]。如果设备树定义了超过 MAX_RESERVED_REGIONS 个动态区域，写入操作会越过数组边界，造成越界写。攻击者若能控制设备树内容（例如通过修改启动配置或利用引导加载程序），可能触发内核内存损坏，影响系统稳定性或导致权限提升。补丁在每次写入前检查索引，若达到上限则打印错误并跳过后续区域，避免越界。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-80723",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-08-26T14:34:25.788Z",
+                    "datePublished": "2026-08-28T06:53:18.485Z",
+                    "dateUpdated": "2026-08-29T06:22:40.126Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-08-29T06:22:40.126Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nof: reserved_mem: prevent OOB when too many dynamic regions are defined\n\nOn boot, fdt_scan_reserved_mem() saves each dynamically-placed\n/reserved-memory subnode into a local array of size\nMAX_RESERVED_REGIONS.\n\nIf the device tree defines more than MAX_RESERVED_REGIONS\ndynamically-placed regions, fdt_scan_reserved_mem() writes past the\nend of the local array.\n\nAdd a bounds check that logs an error and skips the excess regions,\nrestoring the original behavior."
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 8.4,
+                                    "baseSeverity": "HIGH"
+                                },
+                                "scenarios": [
+                                    {
+                                        "lang": "en",
+                                        "value": "AV:L - The overflow only runs in __init boot-time fdt_scan_reserved_mem() while parsing /reserved-memory from the bootloader-provided DTB; there is no post-boot syscall, ioctl, netlink, or network-stack path to this code on OF/DT platforms (arm/arm64/RISC-V/ppc/mips/etc.).\nAC:L - An attacker who can supply a device tree simply defines more than MAX_RESERVED_REGIONS (64) dynamically-placed /reserved-memory subnodes (size without reg); each extra node deterministically performs another unchecked write past dynamic_nodes[] without races or layout luck.\nPR:N - Triggering requires only a crafted device tree delivered at boot (e.g., compromised firmware/OTA image, supply-chain DTB, unauthenticated PXE/TFTP netboot), not privileges on the victim OS; unprivileged local users and user-namespace capabilities cannot reach this __init-only path.\nUI:N - Once a malicious DTB is installed, the stack overflow occurs automatically during early_init_fdt_scan_reserved_mem() before userspace starts; no cooperative action by another user or administrator is required beyond normal boot.\nS:U - Impact is confined to early-boot kernel stack/memory corruption within the same host kernel; this is not a VM escape, guest-to-host breakout, IOMMU boundary bypass, or other cross-security-authority scenario.\nC:H - Each OOB store writes an attacker-influenced FDT node offset past dynamic_nodes[MAX_RESERVED_REGIONS] onto the kernel stack, corrupting adjacent locals and potentially frame/link registers; per kernel guidance, stack OOB writes enable high confidentiality impact.\nI:H - This is a stack buffer overflow (CWE-121/787) during __init: repeated int writes past the 64-element dynamic_nodes[] array can corrupt return addresses and control flow in early boot before full hardening, enabling arbitrary kernel code execution.\nA:H - Unchecked OOB writes into the boot-time stack typically cause immediate kernel panic/oops during fdt_scan_reserved_mem() (corrupted count/fdt pointers or trashed frame), denying availability on every boot with a crafted or over-limit DT."
+                                    }
+                                ]
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/of/of_reserved_mem.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "9a0fe62f93ede02c27aaca81112af1e59c8c0979",
+                                        "lessThan": "68d27250c9e81ab7764603e346c2b1017cb53adf",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "8a6e02d0c00e7b62e6acb74146878bb91e9e7e31",
+                                        "lessThan": "cfa7e2734877330d6c10e0f33953905486c4530c",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "8a6e02d0c00e7b62e6acb74146878bb91e9e7e31",
+                                        "lessThan": "de8ccbd6bf4efe7a059e2c483789936009e10f42",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "8a6e02d0c00e7b62e6acb74146878bb91e9e7e31",
+                                        "lessThan": "db3dbdfea1b8f38774419c5c2c14e4b81c48708d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "6.12.13",
+                                        "lessThan": "6.12.103",
+                                        "status": "affected",
+                                        "versionType": "semver"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/of/of_reserved_mem.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.13",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.13",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.103",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.44",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1.8",
+                                        "lessThanOrEqual": "7.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12.13",
+                                                "versionEndExcluding": "6.12.103"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "6.18.44"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.1.8"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.2"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/68d27250c9e81ab7764603e346c2b1017cb53adf"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/cfa7e2734877330d6c10e0f33953905486c4530c"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/de8ccbd6bf4efe7a059e2c483789936009e10f42"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/db3dbdfea1b8f38774419c5c2c14e4b81c48708d"
+                            }
+                        ],
+                        "title": "of: reserved_mem: prevent OOB when too many dynamic regions are defined",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-08-30T07:15:54.198231"
         }
     ]
 }

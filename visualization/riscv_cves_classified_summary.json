@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 145,
-        "classification_date": "2026-08-29T08:16:36.019758",
+        "total_cves": 146,
+        "classification_date": "2026-08-30T07:15:55.198401",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 145,
-        "successful": 145,
+        "total_processed": 146,
+        "successful": 146,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 96,
+            "Linux Kernel": 97,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -1932,6 +1932,19 @@
             "severity_assessment": "Medium",
             "technical_details": "崩溃日志显示epc和ra均为ffffffff80a04ef8，属于vec_check_unaligned_access_speed_all_cpus+0x18/0x2c，错误cause为0xc（instruction page fault），badaddr为ffffffff80a04ef8。该地址位于.init.text段，启动完成后被释放。由于该函数运行在kthread中，若SBI探测过程延迟，线程可能在内核释放.init.text后仍然运行，导致取指时访问已取消映射的虚拟地址，触发内核oops。补丁通过移除__init标记使函数常驻内核，避免此类竞态。",
             "classification_timestamp": "2026-08-29T08:16:35.019585"
+        },
+        {
+            "cve_id": "CVE-2026-80723",
+            "category": "Linux Kernel",
+            "summary": "Linux内核在启动解析设备树保留内存节点时，fdt_scan_reserved_mem()将动态放置的/reserved-memory子节点保存到固定大小数组，若设备树定义超过MAX_RESERVED_REGIONS个区域会越界写。该漏洞已通过增加边界检查修复，记录错误并跳过超出部分。",
+            "key_points": [
+                "漏洞位于内核启动阶段设备树解析函数 fdt_scan_reserved_mem()，使用固定大小数组保存动态保留内存区域。",
+                "当设备树中动态保留内存区域数量超过 MAX_RESERVED_REGIONS 时，发生数组越界写，可能破坏内核内存。",
+                "修复增加边界检查，对超出数量记录错误并跳过，恢复原有安全行为。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在启动时，fdt_scan_reserved_mem() 会遍历设备树 /reserved-memory 节点，并将每个动态放置的子节点信息保存到本地数组 reserved_mem[MAX_RESERVED_REGIONS]。如果设备树定义了超过 MAX_RESERVED_REGIONS 个动态区域，写入操作会越过数组边界，造成越界写。攻击者若能控制设备树内容（例如通过修改启动配置或利用引导加载程序），可能触发内核内存损坏，影响系统稳定性或导致权限提升。补丁在每次写入前检查索引，若达到上限则打印错误并跳过后续区域，避免越界。",
+            "classification_timestamp": "2026-08-30T07:15:54.198231"
         }
     ]
 }
