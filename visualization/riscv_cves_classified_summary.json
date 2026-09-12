@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 146,
-        "classification_date": "2026-08-30T07:15:55.198401",
+        "total_cves": 147,
+        "classification_date": "2026-09-12T06:22:19.361748",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 146,
-        "successful": 146,
+        "total_processed": 147,
+        "successful": 147,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 97,
+            "Linux Kernel": 98,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -1945,6 +1945,19 @@
             "severity_assessment": "High",
             "technical_details": "在启动时，fdt_scan_reserved_mem() 会遍历设备树 /reserved-memory 节点，并将每个动态放置的子节点信息保存到本地数组 reserved_mem[MAX_RESERVED_REGIONS]。如果设备树定义了超过 MAX_RESERVED_REGIONS 个动态区域，写入操作会越过数组边界，造成越界写。攻击者若能控制设备树内容（例如通过修改启动配置或利用引导加载程序），可能触发内核内存损坏，影响系统稳定性或导致权限提升。补丁在每次写入前检查索引，若达到上限则打印错误并跳过后续区域，避免越界。",
             "classification_timestamp": "2026-08-30T07:15:54.198231"
+        },
+        {
+            "cve_id": "CVE-2026-89513",
+            "category": "Linux Kernel",
+            "summary": "Linux 内核 RISC-V KVM 的 SBI PMU EVENT_GET_INFO 处理存在整数溢出：在 RV64 上 num_events 与条目大小的乘积被 32 位存储截断，导致 KVM 分配不足但按原始数量循环访问，造成越界读写。恶意或嵌套虚拟机可利用此缺陷触发内存破坏或拒绝服务。",
+            "key_points": [
+                "漏洞位于 kvm_riscv_vcpu_pmu_event_info，计算 num_events * sizeof(*einfo) 时使用 32 位整数，RV64 下 0x10000001 * 16 溢出并截断为 16。",
+                "KVM 仅分配 16 字节却按原始 num_events（0x10000001）循环访问，导致 slab-out-of-bounds 读写，KASAN 已报告越界。",
+                "修复改为 size_t 存储共享内存大小并拒绝乘法溢出；使用 kvcalloc() 支持 vmalloc 回退，并采用 GFP_KERNEL_ACCOUNT 和 __GFP_NOWARN，循环索引改为 unsigned long。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "SBI PMU EVENT_GET_INFO 从客户机可控的 num_events 计算要分配的共享内存大小。原代码将乘积存入 32 位变量，在 RV64 上大值乘法溢出会被截断为很小的值，KVM 据此 kmalloc 分配不足的缓冲区，但后续仍以原始 num_events 作为循环上界访问 einfo 数组，造成越界读写。触发路径为 kvm_riscv_vcpu_sbi_ecall -> kvm_sbi_ext_pmu_handler -> kvm_riscv_vcpu_pmu_event_info，KASAN 报告 slab-out-of-bounds。修复使用 size_t 存储大小并在乘法前检查溢出；分配改用 kvcalloc() 并带 GFP_KERNEL_ACCOUNT，避免 kmemcg 未记账，同时用 __GFP_NOWARN 抑制分配失败警告，循环索引改为 unsigned long 以与 num_events 类型匹配。",
+            "classification_timestamp": "2026-09-12T06:22:18.361558"
         }
     ]
 }
