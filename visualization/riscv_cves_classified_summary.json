@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 147,
-        "classification_date": "2026-09-12T06:22:19.361748",
+        "total_cves": 148,
+        "classification_date": "2026-09-17T06:34:38.644249",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 147,
-        "successful": 147,
+        "total_processed": 148,
+        "successful": 148,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 98,
+            "Linux Kernel": 99,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -1958,6 +1958,19 @@
             "severity_assessment": "High",
             "technical_details": "SBI PMU EVENT_GET_INFO 从客户机可控的 num_events 计算要分配的共享内存大小。原代码将乘积存入 32 位变量，在 RV64 上大值乘法溢出会被截断为很小的值，KVM 据此 kmalloc 分配不足的缓冲区，但后续仍以原始 num_events 作为循环上界访问 einfo 数组，造成越界读写。触发路径为 kvm_riscv_vcpu_sbi_ecall -> kvm_sbi_ext_pmu_handler -> kvm_riscv_vcpu_pmu_event_info，KASAN 报告 slab-out-of-bounds。修复使用 size_t 存储大小并在乘法前检查溢出；分配改用 kvcalloc() 并带 GFP_KERNEL_ACCOUNT，避免 kmemcg 未记账，同时用 __GFP_NOWARN 抑制分配失败警告，循环索引改为 unsigned long 以与 num_events 类型匹配。",
             "classification_timestamp": "2026-09-12T06:22:18.361558"
+        },
+        {
+            "cve_id": "CVE-2026-89992",
+            "category": "Linux Kernel",
+            "summary": "Linux 内核 cpuidle 的 dt_idle_genpd 模块存在无效内存释放问题：dt_idle_pd_alloc() 分配完整节点路径，却让 pd->name 指向字符串内部基名地址，释放时对非起始地址调用 kfree()。修复改为复制基名字符串，确保释放安全。",
+            "key_points": [
+                "dt_idle_pd_alloc() 使用 kasprintf() 分配完整路径字符串，并返回起始地址。",
+                "pd->name 通过 kbasename() 指向上述字符串内部，并非独立分配的内存起始地址。",
+                "dt_idle_pd_free() 对 pd->name 调用 kfree()，导致无效释放；修复改为复制基名到独立内存，释放原路径字符串。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于 Linux 内核 cpuidle 的 dt_idle_genpd 驱动中。dt_idle_pd_alloc() 调用 kasprintf() 动态分配完整设备树节点路径，然后将 pd->name 设置为 kbasename() 返回的字符串内部指针。当调用 dt_idle_pd_free() 时，对 pd->name 执行 kfree()，但该指针并非由 kmalloc/kasprintf 返回的起始地址，属于无效释放，可能破坏 slab 分配器元数据，导致内存损坏或系统崩溃。修复方案是复制基名字符串到独立分配的内存，使 pd->name 指向可被正确 kfree() 的起始地址，同时释放原始完整路径分配。该缺陷影响设备树电源域空闲管理路径，在支持相关空闲状态的平台上可能被触发。",
+            "classification_timestamp": "2026-09-17T06:34:37.644067"
         }
     ]
 }
