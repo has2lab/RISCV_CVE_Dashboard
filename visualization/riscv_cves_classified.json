@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 148,
-        "classification_date": "2026-09-17T06:34:38.644249",
+        "total_cves": 156,
+        "classification_date": "2026-09-18T06:36:44.763842",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 148,
-        "successful": 148,
+        "total_processed": 156,
+        "successful": 156,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 99,
+            "Linux Kernel": 107,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -26486,6 +26486,1336 @@
                 }
             },
             "classification_timestamp": "2026-09-17T06:34:37.644067"
+        },
+        {
+            "cve_id": "CVE-2026-93135",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核 BPF 子系统中：RISC-V、ARM64、LoongArch 等架构实现 bpf_jit_inlines_helper_call() 后，验证器会跳过辅助函数调用偏移量的重写，使 insn->imm 保留原始 helper ID。当 JIT 被禁用或运行时编译失败并回退到解释器时，解释器会执行无效地址跳转，导致指令对齐异常或内核 panic。修复方式是对此类程序设置 prog->jit_required=1，在 JIT 不可用时安全拒绝加载。",
+            "key_points": [
+                "影响实现 bpf_jit_inlines_helper_call() 的架构，包括 RISC-V、ARM64、LoongArch。",
+                "验证器在 bpf_do_misc_fixups() 中跳过 insn->imm 重写，使其保留原始 helper 枚举 ID。",
+                "JIT 关闭（net.core.bpf_jit_enable=0）或 JIT 编译失败时回退到解释器，解释器执行 __bpf_call_base + insn->imm 会跳入非法地址空间。",
+                "该错误会导致指令对齐 fault 或内核 panic，构成本地拒绝服务。",
+                "修复通过设置 prog->jit_required=1，使 JIT 不可用时拒绝加载此类 BPF 程序。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在支持 JIT 内联 BPF helper 的架构上，bpf_jit_inlines_helper_call() 返回 true 时，bpf_do_misc_fixups() 不会把 insn->imm 重写为 __bpf_call_base 的偏移，而期望 JIT 编译器在后续内联该 helper。若运行时 JIT 被禁用或编译失败，BPF 程序回退到解释器执行。解释器按通用调用逻辑计算目标地址 __bpf_call_base + insn->imm，由于 insn->imm 仍是原始 helper enum ID，最终会跳转到非法地址，触发 alignment fault 或 panic。该问题出现在 RISC-V、ARM64、LoongArch 等架构上。修复在跳过 helper call 重写时设置 prog->jit_required=1，确保 JIT 不可用时直接拒绝程序加载，避免解释器执行未修补指令。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-93135",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-17T16:02:15.087Z",
+                    "datePublished": "2026-09-17T16:11:36.771Z",
+                    "dateUpdated": "2026-09-17T16:11:36.771Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:11:36.771Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Reject programs with inlined helpers if JIT is not available\n\nWhen an architecture (such as LoongArch, ARM64, and RISC-V) implements\nbpf_jit_inlines_helper_call(), the verifier skips rewriting the helper\ncall offset (insn->imm) in bpf_do_misc_fixups(). This is because the\nhelper is expected to be inlined by the JIT compiler later. Therefore,\ninsn->imm remains as the raw helper enum ID.\n\nHowever, if JIT is disabled at runtime (net.core.bpf_jit_enable=0) or\nif JIT compilation fails dynamically (e.g., due to OOM), the program\nfalls back to the BPF interpreter.\n\nWhen the interpreter executes (__bpf_call_base + insn->imm) with the\nunpatched raw ID, it jumps into an invalid address space, triggering\nan instruction alignment fault or a kernel panic.\n\nAlthough these helpers have valid C implementations in the kernel, the\nomission of offset rewriting makes runtime interpreter fallback fatal.\n\nFix this by setting 'prog->jit_required = 1' when helper call rewriting\nis skipped for JIT inlining. This ensures that such programs are safely\nrejected if JIT is not available, preventing the runtime kernel panic."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "kernel/bpf/fixups.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "2ddec2c80b4402c293c7e6e0881cecaaf77e8cec",
+                                        "lessThan": "21c6445366795fa3a89954e1d318e7c8afdef843",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "2ddec2c80b4402c293c7e6e0881cecaaf77e8cec",
+                                        "lessThan": "f1c27922576edccb99d0257827d09bd05c0304a6",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "kernel/bpf/fixups.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.10",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.10",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.10",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.10",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/21c6445366795fa3a89954e1d318e7c8afdef843"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/f1c27922576edccb99d0257827d09bd05c0304a6"
+                            }
+                        ],
+                        "title": "bpf: Reject programs with inlined helpers if JIT is not available",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:30:22.747769"
+        },
+        {
+            "cve_id": "CVE-2026-90191",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V SBI MPXY邮箱驱动存在漏洞：未校验SBI返回的通知长度，可能导致共享内存数据被越界复制；事件遍历器循环条件反转，可能读取不完整的事件记录。修复增加了长度校验和边界检查。",
+            "key_points": [
+                "SBI返回的通知长度未与协商的共享内存大小进行校验，导致可能越界复制。",
+                "事件遍历器使用反转的循环条件，可能处理不足一个事件头部的短记录，引发越界读取。",
+                "补丁在复制前验证完整通知长度，并确保仅在完整事件头存在时继续遍历，且事件负载不超出已复制数据范围。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于Linux内核RISC-V SBI MPXY邮箱驱动中。RISC-V SBI MPXY机制通过共享内存接收RPMI通知，SBI调用返回的字节数直接作为从共享内存复制到内核通知缓冲区的长度。由于该长度未与协商的共享内存大小比较，恶意或异常SBI固件可返回超长长度，造成内核缓冲区越界写或共享内存越界读。此外，事件遍历循环条件颠倒，可能对短于事件头的数据继续进行解析，并在声明的事件payload超过已复制通知数据时继续访问，构成越界读。修复方式：在复制前验证完整通知长度；遍历时仅在剩余数据至少包含完整事件头时继续；当事件声明长度超出已复制数据时立即停止。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-90191",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-11T19:38:34.792Z",
+                    "datePublished": "2026-09-17T16:07:12.339Z",
+                    "dateUpdated": "2026-09-17T16:07:12.339Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:07:12.339Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nmailbox: riscv-sbi-mpxy: validate RPMI notification lengths\n\nThe SBI return value controls how many bytes are copied from shared\nmemory into the RPMI notification buffer. It is not validated against\nthe negotiated shared-memory size before that copy. The event walker\nalso uses a reversed loop condition and can inspect a short event record.\n\nValidate the complete notification length before copying it, iterate only\nwhile a full event header remains, and stop when a declared event payload\nextends beyond the copied notification data."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/mailbox/riscv-sbi-mpxy-mbox.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "bf3022a4eb119c6b4e3424d6b19d8bfdfbc9bb57",
+                                        "lessThan": "cbc24bce70dfd91c7b2f53b4fa896e9a4b6d6a6b",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "bf3022a4eb119c6b4e3424d6b19d8bfdfbc9bb57",
+                                        "lessThan": "c7bc5e7677bcda7a446d63b989cfaa3fe91d6b76",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "bf3022a4eb119c6b4e3424d6b19d8bfdfbc9bb57",
+                                        "lessThan": "11d5af151bcbe78f5a579e0faecd3be9cea0399a",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/mailbox/riscv-sbi-mpxy-mbox.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.18",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.18",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.52",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.18",
+                                                "versionEndExcluding": "6.18.52"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.18",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.18",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/cbc24bce70dfd91c7b2f53b4fa896e9a4b6d6a6b"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/c7bc5e7677bcda7a446d63b989cfaa3fe91d6b76"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/11d5af151bcbe78f5a579e0faecd3be9cea0399a"
+                            }
+                        ],
+                        "title": "mailbox: riscv-sbi-mpxy: validate RPMI notification lengths",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:31:38.442620"
+        },
+        {
+            "cve_id": "CVE-2026-92519",
+            "category": "Linux Kernel",
+            "summary": "Linux 内核 RISC-V BPF JIT 存在内存泄漏漏洞。在 BPF 子程序编译过程中，第一个子程序的 ctx->offset 数组在后续 extra pass 中被保留，但若后续子程序 JIT 编译失败并调用 bpf_jit_free() 清理时，该数组未被释放，导致内存泄漏。修复方法是在 bpf_jit_free() 中增加 kfree(jit_data->ctx.offset)。",
+            "key_points": [
+                "漏洞位于 RISC-V BPF JIT 的错误清理路径中，bpf_jit_free() 未释放 jit_data->ctx.offset。",
+                "仅在 BPF 多子程序（is_func）编译流程中，当后续子程序 JIT 编译失败时触发。",
+                "ctx->offset 是在首次编译遍历中分配并保留给 extra pass 使用。",
+                "修复补丁在 bpf_jit_free() 中对 jit_data->ctx.offset 调用 kfree。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "bpf_int_jit_compile() 在处理 BPF 子程序时，如果条件 !prog->is_func 或 extra_pass 为 false，会在第一趟编译中提前返回；此时 ctx->offset 被保留以便后续 extra pass 使用。如果后续某个子程序的 JIT 编译失败，BPF 核心会中止整个编译过程并调用 bpf_jit_free() 清理第一个子程序，但 bpf_jit_free() 只释放了 JIT 二进制镜像等资源，没有释放 jit_data->ctx.offset 指向的偏移数组，造成内存泄漏。攻击者或本地用户通过重复触发 BPF 子程序 JIT 编译失败，可能耗尽内核内存。补丁通过添加 kfree(jit_data->ctx.offset) 完成释放。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-92519",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-16T12:21:13.874Z",
+                    "datePublished": "2026-09-17T16:10:26.791Z",
+                    "dateUpdated": "2026-09-17T16:10:26.791Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:10:26.791Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv, bpf: Fix memory leak in bpf_jit_free\n\nWhen bpf_int_jit_compile() is called for subprograms, it returns early\nduring the first pass (!prog->is_func || extra_pass is false), keeping\nctx->offset alive for the subsequent extra pass.\n\nIf JIT compilation fails for a later subprogram, the BPF core aborts\nand calls bpf_jit_free() to clean up the first subprogram. However,\nbpf_jit_free() fails to free jit_data->ctx.offset, which causes a\nmemory leak of the JIT context offsets array.\n\nFix this by adding the missing kfree(jit_data->ctx.offset) in\nbpf_jit_free()."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_core.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "48a8f78c50bd6f7f08fd40daa62252fd043f2f18",
+                                        "lessThan": "b594c23f584ab032a5eae809eee81b809dd27330",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "48a8f78c50bd6f7f08fd40daa62252fd043f2f18",
+                                        "lessThan": "5cadc66b534fe8140441916200a20c7efb06a388",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "48a8f78c50bd6f7f08fd40daa62252fd043f2f18",
+                                        "lessThan": "2a3a29e90021806ea00527f6458cfd2edb58b42a",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "48a8f78c50bd6f7f08fd40daa62252fd043f2f18",
+                                        "lessThan": "369e4635d04801f394d5bd42556f21029e95ff93",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_core.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.6",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.6",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.110",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.52",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "6.12.110"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "6.18.52"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/b594c23f584ab032a5eae809eee81b809dd27330"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/5cadc66b534fe8140441916200a20c7efb06a388"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/2a3a29e90021806ea00527f6458cfd2edb58b42a"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/369e4635d04801f394d5bd42556f21029e95ff93"
+                            }
+                        ],
+                        "title": "riscv, bpf: Fix memory leak in bpf_jit_free",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:32:49.347482"
+        },
+        {
+            "cve_id": "CVE-2026-90195",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V BPF JIT在RV64上未对有符号1字节和2字节kfunc参数进行符号扩展，违反RISC-V ABI。该问题在zext_dst精确分析提交7ce090afbf72后被暴露，导致kfunc_call/kfunc_call_test4自测失败。修复扩展了符号扩展逻辑以覆盖s8/s16参数。",
+            "key_points": [
+                "RV64 ABI要求有符号1字节/2字节kfunc参数必须符号扩展，但RISC-V BPF JIT未实现。",
+                "提交7ce090afbf72之前，32位子寄存器零扩展可能被省略，间接掩盖了该缺陷。",
+                "修复复用并扩展已有符号扩展逻辑，覆盖s8和s16类型的kfunc参数。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "RISC-V 64位调用约定要求有符号char/short参数在寄存器中进行符号扩展。BPF JIT调用kfunc时没有做该扩展，导致负值被传为无符号大值（如-1变为255/65535），可能使kfunc逻辑错误或引发安全问题。该缺陷被后续更精确的zext_dst分析暴露，当前已知导致kfunc_call_test4自测失败。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-90195",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-11T19:38:34.792Z",
+                    "datePublished": "2026-09-17T16:07:14.979Z",
+                    "dateUpdated": "2026-09-17T16:07:14.979Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:07:14.979Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv, bpf: Fix missing sign-ext for signed 1-byte and 2-byte kfunc args\n\nOn RV64, the ABI requires sign-extension for signed 1-byte and 2-byte kfunc\nargs. However, the RV64 JIT currently does not perform sign-extension for\nsuch kfunc args.\n\nBefore commit 7ce090afbf72 (\"bpf: Infer zext_dst based on static register\nliveness analysis\"), state pruning could potentially omit zero-extension\nof 32-bit subregisters, which inadvertently masked the above issue by making\nthe args appear as if they had been properly sign-extended. After that\ncommit, the problem is exposed, causing the kfunc_call/kfunc_call_test4\nselftest to fail.\n\nFix this by extending the existing sign-extension logic to handle signed\n1-byte and 2-byte kfunc args as well."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_comp64.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "443574b033876c85a35de4c65c14f7fe092222b2",
+                                        "lessThan": "555fc6f1caf00ce7005e732b688da26c0dc3c5c5",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "443574b033876c85a35de4c65c14f7fe092222b2",
+                                        "lessThan": "801ae90f8ce099187e6224cec7d72d07a4df0324",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "443574b033876c85a35de4c65c14f7fe092222b2",
+                                        "lessThan": "71dbd143be598954ae103feadd12692aeb0f2f88",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "443574b033876c85a35de4c65c14f7fe092222b2",
+                                        "lessThan": "f2aaa621591093cfe8224a25ef2f04a3b1e304b0",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_comp64.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.9",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.9",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.110",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.52",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.9",
+                                                "versionEndExcluding": "6.12.110"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.9",
+                                                "versionEndExcluding": "6.18.52"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.9",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.9",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/555fc6f1caf00ce7005e732b688da26c0dc3c5c5"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/801ae90f8ce099187e6224cec7d72d07a4df0324"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/71dbd143be598954ae103feadd12692aeb0f2f88"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/f2aaa621591093cfe8224a25ef2f04a3b1e304b0"
+                            }
+                        ],
+                        "title": "riscv, bpf: Fix missing sign-ext for signed 1-byte and 2-byte kfunc args",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:34:16.461711"
+        },
+        {
+            "cve_id": "CVE-2026-92518",
+            "category": "Linux Kernel",
+            "summary": "该漏洞存在于启用 CONFIG_CFI_CLANG 的 RISC-V 架构 Linux 内核 BPF 尾调用路径中。由于 tailcall 跳转偏移重复包含了 kcfi 指令，导致多跳 4 字节并跳过栈指针调整，从而引发内核栈损坏。攻击者可能利用此漏洞造成内核崩溃或提升权限。",
+            "key_points": [
+                "在启用 CONFIG_CFI_CLANG 时，prog->bpf_func 在初始化阶段已跳过 kcfi 指令。",
+                "BPF tailcall 跳转偏移计算再次包含 kcfi 指令长度，导致实际跳转目标多出 4 字节。",
+                "多跳过的 4 字节恰好是函数序言中的栈指针调整指令，使后续代码在不正确的栈帧上执行，造成内核栈损坏。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在 RISC-V BPF JIT 中启用 CONFIG_CFI_CLANG 时，内核会为 BPF 程序入口插入 kcfi 校验指令（4 字节）。在 setup 阶段，prog->bpf_func 已经指向跳过该 kcfi 指令后的地址。但在 tailcall 跳转偏移计算中，错误地再次将 kcfi 指令长度计入偏移，导致实际跳转目标比预期多 4 字节。这 4 字节通常对应函数序言中的栈指针调整指令，跳过该指令会使后续函数体在不正确的栈帧上执行，破坏内核栈数据，可能导致系统崩溃或任意代码执行。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-92518",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-16T12:21:13.873Z",
+                    "datePublished": "2026-09-17T16:10:26.136Z",
+                    "dateUpdated": "2026-09-17T16:10:26.136Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:10:26.136Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv, bpf: Fix kernel stack corruption in tailcall with CFI\n\nWhen CONFIG_CFI_CLANG is enabled, prog->bpf_func already skips the kcfi\ninstruction during setup. Including it again in the tailcall jump offset\ncauses it to jump over an extra 4 bytes, skipping the stack pointer\nadjustment, which will result in kernel stack corruption."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_comp64.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "30a59cc79754fd9ff3f41b7ee2eb21da85988548",
+                                        "lessThan": "34b1bb33a025787e05f966e74de18cd36276f801",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "30a59cc79754fd9ff3f41b7ee2eb21da85988548",
+                                        "lessThan": "a6e11a81da3420fd37f1518d4f238c4d5784086e",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "30a59cc79754fd9ff3f41b7ee2eb21da85988548",
+                                        "lessThan": "52fb1756ea1d2759dfef2d86245be00b05dac3a2",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "fe5b68fdcec0f3d97a32f4c4acfef59cf90718f7",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "6.11.6",
+                                        "lessThan": "6.12",
+                                        "status": "affected",
+                                        "versionType": "semver"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_comp64.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.12",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.12",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.52",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "6.18.52"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.11.6"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/34b1bb33a025787e05f966e74de18cd36276f801"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/a6e11a81da3420fd37f1518d4f238c4d5784086e"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/52fb1756ea1d2759dfef2d86245be00b05dac3a2"
+                            }
+                        ],
+                        "title": "riscv, bpf: Fix kernel stack corruption in tailcall with CFI",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:34:41.358979"
+        },
+        {
+            "cve_id": "CVE-2026-92517",
+            "category": "Linux Kernel",
+            "summary": "Linux内核BPF RISC-V后端在处理arena load_acquire时，emit_atomic_ld_st()返回非零值导致add_exception_handler()被跳过，使PROBE_ATOMIC load_acquire缺少异常表条目，触发非法访问时直接oops。同时故障路径未清零目标寄存器，验证器却认为加载已完成，攻击者可利用BPF map泄露内核数据。",
+            "key_points": [
+                "emit_atomic_ld_st()对sub-word load_acquire返回1以跳过zext，但调用方用 ret ?: add_exception_handler() 将非零返回值视为无需注册异常处理，导致extable条目缺失。",
+                "PROBE_ATOMIC load_acquire发生地址异常时无异常处理入口，内核崩溃；且REG_DONT_CLEAR_MARKER使rd在故障时保留旧值，验证器误判为已覆盖，可通过map泄露内核数据。",
+                "修复改为仅在ret >= 0时调用add_exception_handler()，并为LOAD_ACQ传入rd，使故障时像PROBE_MEM加载一样清零rd；返回值保持非零以继续跳过zext。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于arch/riscv/net/bpf_jit_comp64.c的BPF JIT代码生成逻辑。emit_atomic_ld_st()对带acquire语义的子字加载返回1，目的是通知build_body()跳过零扩展；但调用方使用 ret ?: add_exception_handler(...) 判断时，任何非零返回值都会跳过异常处理注册。因此当PROBE_ATOMIC load_acquire触发异常（如arena地址无效）时，内核无法通过extable恢复，直接oops。同时，由于REG_DONT_CLEAR_MARKER，rd寄存器在故障路径不会被清零，而BPF验证器仍认为加载已覆盖旧值，导致旧寄存器内容可通过map被读取，构成信息泄露。修复通过检查ret >= 0来确保非错误返回值仍注册异常处理，并传递rd使故障处理例程清零目标寄存器，与PROBE_MEM行为一致。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-92517",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-16T12:21:13.873Z",
+                    "datePublished": "2026-09-17T16:10:25.482Z",
+                    "dateUpdated": "2026-09-17T16:10:25.482Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:10:25.482Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf, riscv: Fix extable handling for arena load_acquire\n\nemit_atomic_ld_st() returns 1 to have build_body() skip the zext after\na sub-word load_acquire. The caller does \"ret = ret ?:\nadd_exception_handler(...)\", which skips add_exception_handler() on any\nnon-zero ret, so the extable entry is missing and a faulting\nPROBE_ATOMIC load_acquire oopses.\n\nREG_DONT_CLEAR_MARKER leaves rd stale on fault, and the verifier still\nthinks the load overwrote it, so a program can leak it through a map.\n\nCheck ret >= 0 before calling add_exception_handler(), and pass rd for\nLOAD_ACQ so the fault zeroes rd like a PROBE_MEM load. Return ret\nunchanged for the zext skip."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_comp64.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "fb7cefabae8117c203155ef169a386bec43bbba9",
+                                        "lessThan": "26d9496c826586338d1b8c27edfec4a19a89f462",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "fb7cefabae8117c203155ef169a386bec43bbba9",
+                                        "lessThan": "08fe2eaa609180c1baeb76c2629a9c82263b0427",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "fb7cefabae8117c203155ef169a386bec43bbba9",
+                                        "lessThan": "5eb8921371c6fd117d4a328b6053dfda38707df8",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/net/bpf_jit_comp64.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.18",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.18",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.52",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.18",
+                                                "versionEndExcluding": "6.18.52"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.18",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.18",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/26d9496c826586338d1b8c27edfec4a19a89f462"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/08fe2eaa609180c1baeb76c2629a9c82263b0427"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/5eb8921371c6fd117d4a328b6053dfda38707df8"
+                            }
+                        ],
+                        "title": "bpf, riscv: Fix extable handling for arena load_acquire",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:35:22.995054"
+        },
+        {
+            "cve_id": "CVE-2026-93133",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核的 RISC-V ACPI 处理代码中。函数 riscv_acpi_add_prt_dep() 未检查 acpi_get_handle() 的返回状态，导致句柄 link_handle 可能未被初始化即被使用。修复通过检查返回状态并在失败时跳过该条目，避免使用无效句柄。",
+            "key_points": [
+                "漏洞位于 RISC-V ACPI 中断依赖处理函数 riscv_acpi_add_prt_dep() 中。",
+                "acpi_get_handle() 失败时 link_handle 保持未初始化，原代码继续使用该句柄。",
+                "修复补丁检查 acpi_get_handle() 的返回状态，失败则跳过该 PRT 依赖条目。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "riscv_acpi_add_prt_dep() 通过 acpi_get_handle(adev->handle, \"_PRT\", &link_handle) 获取 _PRT 对象句柄。acpi_get_handle() 返回 acpi_status，当 _PRT 不存在或发生其他 ACPI 错误时，link_handle 不会被写入有效值。修复前代码未检查该返回值，随后可能将未初始化的 link_handle 作为有效 ACPI 句柄用于查找设备或添加依赖关系，导致无效句柄访问、内核 oops 或错误的设备依赖关系。补丁在调用失败时直接返回/跳过当前条目，避免使用未初始化句柄。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-93133",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-17T16:02:15.087Z",
+                    "datePublished": "2026-09-17T16:11:35.383Z",
+                    "dateUpdated": "2026-09-17T16:11:35.383Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:11:35.383Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nACPI: RISC-V: Check acpi_get_handle() status in riscv_acpi_add_prt_dep()\n\nIn riscv_acpi_add_prt_dep(), the acpi_get_handle() call can fail which\nwould leave link_handle uninitialized.\n\nFix it by checking the acpi_get_handle() return status and skip the entry\nif it fails."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/acpi/riscv/irq.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "f8625752bfdf108a0000116aa583b3efe767b540",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "4cdcf4e19ed3127afd787f026d4ec56ae4d2a4ed",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "088c1c85921344d7244ca2e8d5d336ae7461de6e",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "20435bda13f1219891ed0ce41207e320a916ff9c",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/acpi/riscv/irq.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.12",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.12",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.110",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.52",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "6.12.110"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "6.18.52"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/f8625752bfdf108a0000116aa583b3efe767b540"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/4cdcf4e19ed3127afd787f026d4ec56ae4d2a4ed"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/088c1c85921344d7244ca2e8d5d336ae7461de6e"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/20435bda13f1219891ed0ce41207e320a916ff9c"
+                            }
+                        ],
+                        "title": "ACPI: RISC-V: Check acpi_get_handle() status in riscv_acpi_add_prt_dep()",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:36:17.377866"
+        },
+        {
+            "cve_id": "CVE-2026-93132",
+            "category": "Linux Kernel",
+            "summary": "Linux内核ACPI RISC-V子系统中的riscv_acpi_add_prt_dep()函数存在循环处理缺陷，错误路径使用continue时未正确推进条目指针，可能导致死循环或跳过条目。修复将该循环重写为for循环，并用辅助函数封装条件判断和指针更新。",
+            "key_points": [
+                "riscv_acpi_add_prt_dep()在处理ACPI _PRT依赖时，错误条件分支使用continue却未更新entry指针，可能使循环卡在同一表项。",
+                "该缺陷会影响RISC-V平台ACPI初始化，恶意或畸形的ACPI表可能导致内核无法完成启动，形成拒绝服务。",
+                "补丁用for循环重构逻辑，并通过helper函数处理条件与迭代更新，确保continue时指针正确前进。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "漏洞位于Linux内核ACPI RISC-V初始化代码中。修复前循环体在检测到错误时执行continue，但continue会跳过循环末尾的entry指针更新，导致下一次迭代仍处理同一条目；若错误持续存在，将形成无限循环。由于ACPI表通常由平台固件提供，利用需要能够注入畸形ACPI表（例如已控制固件或虚拟机配置），实际攻击条件较高。补丁将其改为for循环并封装辅助函数，使continue后仍能正确移动到下一项。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-93132",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-17T16:02:15.087Z",
+                    "datePublished": "2026-09-17T16:11:34.708Z",
+                    "dateUpdated": "2026-09-17T16:11:34.708Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-17T16:11:34.708Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nACPI: RISC-V: Fix riscv_acpi_add_prt_dep() loop handling\n\nThe loop in riscv_acpi_add_prt_dep() includes error conditions that are\nhandled in a dubious - if not outright wrong - way, by continuining the\nloop (which skips and misses the entry pointer update to point to the next\nentry).\n\nRewrite the loop as a for loop (that handles the continuation correctly)\nand wrap the condition and update statements using helper functions to make\nit cleaner."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/acpi/riscv/irq.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "41652ca8c6ff2b77b9780cbbb2f20f1551b9ff80",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "c9729ced165d6c5b57d99141b6632bb8711efec9",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "3fd86a5d6facb6618f63a76d499f28007cef878f",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "1b173cc4bfcdcf4a49927952ba3a445c5b293723",
+                                        "lessThan": "3a56321d0aceee2a0bd80d23366401c131ff8350",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/acpi/riscv/irq.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.12",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.12",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.110",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.52",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.6",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "6.12.110"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "6.18.52"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "7.2.6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.12",
+                                                "versionEndExcluding": "7.3-rc1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/41652ca8c6ff2b77b9780cbbb2f20f1551b9ff80"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/c9729ced165d6c5b57d99141b6632bb8711efec9"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/3fd86a5d6facb6618f63a76d499f28007cef878f"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/3a56321d0aceee2a0bd80d23366401c131ff8350"
+                            }
+                        ],
+                        "title": "ACPI: RISC-V: Fix riscv_acpi_add_prt_dep() loop handling",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-18T06:36:43.763684"
         }
     ]
 }

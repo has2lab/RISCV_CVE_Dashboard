@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 148,
-        "classification_date": "2026-09-17T06:34:38.644249",
+        "total_cves": 156,
+        "classification_date": "2026-09-18T06:36:44.763842",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 148,
-        "successful": 148,
+        "total_processed": 156,
+        "successful": 156,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 99,
+            "Linux Kernel": 107,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -1971,6 +1971,113 @@
             "severity_assessment": "Medium",
             "technical_details": "漏洞位于 Linux 内核 cpuidle 的 dt_idle_genpd 驱动中。dt_idle_pd_alloc() 调用 kasprintf() 动态分配完整设备树节点路径，然后将 pd->name 设置为 kbasename() 返回的字符串内部指针。当调用 dt_idle_pd_free() 时，对 pd->name 执行 kfree()，但该指针并非由 kmalloc/kasprintf 返回的起始地址，属于无效释放，可能破坏 slab 分配器元数据，导致内存损坏或系统崩溃。修复方案是复制基名字符串到独立分配的内存，使 pd->name 指向可被正确 kfree() 的起始地址，同时释放原始完整路径分配。该缺陷影响设备树电源域空闲管理路径，在支持相关空闲状态的平台上可能被触发。",
             "classification_timestamp": "2026-09-17T06:34:37.644067"
+        },
+        {
+            "cve_id": "CVE-2026-93135",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核 BPF 子系统中：RISC-V、ARM64、LoongArch 等架构实现 bpf_jit_inlines_helper_call() 后，验证器会跳过辅助函数调用偏移量的重写，使 insn->imm 保留原始 helper ID。当 JIT 被禁用或运行时编译失败并回退到解释器时，解释器会执行无效地址跳转，导致指令对齐异常或内核 panic。修复方式是对此类程序设置 prog->jit_required=1，在 JIT 不可用时安全拒绝加载。",
+            "key_points": [
+                "影响实现 bpf_jit_inlines_helper_call() 的架构，包括 RISC-V、ARM64、LoongArch。",
+                "验证器在 bpf_do_misc_fixups() 中跳过 insn->imm 重写，使其保留原始 helper 枚举 ID。",
+                "JIT 关闭（net.core.bpf_jit_enable=0）或 JIT 编译失败时回退到解释器，解释器执行 __bpf_call_base + insn->imm 会跳入非法地址空间。",
+                "该错误会导致指令对齐 fault 或内核 panic，构成本地拒绝服务。",
+                "修复通过设置 prog->jit_required=1，使 JIT 不可用时拒绝加载此类 BPF 程序。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在支持 JIT 内联 BPF helper 的架构上，bpf_jit_inlines_helper_call() 返回 true 时，bpf_do_misc_fixups() 不会把 insn->imm 重写为 __bpf_call_base 的偏移，而期望 JIT 编译器在后续内联该 helper。若运行时 JIT 被禁用或编译失败，BPF 程序回退到解释器执行。解释器按通用调用逻辑计算目标地址 __bpf_call_base + insn->imm，由于 insn->imm 仍是原始 helper enum ID，最终会跳转到非法地址，触发 alignment fault 或 panic。该问题出现在 RISC-V、ARM64、LoongArch 等架构上。修复在跳过 helper call 重写时设置 prog->jit_required=1，确保 JIT 不可用时直接拒绝程序加载，避免解释器执行未修补指令。",
+            "classification_timestamp": "2026-09-18T06:30:22.747769"
+        },
+        {
+            "cve_id": "CVE-2026-90191",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V SBI MPXY邮箱驱动存在漏洞：未校验SBI返回的通知长度，可能导致共享内存数据被越界复制；事件遍历器循环条件反转，可能读取不完整的事件记录。修复增加了长度校验和边界检查。",
+            "key_points": [
+                "SBI返回的通知长度未与协商的共享内存大小进行校验，导致可能越界复制。",
+                "事件遍历器使用反转的循环条件，可能处理不足一个事件头部的短记录，引发越界读取。",
+                "补丁在复制前验证完整通知长度，并确保仅在完整事件头存在时继续遍历，且事件负载不超出已复制数据范围。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于Linux内核RISC-V SBI MPXY邮箱驱动中。RISC-V SBI MPXY机制通过共享内存接收RPMI通知，SBI调用返回的字节数直接作为从共享内存复制到内核通知缓冲区的长度。由于该长度未与协商的共享内存大小比较，恶意或异常SBI固件可返回超长长度，造成内核缓冲区越界写或共享内存越界读。此外，事件遍历循环条件颠倒，可能对短于事件头的数据继续进行解析，并在声明的事件payload超过已复制通知数据时继续访问，构成越界读。修复方式：在复制前验证完整通知长度；遍历时仅在剩余数据至少包含完整事件头时继续；当事件声明长度超出已复制数据时立即停止。",
+            "classification_timestamp": "2026-09-18T06:31:38.442620"
+        },
+        {
+            "cve_id": "CVE-2026-92519",
+            "category": "Linux Kernel",
+            "summary": "Linux 内核 RISC-V BPF JIT 存在内存泄漏漏洞。在 BPF 子程序编译过程中，第一个子程序的 ctx->offset 数组在后续 extra pass 中被保留，但若后续子程序 JIT 编译失败并调用 bpf_jit_free() 清理时，该数组未被释放，导致内存泄漏。修复方法是在 bpf_jit_free() 中增加 kfree(jit_data->ctx.offset)。",
+            "key_points": [
+                "漏洞位于 RISC-V BPF JIT 的错误清理路径中，bpf_jit_free() 未释放 jit_data->ctx.offset。",
+                "仅在 BPF 多子程序（is_func）编译流程中，当后续子程序 JIT 编译失败时触发。",
+                "ctx->offset 是在首次编译遍历中分配并保留给 extra pass 使用。",
+                "修复补丁在 bpf_jit_free() 中对 jit_data->ctx.offset 调用 kfree。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "bpf_int_jit_compile() 在处理 BPF 子程序时，如果条件 !prog->is_func 或 extra_pass 为 false，会在第一趟编译中提前返回；此时 ctx->offset 被保留以便后续 extra pass 使用。如果后续某个子程序的 JIT 编译失败，BPF 核心会中止整个编译过程并调用 bpf_jit_free() 清理第一个子程序，但 bpf_jit_free() 只释放了 JIT 二进制镜像等资源，没有释放 jit_data->ctx.offset 指向的偏移数组，造成内存泄漏。攻击者或本地用户通过重复触发 BPF 子程序 JIT 编译失败，可能耗尽内核内存。补丁通过添加 kfree(jit_data->ctx.offset) 完成释放。",
+            "classification_timestamp": "2026-09-18T06:32:49.347482"
+        },
+        {
+            "cve_id": "CVE-2026-90195",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V BPF JIT在RV64上未对有符号1字节和2字节kfunc参数进行符号扩展，违反RISC-V ABI。该问题在zext_dst精确分析提交7ce090afbf72后被暴露，导致kfunc_call/kfunc_call_test4自测失败。修复扩展了符号扩展逻辑以覆盖s8/s16参数。",
+            "key_points": [
+                "RV64 ABI要求有符号1字节/2字节kfunc参数必须符号扩展，但RISC-V BPF JIT未实现。",
+                "提交7ce090afbf72之前，32位子寄存器零扩展可能被省略，间接掩盖了该缺陷。",
+                "修复复用并扩展已有符号扩展逻辑，覆盖s8和s16类型的kfunc参数。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "RISC-V 64位调用约定要求有符号char/short参数在寄存器中进行符号扩展。BPF JIT调用kfunc时没有做该扩展，导致负值被传为无符号大值（如-1变为255/65535），可能使kfunc逻辑错误或引发安全问题。该缺陷被后续更精确的zext_dst分析暴露，当前已知导致kfunc_call_test4自测失败。",
+            "classification_timestamp": "2026-09-18T06:34:16.461711"
+        },
+        {
+            "cve_id": "CVE-2026-92518",
+            "category": "Linux Kernel",
+            "summary": "该漏洞存在于启用 CONFIG_CFI_CLANG 的 RISC-V 架构 Linux 内核 BPF 尾调用路径中。由于 tailcall 跳转偏移重复包含了 kcfi 指令，导致多跳 4 字节并跳过栈指针调整，从而引发内核栈损坏。攻击者可能利用此漏洞造成内核崩溃或提升权限。",
+            "key_points": [
+                "在启用 CONFIG_CFI_CLANG 时，prog->bpf_func 在初始化阶段已跳过 kcfi 指令。",
+                "BPF tailcall 跳转偏移计算再次包含 kcfi 指令长度，导致实际跳转目标多出 4 字节。",
+                "多跳过的 4 字节恰好是函数序言中的栈指针调整指令，使后续代码在不正确的栈帧上执行，造成内核栈损坏。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在 RISC-V BPF JIT 中启用 CONFIG_CFI_CLANG 时，内核会为 BPF 程序入口插入 kcfi 校验指令（4 字节）。在 setup 阶段，prog->bpf_func 已经指向跳过该 kcfi 指令后的地址。但在 tailcall 跳转偏移计算中，错误地再次将 kcfi 指令长度计入偏移，导致实际跳转目标比预期多 4 字节。这 4 字节通常对应函数序言中的栈指针调整指令，跳过该指令会使后续函数体在不正确的栈帧上执行，破坏内核栈数据，可能导致系统崩溃或任意代码执行。",
+            "classification_timestamp": "2026-09-18T06:34:41.358979"
+        },
+        {
+            "cve_id": "CVE-2026-92517",
+            "category": "Linux Kernel",
+            "summary": "Linux内核BPF RISC-V后端在处理arena load_acquire时，emit_atomic_ld_st()返回非零值导致add_exception_handler()被跳过，使PROBE_ATOMIC load_acquire缺少异常表条目，触发非法访问时直接oops。同时故障路径未清零目标寄存器，验证器却认为加载已完成，攻击者可利用BPF map泄露内核数据。",
+            "key_points": [
+                "emit_atomic_ld_st()对sub-word load_acquire返回1以跳过zext，但调用方用 ret ?: add_exception_handler() 将非零返回值视为无需注册异常处理，导致extable条目缺失。",
+                "PROBE_ATOMIC load_acquire发生地址异常时无异常处理入口，内核崩溃；且REG_DONT_CLEAR_MARKER使rd在故障时保留旧值，验证器误判为已覆盖，可通过map泄露内核数据。",
+                "修复改为仅在ret >= 0时调用add_exception_handler()，并为LOAD_ACQ传入rd，使故障时像PROBE_MEM加载一样清零rd；返回值保持非零以继续跳过zext。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于arch/riscv/net/bpf_jit_comp64.c的BPF JIT代码生成逻辑。emit_atomic_ld_st()对带acquire语义的子字加载返回1，目的是通知build_body()跳过零扩展；但调用方使用 ret ?: add_exception_handler(...) 判断时，任何非零返回值都会跳过异常处理注册。因此当PROBE_ATOMIC load_acquire触发异常（如arena地址无效）时，内核无法通过extable恢复，直接oops。同时，由于REG_DONT_CLEAR_MARKER，rd寄存器在故障路径不会被清零，而BPF验证器仍认为加载已覆盖旧值，导致旧寄存器内容可通过map被读取，构成信息泄露。修复通过检查ret >= 0来确保非错误返回值仍注册异常处理，并传递rd使故障处理例程清零目标寄存器，与PROBE_MEM行为一致。",
+            "classification_timestamp": "2026-09-18T06:35:22.995054"
+        },
+        {
+            "cve_id": "CVE-2026-93133",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核的 RISC-V ACPI 处理代码中。函数 riscv_acpi_add_prt_dep() 未检查 acpi_get_handle() 的返回状态，导致句柄 link_handle 可能未被初始化即被使用。修复通过检查返回状态并在失败时跳过该条目，避免使用无效句柄。",
+            "key_points": [
+                "漏洞位于 RISC-V ACPI 中断依赖处理函数 riscv_acpi_add_prt_dep() 中。",
+                "acpi_get_handle() 失败时 link_handle 保持未初始化，原代码继续使用该句柄。",
+                "修复补丁检查 acpi_get_handle() 的返回状态，失败则跳过该 PRT 依赖条目。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "riscv_acpi_add_prt_dep() 通过 acpi_get_handle(adev->handle, \"_PRT\", &link_handle) 获取 _PRT 对象句柄。acpi_get_handle() 返回 acpi_status，当 _PRT 不存在或发生其他 ACPI 错误时，link_handle 不会被写入有效值。修复前代码未检查该返回值，随后可能将未初始化的 link_handle 作为有效 ACPI 句柄用于查找设备或添加依赖关系，导致无效句柄访问、内核 oops 或错误的设备依赖关系。补丁在调用失败时直接返回/跳过当前条目，避免使用未初始化句柄。",
+            "classification_timestamp": "2026-09-18T06:36:17.377866"
+        },
+        {
+            "cve_id": "CVE-2026-93132",
+            "category": "Linux Kernel",
+            "summary": "Linux内核ACPI RISC-V子系统中的riscv_acpi_add_prt_dep()函数存在循环处理缺陷，错误路径使用continue时未正确推进条目指针，可能导致死循环或跳过条目。修复将该循环重写为for循环，并用辅助函数封装条件判断和指针更新。",
+            "key_points": [
+                "riscv_acpi_add_prt_dep()在处理ACPI _PRT依赖时，错误条件分支使用continue却未更新entry指针，可能使循环卡在同一表项。",
+                "该缺陷会影响RISC-V平台ACPI初始化，恶意或畸形的ACPI表可能导致内核无法完成启动，形成拒绝服务。",
+                "补丁用for循环重构逻辑，并通过helper函数处理条件与迭代更新，确保continue时指针正确前进。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "漏洞位于Linux内核ACPI RISC-V初始化代码中。修复前循环体在检测到错误时执行continue，但continue会跳过循环末尾的entry指针更新，导致下一次迭代仍处理同一条目；若错误持续存在，将形成无限循环。由于ACPI表通常由平台固件提供，利用需要能够注入畸形ACPI表（例如已控制固件或虚拟机配置），实际攻击条件较高。补丁将其改为for循环并封装辅助函数，使continue后仍能正确移动到下一项。",
+            "classification_timestamp": "2026-09-18T06:36:43.763684"
         }
     ]
 }
