@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 156,
-        "classification_date": "2026-09-18T06:36:44.763842",
+        "total_cves": 157,
+        "classification_date": "2026-09-25T06:31:56.350068",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 156,
-        "successful": 156,
+        "total_processed": 157,
+        "successful": 157,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 107,
+            "Linux Kernel": 108,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -2078,6 +2078,19 @@
             "severity_assessment": "Low",
             "technical_details": "漏洞位于Linux内核ACPI RISC-V初始化代码中。修复前循环体在检测到错误时执行continue，但continue会跳过循环末尾的entry指针更新，导致下一次迭代仍处理同一条目；若错误持续存在，将形成无限循环。由于ACPI表通常由平台固件提供，利用需要能够注入畸形ACPI表（例如已控制固件或虚拟机配置），实际攻击条件较高。补丁将其改为for循环并封装辅助函数，使continue后仍能正确移动到下一项。",
             "classification_timestamp": "2026-09-18T06:36:43.763684"
+        },
+        {
+            "cve_id": "CVE-2026-93237",
+            "category": "Linux Kernel",
+            "summary": "Linux内核LoongArch架构缺少DIRECT_MAP_PHYSMEM_END定义，回退使用不随CPU物理地址位数变化的编译期上限。在物理地址位数较小的CPU上，内存热插拔或设备内存区域搜索可能返回vmemmap窗口之外的ZONE_DEVICE区域，导致vmemmap_populate()回绕映射并静默破坏页表。修复将其定义为vmemmap覆盖的物理地址范围，并用MAX_PHYSMEM_BITS封顶。",
+            "key_points": [
+                "LoongArch未定义DIRECT_MAP_PHYSMEM_END，使用mm.h回退值(1ULL << MAX_PHYSMEM_BITS)-1，不能适配cpu_pabits。",
+                "当cpu_pabits小于MAX_PHYSMEM_BITS时，get_free_mem_region()可能返回超出vmemmap窗口的ZONE_DEVICE区域，vmemmap_populate()发生地址回绕并破坏页表。",
+                "Loongson-3C6000上已触发amdkfd相关崩溃，Loongson-2K等较小cpu_pabits型号仍受影响；修复公式为(1ULL << (cpu_pabits + 1)) - 1，并封顶于(1ULL << MAX_PHYSMEM_BITS) - 1。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "受影响的函数包括get_free_mem_region()、mhp_get_pluggable_range()、vmemmap_populate()和memmap_init_zone_device()。LoongArch未定义DIRECT_MAP_PHYSMEM_END，在CONFIG_SPARSEMEM_VMEMMAP下回退为编译期常量(1ULL << MAX_PHYSMEM_BITS)-1，而vmemmap窗口实际只覆盖物理地址空间低于2^(cpu_pabits+1)的范围。对于物理地址位数少于MAX_PHYSMEM_BITS的CPU（如Loongson-2K系列），该回退值过大，使内存区域搜索可能选中vmemmap窗口之外的ZONE_DEVICE区域。vmemmap_populate()随后将memmap范围回绕映射到低地址内存，静默破坏页表；此前在Loongson-3C6000上已导致amdkfd调用memmap_init_zone_device()崩溃。修复参考RISC-V commit f3336b48cf9d，在CONFIG_SPARSEMEM下定义DIRECT_MAP_PHYSMEM_END为(1ULL << (cpu_pabits + 1)) - 1，并以(1ULL << MAX_PHYSMEM_BITS) - 1封顶，使搜索范围与实际vmemmap覆盖范围一致。",
+            "classification_timestamp": "2026-09-25T06:31:55.349891"
         }
     ]
 }
