@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 157,
-        "classification_date": "2026-09-25T06:31:56.350068",
+        "total_cves": 159,
+        "classification_date": "2026-09-26T06:36:42.528753",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 157,
-        "successful": 157,
+        "total_processed": 159,
+        "successful": 159,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 108,
+            "Linux Kernel": 110,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -2091,6 +2091,33 @@
             "severity_assessment": "High",
             "technical_details": "受影响的函数包括get_free_mem_region()、mhp_get_pluggable_range()、vmemmap_populate()和memmap_init_zone_device()。LoongArch未定义DIRECT_MAP_PHYSMEM_END，在CONFIG_SPARSEMEM_VMEMMAP下回退为编译期常量(1ULL << MAX_PHYSMEM_BITS)-1，而vmemmap窗口实际只覆盖物理地址空间低于2^(cpu_pabits+1)的范围。对于物理地址位数少于MAX_PHYSMEM_BITS的CPU（如Loongson-2K系列），该回退值过大，使内存区域搜索可能选中vmemmap窗口之外的ZONE_DEVICE区域。vmemmap_populate()随后将memmap范围回绕映射到低地址内存，静默破坏页表；此前在Loongson-3C6000上已导致amdkfd调用memmap_init_zone_device()崩溃。修复参考RISC-V commit f3336b48cf9d，在CONFIG_SPARSEMEM下定义DIRECT_MAP_PHYSMEM_END为(1ULL << (cpu_pabits + 1)) - 1，并以(1ULL << MAX_PHYSMEM_BITS) - 1封顶，使搜索范围与实际vmemmap覆盖范围一致。",
             "classification_timestamp": "2026-09-25T06:31:55.349891"
+        },
+        {
+            "cve_id": "CVE-2026-98004",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核 RISC-V IOMMU 驱动的命令队列发布路径，缺少对软件生产者状态和硬件 tail 更新的串行化保护。多核并发提交命令时可能产生竞态，导致命令队列状态不一致或命令写入错误。补丁通过队列锁串行化发布，并在队列满时在锁外等待硬件消费，避免阻塞其他 CPU。",
+            "key_points": [
+                "Linux 内核 RISC-V IOMMU 驱动的命令队列发布过程存在竞态条件。",
+                "软件生产者状态可能在命令写入完成和硬件 tail 更新前被提前推进，导致队列槽重用或硬件状态不一致。",
+                "修复引入队列锁串行化命令发布，并在命令队列满时在锁外等待硬件消费，防止长时间持锁阻塞其他 CPU。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "Linux 内核 RISC-V IOMMU 驱动的命令队列发布过程缺少串行化：多个 CPU 并发提交命令时，软件生产者索引可能在命令写入完成和硬件 tail 更新之前就提前推进，导致队列槽被重用或硬件 tail 与软件状态不一致。补丁引入队列锁，保证在持锁状态下写入命令并更新硬件 tail 后，才推进软件生产者状态；当命令队列已满时，在队列锁之外等待硬件消费，避免一个 CPU 长时间轮询阻塞其他 CPU。此竞态可能导致 IOMMU 命令丢失、队列指针腐败，进而引发 DMA 映射错误、页表更新不一致或系统不稳定。",
+            "classification_timestamp": "2026-09-26T06:35:49.635415"
+        },
+        {
+            "cve_id": "CVE-2026-97587",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于Linux内核RISC-V perf驱动：可用计数器掩码被定义为单个unsigned long，在32位RISC-V（RV32）上宽度只有32位，但代码按RISCV_MAX_COUNTERS=64进行遍历，导致越界访问。修复改用DECLARE_BITMAP与bitmap辅助函数，并按BITS_PER_LONG逐字处理。",
+            "key_points": [
+                "RV32上unsigned long为32位，但驱动按64位遍历available counter mask，访问bit 32~63会越过对象边界。",
+                "旧实现中设置高位bit同样会写入相邻内存；qemu-system-riscv32的probe bitmap可能包含高于XLEN的置位。",
+                "修复使用DECLARE_BITMAP、set_bit/bitmap helpers，在检查events、分配索引和停止计数器时按BITS_PER_LONG逐字遍历。",
+                "抽取CFG_MATCH ecall辅助函数，避免32位参数拆分逻辑重复。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在RV32上，unsigned long仅32位，而RISCV_MAX_COUNTERS为64。旧代码对单个unsigned long调用test_bit/set_bit时，bit索引≥32会访问或写入相邻内存，造成内核越界读或写。修复后使用DECLARE_BITMAP声明位图，并通过set_bit/bitmap helpers操作；遍历时按每个long字处理，counter base设为i*BITS_PER_LONG。qemu-system-riscv32的probe结果可能在高位设置bit，因此仅检查首字不够，必须完整遍历位图。",
+            "classification_timestamp": "2026-09-26T06:36:41.528599"
         }
     ]
 }

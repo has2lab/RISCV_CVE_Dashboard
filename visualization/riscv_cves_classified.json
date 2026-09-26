@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 157,
-        "classification_date": "2026-09-25T06:31:56.350068",
+        "total_cves": 159,
+        "classification_date": "2026-09-26T06:36:42.528753",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 157,
-        "successful": 157,
+        "total_processed": 159,
+        "successful": 159,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 108,
+            "Linux Kernel": 110,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
@@ -27971,6 +27971,323 @@
                 }
             },
             "classification_timestamp": "2026-09-25T06:31:55.349891"
+        },
+        {
+            "cve_id": "CVE-2026-98004",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核 RISC-V IOMMU 驱动的命令队列发布路径，缺少对软件生产者状态和硬件 tail 更新的串行化保护。多核并发提交命令时可能产生竞态，导致命令队列状态不一致或命令写入错误。补丁通过队列锁串行化发布，并在队列满时在锁外等待硬件消费，避免阻塞其他 CPU。",
+            "key_points": [
+                "Linux 内核 RISC-V IOMMU 驱动的命令队列发布过程存在竞态条件。",
+                "软件生产者状态可能在命令写入完成和硬件 tail 更新前被提前推进，导致队列槽重用或硬件状态不一致。",
+                "修复引入队列锁串行化命令发布，并在命令队列满时在锁外等待硬件消费，防止长时间持锁阻塞其他 CPU。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "Linux 内核 RISC-V IOMMU 驱动的命令队列发布过程缺少串行化：多个 CPU 并发提交命令时，软件生产者索引可能在命令写入完成和硬件 tail 更新之前就提前推进，导致队列槽被重用或硬件 tail 与软件状态不一致。补丁引入队列锁，保证在持锁状态下写入命令并更新硬件 tail 后，才推进软件生产者状态；当命令队列已满时，在队列锁之外等待硬件消费，避免一个 CPU 长时间轮询阻塞其他 CPU。此竞态可能导致 IOMMU 命令丢失、队列指针腐败，进而引发 DMA 映射错误、页表更新不一致或系统不稳定。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-98004",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:19:56.068Z",
+                    "datePublished": "2026-09-25T10:23:31.134Z",
+                    "dateUpdated": "2026-09-25T10:23:31.134Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-25T10:23:31.134Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/riscv: Serialize command queue publishing\n\nSerialize command queue publishing so software producer state advances only\nafter a command is written and the hardware tail is updated. Wait for\nhardware consumption outside the queue lock when the command queue is full\nso other CPUs are not blocked behind a long poll."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/iommu/riscv/iommu.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "856c0cfe5c5f6a2cc8d995872eb67bff9c68c57c",
+                                        "lessThan": "6d4c12ab9ab8db87411c863a54e0e97f9197afde",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "856c0cfe5c5f6a2cc8d995872eb67bff9c68c57c",
+                                        "lessThan": "ca58afa40946acd252a50fa4d4a86f15847a3d7d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/iommu/riscv/iommu.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.13",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.13",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.7",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc3",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.2.7"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.3-rc3"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/6d4c12ab9ab8db87411c863a54e0e97f9197afde"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/ca58afa40946acd252a50fa4d4a86f15847a3d7d"
+                            }
+                        ],
+                        "title": "iommu/riscv: Serialize command queue publishing",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-26T06:35:49.635415"
+        },
+        {
+            "cve_id": "CVE-2026-97587",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于Linux内核RISC-V perf驱动：可用计数器掩码被定义为单个unsigned long，在32位RISC-V（RV32）上宽度只有32位，但代码按RISCV_MAX_COUNTERS=64进行遍历，导致越界访问。修复改用DECLARE_BITMAP与bitmap辅助函数，并按BITS_PER_LONG逐字处理。",
+            "key_points": [
+                "RV32上unsigned long为32位，但驱动按64位遍历available counter mask，访问bit 32~63会越过对象边界。",
+                "旧实现中设置高位bit同样会写入相邻内存；qemu-system-riscv32的probe bitmap可能包含高于XLEN的置位。",
+                "修复使用DECLARE_BITMAP、set_bit/bitmap helpers，在检查events、分配索引和停止计数器时按BITS_PER_LONG逐字遍历。",
+                "抽取CFG_MATCH ecall辅助函数，避免32位参数拆分逻辑重复。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在RV32上，unsigned long仅32位，而RISCV_MAX_COUNTERS为64。旧代码对单个unsigned long调用test_bit/set_bit时，bit索引≥32会访问或写入相邻内存，造成内核越界读或写。修复后使用DECLARE_BITMAP声明位图，并通过set_bit/bitmap helpers操作；遍历时按每个long字处理，counter base设为i*BITS_PER_LONG。qemu-system-riscv32的probe结果可能在高位设置bit，因此仅检查首字不够，必须完整遍历位图。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-97587",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-24T16:01:01.157Z",
+                    "datePublished": "2026-09-25T10:22:06.177Z",
+                    "dateUpdated": "2026-09-25T10:22:06.177Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-09-25T10:22:06.177Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf: RISC-V: store available counter mask as bitmap\n\nThe available-counter mask was a single unsigned long, but iteration\nuses RISCV_MAX_COUNTERS, which is 64. On RV32 that reads past the object.\nFilling with an unsigned-long bit at index 32 and above is also wrong.\n\nUse DECLARE_BITMAP and set_bit/bitmap helpers. Walk each bitmap word\ninto CFG_MATCH when checking events, when allocating an index, and when\nstopping all counters. Set the counter base to i times BITS_PER_LONG.\nShare the CFG_MATCH ecall through a small helper so the 32-bit argument\nsplit is not duplicated. On qemu-system-riscv32 the probe bitmap has bits\nabove XLEN set, so the first word alone is not enough.\n\n[pjw@kernel.org: updated to apply; fixed checkpatch.pl issues]"
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/perf/riscv_pmu_legacy.c",
+                                    "drivers/perf/riscv_pmu_sbi.c",
+                                    "include/linux/perf/riscv_pmu.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "e9991434596f5373dfd75857b445eb92a9253c56",
+                                        "lessThan": "143668c424772979a45118dc9cc9c2c13a35f41d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e9991434596f5373dfd75857b445eb92a9253c56",
+                                        "lessThan": "9bec7beaed074bcae4181fde9ff9dfbe4e7b0957",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e9991434596f5373dfd75857b445eb92a9253c56",
+                                        "lessThan": "e5481db31f4654e9a1254d5d467d9b1ff2f8b1cb",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e9991434596f5373dfd75857b445eb92a9253c56",
+                                        "lessThan": "6809da6e9c08ccc9a09cb0a48c61471679274aaa",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "drivers/perf/riscv_pmu_legacy.c",
+                                    "drivers/perf/riscv_pmu_sbi.c",
+                                    "include/linux/perf/riscv_pmu.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.18",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.18",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.111",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.53",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.7",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc3",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.18",
+                                                "versionEndExcluding": "6.12.111"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.18",
+                                                "versionEndExcluding": "6.18.53"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.18",
+                                                "versionEndExcluding": "7.2.7"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.18",
+                                                "versionEndExcluding": "7.3-rc3"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/143668c424772979a45118dc9cc9c2c13a35f41d"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/9bec7beaed074bcae4181fde9ff9dfbe4e7b0957"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/e5481db31f4654e9a1254d5d467d9b1ff2f8b1cb"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/6809da6e9c08ccc9a09cb0a48c61471679274aaa"
+                            }
+                        ],
+                        "title": "perf: RISC-V: store available counter mask as bitmap",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-09-26T06:36:41.528599"
         }
     ]
 }
