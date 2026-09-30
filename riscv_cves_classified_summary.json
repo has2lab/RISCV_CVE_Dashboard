@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 159,
-        "classification_date": "2026-09-26T06:36:42.528753",
+        "total_cves": 160,
+        "classification_date": "2026-09-30T07:16:45.844069",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -11,13 +11,14 @@
             "RISC-V Development Tools",
             "Device-Specific Firmware & Applications",
             "RISC-V Instruction Set Manual",
-            "Other"
+            "Other",
+            "RISC-V Software Libraries"
         ],
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 159,
-        "successful": 159,
+        "total_processed": 160,
+        "successful": 160,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -27,7 +28,8 @@
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
-            "Other": 3
+            "Other": 3,
+            "RISC-V Software Libraries": 1
         }
     },
     "classified_cves": [
@@ -2118,6 +2120,19 @@
             "severity_assessment": "High",
             "technical_details": "在RV32上，unsigned long仅32位，而RISCV_MAX_COUNTERS为64。旧代码对单个unsigned long调用test_bit/set_bit时，bit索引≥32会访问或写入相邻内存，造成内核越界读或写。修复后使用DECLARE_BITMAP声明位图，并通过set_bit/bitmap helpers操作；遍历时按每个long字处理，counter base设为i*BITS_PER_LONG。qemu-system-riscv32的probe结果可能在高位设置bit，因此仅检查首字不够，必须完整遍历位图。",
             "classification_timestamp": "2026-09-26T06:36:41.528599"
+        },
+        {
+            "cve_id": "CVE-2026-54875",
+            "category": "RISC-V Software Libraries",
+            "summary": "OpenSSL 在 ARM64 和 RISC-V 平台上对 SM2 私钥操作使用了非恒定时间的标量乘法优化实现，其条件分支和表查找取决于秘密标量位，导致时间与缓存访问模式泄露秘密信息。攻击者可据此恢复 SM2 长期私钥或签名临时 nonce；受影响版本为 4.0、3.6、3.5、3.4，需升级到对应修复版本。",
+            "key_points": [
+                "非恒定时间 SM2 标量乘法优化实现位于 AArch64 与 RISC-V 平台，条件分支和表查找由秘密标量位决定。",
+                "时间测量和缓存行访问模式可泄露 SM2 解密私钥或签名 nonce，属于 CWE-208 可观测时间差异。",
+                "受影响：OpenSSL 4.0/3.6/3.5/3.4；修复：4.0.3/3.6.5/3.5.9/3.4.8；OpenSSL 3.0/1.1.1/1.0.2 不受影响。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞根因是 OpenSSL 在 64 位 ARM 和 RISC-V 上为 SM2 曲线启用了性能优化版标量乘法，其中针对秘密标量的逐位处理使用条件分支和依赖位值的查表操作，未保持恒定时间。攻击者可通过测量签名/解密操作的总执行时间，或观察缓存行访问模式（如 Prime+Probe、Flush+Reload）推断秘密标量位；对 SM2 解密可恢复长期私钥，对签名可恢复每签名 nonce，进而可能通过多次签名恢复私钥。FIPS 模块不受影响，因为 SM2 不是 FIPS 算法。注意：该漏洞属于软件库实现问题，并非 RISC-V 硬件缺陷，但 RISC-V 平台上的 OpenSSL 用户需修复。",
+            "classification_timestamp": "2026-09-30T07:16:44.843912"
         }
     ]
 }

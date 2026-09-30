@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 159,
-        "classification_date": "2026-09-26T06:36:42.528753",
+        "total_cves": 160,
+        "classification_date": "2026-09-30T07:16:45.844069",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -11,13 +11,14 @@
             "RISC-V Development Tools",
             "Device-Specific Firmware & Applications",
             "RISC-V Instruction Set Manual",
-            "Other"
+            "Other",
+            "RISC-V Software Libraries"
         ],
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 159,
-        "successful": 159,
+        "total_processed": 160,
+        "successful": 160,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -27,7 +28,8 @@
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 5,
-            "Other": 3
+            "Other": 3,
+            "RISC-V Software Libraries": 1
         }
     },
     "classified_cves": [
@@ -28288,6 +28290,222 @@
                 }
             },
             "classification_timestamp": "2026-09-26T06:36:41.528599"
+        },
+        {
+            "cve_id": "CVE-2026-54875",
+            "category": "RISC-V Software Libraries",
+            "summary": "OpenSSL 在 ARM64 和 RISC-V 平台上对 SM2 私钥操作使用了非恒定时间的标量乘法优化实现，其条件分支和表查找取决于秘密标量位，导致时间与缓存访问模式泄露秘密信息。攻击者可据此恢复 SM2 长期私钥或签名临时 nonce；受影响版本为 4.0、3.6、3.5、3.4，需升级到对应修复版本。",
+            "key_points": [
+                "非恒定时间 SM2 标量乘法优化实现位于 AArch64 与 RISC-V 平台，条件分支和表查找由秘密标量位决定。",
+                "时间测量和缓存行访问模式可泄露 SM2 解密私钥或签名 nonce，属于 CWE-208 可观测时间差异。",
+                "受影响：OpenSSL 4.0/3.6/3.5/3.4；修复：4.0.3/3.6.5/3.5.9/3.4.8；OpenSSL 3.0/1.1.1/1.0.2 不受影响。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "该漏洞根因是 OpenSSL 在 64 位 ARM 和 RISC-V 上为 SM2 曲线启用了性能优化版标量乘法，其中针对秘密标量的逐位处理使用条件分支和依赖位值的查表操作，未保持恒定时间。攻击者可通过测量签名/解密操作的总执行时间，或观察缓存行访问模式（如 Prime+Probe、Flush+Reload）推断秘密标量位；对 SM2 解密可恢复长期私钥，对签名可恢复每签名 nonce，进而可能通过多次签名恢复私钥。FIPS 模块不受影响，因为 SM2 不是 FIPS 算法。注意：该漏洞属于软件库实现问题，并非 RISC-V 硬件缺陷，但 RISC-V 平台上的 OpenSSL 用户需修复。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-54875",
+                    "assignerOrgId": "3a12439a-ef3a-4c79-92e6-6081a721f1e5",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "openssl",
+                    "dateReserved": "2026-06-16T10:18:08.636Z",
+                    "datePublished": "2026-09-29T15:32:17.206Z",
+                    "dateUpdated": "2026-09-29T17:17:20.483Z"
+                },
+                "containers": {
+                    "cna": {
+                        "affected": [
+                            {
+                                "defaultStatus": "unaffected",
+                                "product": "OpenSSL",
+                                "vendor": "OpenSSL",
+                                "versions": [
+                                    {
+                                        "lessThan": "4.0.3",
+                                        "status": "affected",
+                                        "version": "4.0.0",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "lessThan": "3.6.5",
+                                        "status": "affected",
+                                        "version": "3.6.0",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "lessThan": "3.5.9",
+                                        "status": "affected",
+                                        "version": "3.5.0",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "lessThan": "3.4.8",
+                                        "status": "affected",
+                                        "version": "3.4.0",
+                                        "versionType": "semver"
+                                    }
+                                ]
+                            }
+                        ],
+                        "credits": [
+                            {
+                                "lang": "en",
+                                "type": "reporter",
+                                "value": "Abhinav Agarwal"
+                            },
+                            {
+                                "lang": "en",
+                                "type": "reporter",
+                                "value": "Feng Xue"
+                            },
+                            {
+                                "lang": "en",
+                                "type": "remediation developer",
+                                "value": "Igor Ustinov"
+                            }
+                        ],
+                        "datePublic": "2026-09-29T14:21:57.000Z",
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "supportingMedia": [
+                                    {
+                                        "base64": false,
+                                        "type": "text/html",
+                                        "value": "Issue summary: A non-constant-time optimized implementation of scalar<br>point multiplication is used for SM2 private key operations on ARM64 and<br>RISC-V platforms.<br><br>Impact summary: An attacker able to measure the time taken by, or to observe<br>the cache-line access pattern of SM2 signing or decryption on an affected<br>platform can learn information about the secret scalar.<br><br>CWE: CWE-208: Observable Timing Discrepancy<br><br>Description: On ARM64 and RISC-V processors, the SM2 curve uses an optimized<br>scalar multiplication implementation whose conditional branches and table<br>look ups are chosen according to the bits of the secret scalar. The execution<br>time and the cache-access pattern therefore depend on the long-term private<br>key (during SM2 decryption) or the per-signature nonce (during SM2 signature<br>generation), forming a timing and cache side-channel.<br><br>FIPS Impact: no<br>SM2 is not a FIPS algorithm and the optimized SM2 implementation is not part<br>of the FIPS module.<br><br>OpenSSL 4.0, 3.6, 3.5 and 3.4 are vulnerable to this issue on AArch64 and<br>RISC-V.<br><br>OpenSSL 3.0, 1.1.1 and 1.0.2 are not affected by this issue.<br><br>OpenSSL 4.0 users should upgrade to OpenSSL 4.0.3.<br>OpenSSL 3.6 users should upgrade to OpenSSL 3.6.5.<br>OpenSSL 3.5 users should upgrade to OpenSSL 3.5.9.<br>OpenSSL 3.4 users should upgrade to OpenSSL 3.4.8.<br><br>This issue was reported on 2 May 2026 by Abhinav Agarwal.<br>It was independently reported on 6 June 2026 by Feng Xue.<br>The fix was developed by Igor Ustinov.<br><br>-- cut (non-publishing metadata for internal use) --<br>Reported by: Abhinav Agarwal, Feng Xue<br>Fixed by: Igor Ustinov"
+                                    }
+                                ],
+                                "value": "Issue summary: A non-constant-time optimized implementation of scalar\npoint multiplication is used for SM2 private key operations on ARM64 and\nRISC-V platforms.\n\nImpact summary: An attacker able to measure the time taken by, or to observe\nthe cache-line access pattern of SM2 signing or decryption on an affected\nplatform can learn information about the secret scalar.\n\nCWE: CWE-208: Observable Timing Discrepancy\n\nDescription: On ARM64 and RISC-V processors, the SM2 curve uses an optimized\nscalar multiplication implementation whose conditional branches and table\nlook ups are chosen according to the bits of the secret scalar. The execution\ntime and the cache-access pattern therefore depend on the long-term private\nkey (during SM2 decryption) or the per-signature nonce (during SM2 signature\ngeneration), forming a timing and cache side-channel.\n\nFIPS Impact: no\nSM2 is not a FIPS algorithm and the optimized SM2 implementation is not part\nof the FIPS module.\n\nOpenSSL 4.0, 3.6, 3.5 and 3.4 are vulnerable to this issue on AArch64 and\nRISC-V.\n\nOpenSSL 3.0, 1.1.1 and 1.0.2 are not affected by this issue.\n\nOpenSSL 4.0 users should upgrade to OpenSSL 4.0.3.\nOpenSSL 3.6 users should upgrade to OpenSSL 3.6.5.\nOpenSSL 3.5 users should upgrade to OpenSSL 3.5.9.\nOpenSSL 3.4 users should upgrade to OpenSSL 3.4.8.\n\nThis issue was reported on 2 May 2026 by Abhinav Agarwal.\nIt was independently reported on 6 June 2026 by Feng Xue.\nThe fix was developed by Igor Ustinov.\n\n-- cut (non-publishing metadata for internal use) --\nReported by: Abhinav Agarwal, Feng Xue\nFixed by: Igor Ustinov"
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "format": "other",
+                                "other": {
+                                    "content": {
+                                        "text": "Low"
+                                    },
+                                    "type": "https://openssl-library.org/policies/general/security-policy/"
+                                }
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-208",
+                                        "description": "CWE-208 Observable Timing Discrepancy",
+                                        "lang": "en",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "orgId": "3a12439a-ef3a-4c79-92e6-6081a721f1e5",
+                            "shortName": "openssl",
+                            "dateUpdated": "2026-09-29T15:32:17.206Z"
+                        },
+                        "references": [
+                            {
+                                "name": "OpenSSL Advisory",
+                                "tags": [
+                                    "vendor-advisory"
+                                ],
+                                "url": "https://openssl-library.org/news/secadv/20260929.txt"
+                            },
+                            {
+                                "name": "4.0.3 git commit",
+                                "tags": [
+                                    "patch"
+                                ],
+                                "url": "https://github.com/openssl/openssl/commit/9794ed473764839275cb701b4850f3c24d929c28"
+                            },
+                            {
+                                "name": "3.6.5 git commit",
+                                "tags": [
+                                    "patch"
+                                ],
+                                "url": "https://github.com/openssl/openssl/commit/dddad955d5ff3e9507619cf4e0f13e9988e2197c"
+                            },
+                            {
+                                "name": "3.5.9 git commit",
+                                "tags": [
+                                    "patch"
+                                ],
+                                "url": "https://github.com/openssl/openssl/commit/469f3e42629f4a0b5631796e20c66c92c138a3e8"
+                            },
+                            {
+                                "name": "3.4.8 git commit",
+                                "tags": [
+                                    "patch"
+                                ],
+                                "url": "https://github.com/openssl/openssl/commit/3f01bbc28f7e08211fcdc797fd43816504f94257"
+                            }
+                        ],
+                        "source": {
+                            "discovery": "UNKNOWN"
+                        },
+                        "title": "Non-Constant-Time SM2 Scalar Multiplication on ARM64 and RISC-V",
+                        "x_generator": {
+                            "engine": "Vulnogram 0.2.0"
+                        }
+                    },
+                    "adp": [
+                        {
+                            "metrics": [
+                                {
+                                    "cvssV3_1": {
+                                        "scope": "UNCHANGED",
+                                        "version": "3.1",
+                                        "baseScore": 3.7,
+                                        "attackVector": "NETWORK",
+                                        "baseSeverity": "LOW",
+                                        "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:N",
+                                        "integrityImpact": "NONE",
+                                        "userInteraction": "NONE",
+                                        "attackComplexity": "HIGH",
+                                        "availabilityImpact": "NONE",
+                                        "privilegesRequired": "NONE",
+                                        "confidentialityImpact": "LOW"
+                                    }
+                                },
+                                {
+                                    "other": {
+                                        "type": "ssvc",
+                                        "content": {
+                                            "timestamp": "2026-09-29T17:17:05.164162Z",
+                                            "id": "CVE-2026-54875",
+                                            "options": [
+                                                {
+                                                    "Exploitation": "none"
+                                                },
+                                                {
+                                                    "Automatable": "no"
+                                                },
+                                                {
+                                                    "Technical Impact": "partial"
+                                                }
+                                            ],
+                                            "role": "CISA Coordinator",
+                                            "version": "2.0.3"
+                                        }
+                                    }
+                                }
+                            ],
+                            "title": "CISA ADP Vulnrichment",
+                            "providerMetadata": {
+                                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                                "shortName": "CISA-ADP",
+                                "dateUpdated": "2026-09-29T17:17:20.483Z"
+                            }
+                        }
+                    ]
+                }
+            },
+            "classification_timestamp": "2026-09-30T07:16:44.843912"
         }
     ]
 }
