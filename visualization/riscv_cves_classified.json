@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 160,
-        "classification_date": "2026-09-30T07:16:45.844069",
+        "total_cves": 161,
+        "classification_date": "2026-10-12T07:55:13.730224",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -11,14 +11,13 @@
             "RISC-V Development Tools",
             "Device-Specific Firmware & Applications",
             "RISC-V Instruction Set Manual",
-            "Other",
-            "RISC-V Software Libraries"
+            "Other"
         ],
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 160,
-        "successful": 160,
+        "total_processed": 161,
+        "successful": 161,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -27,7 +26,7 @@
             "Linux Kernel": 110,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
-            "Device-Specific Firmware & Applications": 5,
+            "Device-Specific Firmware & Applications": 6,
             "Other": 3,
             "RISC-V Software Libraries": 1
         }
@@ -28506,6 +28505,117 @@
                 }
             },
             "classification_timestamp": "2026-09-30T07:16:44.843912"
+        },
+        {
+            "cve_id": "CVE-2026-19737",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "Zephyr RTOS 的 ESP32 I2S 驱动在 i2s_esp32_trigger_check() 中仅对 I2S_DIR_BOTH 做方向校验，未对单向配置实例的另一方向流指针进行判空，可通过 i2s_trigger() 系统调用触发 NULL 指针解引用。在启用 CONFIG_USERSPACE 的 RISC-V 平台（如 ESP32-C6）上，已授权 I2S 设备的用户态线程可借此造成内核态地址 0 读取异常，最终使系统崩溃，构成本地拒绝服务。",
+            "key_points": [
+                "缺陷位于 drivers/i2s/i2s_esp32.c 的 i2s_esp32_trigger_check()：I2S_DIR_RX/TX 分支未检查 dev_cfg->rx.data/tx.data 是否为 NULL，而 I2S_ESP32_STREAM_INIT() 对设备树未描述的方向将 .conf/.data 置为 NULL。",
+                "i2s_trigger() 是 Zephyr 系统调用，z_vrfy_i2s_trigger() 只校验设备对象和 trigger API 指针，未校验 dir；CONFIG_USERSPACE 启用时用户态线程可将未实现方向传入驱动。",
+                "受影响条件主要是启用 CONFIG_USERSPACE 的 RISC-V Espressif SoC，如 ESP32-C6（选择 CONFIG_RISCV_PMP）；Xtensa 目标不支持 Zephyr userspace，v4.4.0 之前无可运行用户态的树内配置。",
+                "影响仅限可用性：NULL 指针读取偏移为 0，无攻击者控制偏移、无写入原语、无信息泄露；默认 fatal error handler 会停机，造成系统级 DoS。",
+                "修复在触发检查中复用 I2S_DIR_BOTH 已有的指针检查，对未实现方向返回 -ENOSYS；v4.3-branch 也合并作为加固。"
+            ],
+            "severity_assessment": "Medium（本地拒绝服务，不影响机密性/完整性）",
+            "technical_details": "该漏洞是 Zephyr RTOS 中 ESP32 I2S 驱动对单向流配置的指针检查缺失。i2s_esp32_trigger_check() 仅在 I2S_DIR_BOTH 分支校验两个流都存在；对于 I2S_DIR_RX 或 I2S_DIR_TX，直接解引用 dev_cfg->rx.data->configured 或 dev_cfg->tx.data->configured。由于设备树未描述某一方向时，I2S_ESP32_STREAM_INIT() 会把对应 .conf 和 .data 初始化为 NULL，因此在只配置了播放或只配置了录音/LED 输出（如 worldsemi,ws2812-i2s）的实例上，请求未接线方向会触发内核模式下的 NULL 指针读取。i2s_trigger() 是 Zephyr syscall，其验证函数 z_vrfy_i2s_trigger() 未检查 dir 参数，使用户空间线程在获得 I2S 设备访问权后能够直接传入任意方向值。在启用 CONFIG_USERSPACE 且具备 RISC-V PMP 的平台上（典型为 ESP32-C6），该攻击路径可被利用；影响仅为系统宕机的拒绝服务，因为读取固定发生在偏移 0 的缺失流结构上，不产生攻击者控制的偏移、写入或信息泄露。修复方式是为单向分支增加与 I2S_DIR_BOTH 相同的指针检查，并在方向未实现时返回 -ENOSYS。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-19737",
+                    "assignerOrgId": "e2e69745-5e70-4e92-8431-deb5529a81ad",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "zephyr",
+                    "dateReserved": "2026-08-13T13:46:28.028Z",
+                    "datePublished": "2026-10-11T17:15:01.878Z",
+                    "dateUpdated": "2026-10-11T17:15:01.878Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "e2e69745-5e70-4e92-8431-deb5529a81ad",
+                            "shortName": "zephyr",
+                            "dateUpdated": "2026-10-11T17:15:01.878Z"
+                        },
+                        "title": "NULL pointer dereference in the ESP32 I2S driver when triggering an unsupported direction",
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "i2s_esp32_trigger_check() in drivers/i2s/i2s_esp32.c validates the requested direction only for I2S_DIR_BOTH. The I2S_DIR_RX and I2S_DIR_TX branches read dev_cfg->rx.data->configured / dev_cfg->tx.data->configured without first checking the stream pointers. The device instantiation macro I2S_ESP32_STREAM_INIT() sets both .conf and .data to NULL for a direction the devicetree does not describe, so on an instance that wires only one direction — the normal shape for audio output or a worldsemi,ws2812-i2s LED strip — the other direction dereferences a NULL pointer instead of returning an error.\n\ni2s_trigger() is a Zephyr syscall, and z_vrfy_i2s_trigger() in drivers/i2s/i2s_handlers.c validates only the device object and the presence of the trigger API pointer; the dir argument is passed to the driver unvalidated. On a build with CONFIG_USERSPACE enabled, a user-mode thread that has been granted the I2S device can issue a single i2s_trigger() call naming the unwired direction and cause a load from address 0 in kernel mode. Among the Espressif parts that carry this driver, userspace is available in-tree only on RISC-V SoCs with CONFIG_RISCV_PMP, and v4.4.0 is the first release where that is buildable: the ESP32-C6 HPCORE selects RISCV_PMP when it is not built for MCUboot. ESP32-C5 in v4.4.x carries the same PMP-region and userspace linker support but does not select RISCV_PMP by default. Espressif Xtensa targets do not support Zephyr userspace, and in a non-userspace build the bad direction can only come from in-kernel application code.\n\nThe impact is limited to availability: the access is a read at offset 0 of the missing stream structure, so there is no attacker-controlled offset, no write primitive and no information disclosure. With the default fatal-error handler the resulting exception halts the system, giving an unprivileged user-mode thread a system-wide denial of service. The fix adds the same pointer check the I2S_DIR_BOTH branch already performed and returns -ENOSYS for a direction the instance does not implement; the driver's other entry points (i2s_esp32_config_check(), i2s_esp32_config_get(), i2s_esp32_read(), i2s_esp32_write()) already guarded the pointers, and a static audit found no equivalent unguarded path.\n\nThe driver defect is older than the affected range. The unguarded dereference is present from v4.2.0 (reached through i2s_esp32_trigger_stream(), whose if (stream) guard tests the address of a struct member and is never false) and takes its present i2s_esp32_trigger_check() form in v4.3.0. No in-tree Espressif configuration before v4.4.0 can run a user-mode thread, so in v4.2.x and v4.3.x the direction argument can only come from trusted kernel code. Those releases carry the bug but are not listed as affected; the fix has also been merged to v4.3-branch as hardening."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "zephyrproject",
+                                "product": "zephyr",
+                                "collectionURL": "https://github.com/zephyrproject-rtos/zephyr",
+                                "packageName": "zephyr",
+                                "defaultStatus": "unaffected",
+                                "programFiles": [
+                                    "drivers/i2s/i2s_esp32.c"
+                                ],
+                                "programRoutines": [
+                                    {
+                                        "name": "i2s_esp32_trigger"
+                                    },
+                                    {
+                                        "name": "i2s_esp32_trigger_check"
+                                    }
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "4.4.0",
+                                        "status": "affected",
+                                        "lessThan": "4.5.0",
+                                        "versionType": "semver"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://github.com/zephyrproject-rtos/zephyr/commit/0d82dbbe72f154de32cc45021a9f59d9a737246b",
+                                "name": "Fix commit",
+                                "tags": [
+                                    "patch"
+                                ]
+                            },
+                            {
+                                "url": "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-5g9q-h8wq-rrf3",
+                                "name": "GHSA-5g9q-h8wq-rrf3"
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "format": "CVSS",
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+                                    "baseScore": 5.5,
+                                    "baseSeverity": "MEDIUM"
+                                }
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "lang": "en",
+                                        "description": "memory-safety",
+                                        "cweId": "CWE-476",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "x_generator": {
+                            "engine": "cvelib 1.8.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-12T07:55:12.729970"
         }
     ]
 }

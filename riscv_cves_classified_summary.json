@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 160,
-        "classification_date": "2026-09-30T07:16:45.844069",
+        "total_cves": 161,
+        "classification_date": "2026-10-12T07:55:13.730224",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -11,14 +11,13 @@
             "RISC-V Development Tools",
             "Device-Specific Firmware & Applications",
             "RISC-V Instruction Set Manual",
-            "Other",
-            "RISC-V Software Libraries"
+            "Other"
         ],
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 160,
-        "successful": 160,
+        "total_processed": 161,
+        "successful": 161,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -27,7 +26,7 @@
             "Linux Kernel": 110,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
-            "Device-Specific Firmware & Applications": 5,
+            "Device-Specific Firmware & Applications": 6,
             "Other": 3,
             "RISC-V Software Libraries": 1
         }
@@ -2133,6 +2132,21 @@
             "severity_assessment": "Medium",
             "technical_details": "该漏洞根因是 OpenSSL 在 64 位 ARM 和 RISC-V 上为 SM2 曲线启用了性能优化版标量乘法，其中针对秘密标量的逐位处理使用条件分支和依赖位值的查表操作，未保持恒定时间。攻击者可通过测量签名/解密操作的总执行时间，或观察缓存行访问模式（如 Prime+Probe、Flush+Reload）推断秘密标量位；对 SM2 解密可恢复长期私钥，对签名可恢复每签名 nonce，进而可能通过多次签名恢复私钥。FIPS 模块不受影响，因为 SM2 不是 FIPS 算法。注意：该漏洞属于软件库实现问题，并非 RISC-V 硬件缺陷，但 RISC-V 平台上的 OpenSSL 用户需修复。",
             "classification_timestamp": "2026-09-30T07:16:44.843912"
+        },
+        {
+            "cve_id": "CVE-2026-19737",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "Zephyr RTOS 的 ESP32 I2S 驱动在 i2s_esp32_trigger_check() 中仅对 I2S_DIR_BOTH 做方向校验，未对单向配置实例的另一方向流指针进行判空，可通过 i2s_trigger() 系统调用触发 NULL 指针解引用。在启用 CONFIG_USERSPACE 的 RISC-V 平台（如 ESP32-C6）上，已授权 I2S 设备的用户态线程可借此造成内核态地址 0 读取异常，最终使系统崩溃，构成本地拒绝服务。",
+            "key_points": [
+                "缺陷位于 drivers/i2s/i2s_esp32.c 的 i2s_esp32_trigger_check()：I2S_DIR_RX/TX 分支未检查 dev_cfg->rx.data/tx.data 是否为 NULL，而 I2S_ESP32_STREAM_INIT() 对设备树未描述的方向将 .conf/.data 置为 NULL。",
+                "i2s_trigger() 是 Zephyr 系统调用，z_vrfy_i2s_trigger() 只校验设备对象和 trigger API 指针，未校验 dir；CONFIG_USERSPACE 启用时用户态线程可将未实现方向传入驱动。",
+                "受影响条件主要是启用 CONFIG_USERSPACE 的 RISC-V Espressif SoC，如 ESP32-C6（选择 CONFIG_RISCV_PMP）；Xtensa 目标不支持 Zephyr userspace，v4.4.0 之前无可运行用户态的树内配置。",
+                "影响仅限可用性：NULL 指针读取偏移为 0，无攻击者控制偏移、无写入原语、无信息泄露；默认 fatal error handler 会停机，造成系统级 DoS。",
+                "修复在触发检查中复用 I2S_DIR_BOTH 已有的指针检查，对未实现方向返回 -ENOSYS；v4.3-branch 也合并作为加固。"
+            ],
+            "severity_assessment": "Medium（本地拒绝服务，不影响机密性/完整性）",
+            "technical_details": "该漏洞是 Zephyr RTOS 中 ESP32 I2S 驱动对单向流配置的指针检查缺失。i2s_esp32_trigger_check() 仅在 I2S_DIR_BOTH 分支校验两个流都存在；对于 I2S_DIR_RX 或 I2S_DIR_TX，直接解引用 dev_cfg->rx.data->configured 或 dev_cfg->tx.data->configured。由于设备树未描述某一方向时，I2S_ESP32_STREAM_INIT() 会把对应 .conf 和 .data 初始化为 NULL，因此在只配置了播放或只配置了录音/LED 输出（如 worldsemi,ws2812-i2s）的实例上，请求未接线方向会触发内核模式下的 NULL 指针读取。i2s_trigger() 是 Zephyr syscall，其验证函数 z_vrfy_i2s_trigger() 未检查 dir 参数，使用户空间线程在获得 I2S 设备访问权后能够直接传入任意方向值。在启用 CONFIG_USERSPACE 且具备 RISC-V PMP 的平台上（典型为 ESP32-C6），该攻击路径可被利用；影响仅为系统宕机的拒绝服务，因为读取固定发生在偏移 0 的缺失流结构上，不产生攻击者控制的偏移、写入或信息泄露。修复方式是为单向分支增加与 I2S_DIR_BOTH 相同的指针检查，并在方向未实现时返回 -ENOSYS。",
+            "classification_timestamp": "2026-10-12T07:55:12.729970"
         }
     ]
 }
