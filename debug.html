@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据调试页面</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-card .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 RISC-V CVE 数据调试</h1>
+    
+    <div class="debug-section">
+        <h2>📊 数据统计</h2>
+        <div id="stats" class="loading">加载中...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>📅 时间线数据</h2>
+        <div id="timeline" class="loading">加载中...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🔤 关键词数据</h2>
+        <div id="keywords" class="loading">加载中...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🐛 漏洞类型数据</h2>
+        <div id="vulnTypes" class="loading">加载中...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>📝 原始数据样本</h2>
+        <div id="rawData" class="loading">加载中...</div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                // 加载 JSON 数据
+                const summaryResponse = await fetch('riscv_cves_classified_summary.json');
+                const summaryData = await summaryResponse.json();
+
+                const classifiedResponse = await fetch('riscv_cves_classified.json');
+                const classifiedData = await classifiedResponse.json();
+
+                console.log('Summary Data:', summaryData);
+                console.log('Classified Data:', classifiedData);
+
+                // 基本统计
+                displayStats(summaryData, classifiedData);
+
+                // 时间线数据
+                displayTimeline(summaryData);
+
+                // 关键词数据
+                displayKeywords(summaryData);
+
+                // 漏洞类型数据
+                displayVulnTypes(summaryData);
+
+                // 原始数据样本
+                displayRawData(summaryData, classifiedData);
+
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                document.querySelectorAll('.loading').forEach(el => {
+                    el.innerHTML = `<div style="color: red;">❌ 加载失败: ${error.message}</div>`;
+                });
+            }
+        }
+
+        function displayStats(summary, classified) {
+            const totalCVEs = summary.total_cves || 0;
+            const categories = Object.keys(classified.categories || {}).length;
+            const years = new Set();
+            
+            summary.cves.forEach(cve => {
+                const match = cve.cve_id.match(/CVE-(\d{4})-/);
+                if (match) years.add(match[1]);
+            });
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="label">CVE 总数</div>
+                        <div class="value">${totalCVEs}</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="label">分类数量</div>
+                        <div class="value">${categories}</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="label">年份跨度</div>
+                        <div class="value">${years.size}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayTimeline(summary) {
+            const yearData = {};
+            
+            summary.cves.forEach(cve => {
+                const match = cve.cve_id.match(/CVE-(\d{4})-/);
+                if (match) {
+                    const year = match[1];
+                    yearData[year] = (yearData[year] || 0) + 1;
+                }
+            });
+
+            const sortedYears = Object.keys(yearData).sort();
+            const html = `
+                <p><strong>年份范围:</strong> ${sortedYears[0]} - ${sortedYears[sortedYears.length - 1]}</p>
+                <pre>${JSON.stringify(yearData, null, 2)}</pre>
+            `;
+
+            document.getElementById('timeline').innerHTML = html;
+        }
+
+        function displayKeywords(summary) {
+            const keywords = {};
+            
+            summary.cves.forEach(cve => {
+                // 从summary提取关键词
+                if (cve.summary) {
+                    const words = cve.summary.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+                    words.forEach(word => {
+                        keywords[word] = (keywords[word] || 0) + 1;
+                    });
+                }
+                
+                // 从key_points提取
+                if (cve.key_points) {
+                    cve.key_points.forEach(point => {
+                        const words = point.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+                        words.forEach(word => {
+                            keywords[word] = (keywords[word] || 0) + 1;
+                        });
+                    });
+                }
+            });
+
+            const sortedKeywords = Object.entries(keywords)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 50);
+
+            const html = `
+                <p><strong>关键词总数:</strong> ${Object.keys(keywords).length}</p>
+                <p><strong>前50个关键词:</strong></p>
+                <pre>${JSON.stringify(Object.fromEntries(sortedKeywords), null, 2)}</pre>
+            `;
+
+            document.getElementById('keywords').innerHTML = html;
+        }
+
+        function displayVulnTypes(summary) {
+            const typePatterns = {
+                '缓冲区溢出': ['overflow', 'buffer'],
+                '权限提升': ['privilege', 'escalation'],
+                '拒绝服务': ['denial', 'dos', 'crash'],
+                '内存相关': ['memory', 'leak', 'corruption'],
+                '空指针': ['null', 'pointer'],
+                '代码执行': ['execution', 'code'],
+                '信息泄露': ['disclosure', 'information'],
+                '访问控制': ['access', 'control']
+            };
+
+            const vulnTypes = {};
+
+            summary.cves.forEach(cve => {
+                const text = (cve.summary + ' ' + (cve.key_points || []).join(' ')).toLowerCase();
+                
+                for (const [type, patterns] of Object.entries(typePatterns)) {
+                    if (patterns.some(pattern => text.includes(pattern))) {
+                        vulnTypes[type] = (vulnTypes[type] || 0) + 1;
+                    }
+                }
+            });
+
+            const html = `
+                <p><strong>检测到的漏洞类型:</strong></p>
+                <pre>${JSON.stringify(vulnTypes, null, 2)}</pre>
+            `;
+
+            document.getElementById('vulnTypes').innerHTML = html;
+        }
+
+        function displayRawData(summary, classified) {
+            const sampleCVE = summary.cves[0];
+            const html = `
+                <p><strong>示例 CVE (第一个):</strong></p>
+                <pre>${JSON.stringify(sampleCVE, null, 2)}</pre>
+                <p><strong>分类结构:</strong></p>
+                <pre>${JSON.stringify({
+                    categories: Object.keys(classified.categories || {}),
+                    metadata: classified.metadata
+                }, null, 2)}</pre>
+            `;
+
+            document.getElementById('rawData').innerHTML = html;
+        }
+
+        // 页面加载时执行
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
