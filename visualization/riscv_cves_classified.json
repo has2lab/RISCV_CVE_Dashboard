@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 161,
-        "classification_date": "2026-10-12T07:55:13.730224",
+        "total_cves": 165,
+        "classification_date": "2026-10-19T06:43:39.232425",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 161,
-        "successful": 161,
+        "total_processed": 165,
+        "successful": 165,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 110,
+            "Linux Kernel": 114,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 6,
@@ -28616,6 +28616,741 @@
                 }
             },
             "classification_timestamp": "2026-10-12T07:55:12.729970"
+        },
+        {
+            "cve_id": "CVE-2026-98464",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V KVM存在竞态条件：非Sstc模式下的hrtimer回调在清除next_set后仍继续访问vCPU，而VM销毁路径可能因next_set为false跳过hrtimer_cancel并提前释放vCPU，造成释放后使用。恶意客户机可通过SBI定时器与关机请求配合VMM销毁VM触发该漏洞。修复方法是在销毁阶段始终同步取消已初始化的hrtimer。",
+            "key_points": [
+                "漏洞位于RISC-V KVM虚拟定时器模拟的非Sstc路径，hrtimer回调先清除next_set标志，随后仍继续调用kvm_riscv_vcpu_set_interrupt()访问vCPU结构，存在竞态窗口。",
+                "VM销毁时kvm_riscv_vcpu_timer_cancel()若观察到next_set为false会跳过hrtimer_cancel()，导致kvm_destroy_vcpus()可能在回调结束前释放vCPU，引发slab-use-after-free。",
+                "修复方案是始终对已初始化的timer调用hrtimer_cancel()进行同步，在确认回调已完成后若timer确实未设置再返回-EINVAL，从而避免并发释放。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞是RISC-V KVM虚拟定时器模拟中的释放后使用竞态。非Sstc模式下，hrtimer回调在清除next_set=false之后仍会使用包含该标志的vCPU结构；如果此时VM销毁路径观察到next_set为false，kvm_riscv_vcpu_timer_cancel()会跳过hrtimer_cancel()，kvm_destroy_vcpus()即可释放vCPU，而回调尚未完成。触发路径为：Guest通过SBI TIME设置定时器，并通过SBI legacy shutdown或SRST请求关机；VMM处理KVM_EXIT_SYSTEM_EVENT后销毁VM。KASAN报告显示在do_raw_spin_lock中发生slab-use-after-free，调用链为kvm_riscv_vcpu_set_interrupt -> kvm_riscv_vcpu_hrtimer_expired -> __hrtimer_run_queues -> hrtimer_interrupt。由于该竞态自然复现受时序影响较大，但一旦触发可导致宿主机内核内存破坏，可能造成拒绝服务或进一步的内核利用。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-98464",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.350Z",
+                    "datePublished": "2026-10-18T15:15:16.624Z",
+                    "dateUpdated": "2026-10-18T15:15:16.624Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-18T15:15:16.624Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nRISC-V: KVM: Synchronize hrtimer callback during teardown\n\nThe non-Sstc hrtimer callback clears next_set before its final uses of\nthe enclosing vCPU.  If teardown observes next_set as false while the\ncallback is still running, kvm_riscv_vcpu_timer_cancel() skips\nhrtimer_cancel() and kvm_destroy_vcpus() can free the vCPU before the\ncallback enters kvm_riscv_vcpu_set_interrupt().\n\nA guest can arm the timer with SBI TIME and request shutdown with SBI\nlegacy shutdown or SRST.  A VMM that honors KVM_EXIT_SYSTEM_EVENT and\ndestroys the VM supplies the teardown side of the race; no post-launch\nhost ioctl is needed to arm or request teardown.\n\nOn upstream master 62cc90241548, generic KASAN reported:\n\n  BUG: KASAN: slab-use-after-free in do_raw_spin_lock\n  Write of size 4 at addr ff60000005e58898\n\n  kvm_riscv_vcpu_set_interrupt\n  kvm_riscv_vcpu_hrtimer_expired\n  __hrtimer_run_queues\n  hrtimer_interrupt\n\nThe object was allocated by KVM_CREATE_VCPU and freed concurrently by:\n\n  kvm_destroy_vcpus\n  kvm_arch_destroy_vm\n  kvm_destroy_vm\n  __fput\n\nFor deterministic validation, I added mdelay(1000) immediately after\nthe existing next_set = false assignment.  This only widens the\nexisting post-clear callback window.  A no-delay trace build naturally\nreached the callback-after-teardown-start/before-deinit ordering in 12\nof 200 runs, but 1,500 stock-kernel stress iterations did not produce a\nKASAN report, so natural reproduction is timing-sensitive.\n\nAlways invoke hrtimer_cancel() for an initialized timer.  Preserve the\nexisting -EINVAL result when the timer is no longer set, but only after\nsynchronizing with a running callback.\n\nWith this patch, hrtimer_cancel() blocked for the full widened callback\nwindow before vCPU destruction.  KASAN reported no error in 100\nfixed-and-widened runs or 200 fix-only timing-sweep runs."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kvm/vcpu_timer.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "3a9f66cb25e18a3eeca36c08d9f823a35b3ddc22",
+                                        "lessThan": "9bdbae64ae0dab93041ebc57ec4e93def793fc2d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "3a9f66cb25e18a3eeca36c08d9f823a35b3ddc22",
+                                        "lessThan": "2af03b606aadaaeb386658ef798c79bdcdef87c1",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "3a9f66cb25e18a3eeca36c08d9f823a35b3ddc22",
+                                        "lessThan": "e66aced74f0122380603c9910a71d77618b28f0e",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "3a9f66cb25e18a3eeca36c08d9f823a35b3ddc22",
+                                        "lessThan": "ea91f05a55b807ead3166546a2c75f4185ca645f",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "3a9f66cb25e18a3eeca36c08d9f823a35b3ddc22",
+                                        "lessThan": "3cc6184bd5920c9685d87f4e260568feba08650d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "3a9f66cb25e18a3eeca36c08d9f823a35b3ddc22",
+                                        "lessThan": "aaad136d56d91252517272b68cd533e5714698d5",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kvm/vcpu_timer.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.16",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.16",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.1.189",
+                                        "lessThanOrEqual": "6.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.6.158",
+                                        "lessThanOrEqual": "6.6.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.112",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.55",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.9",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc5",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.1.189"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.6.158"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.12.112"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.18.55"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "7.2.9"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "7.3-rc5"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/9bdbae64ae0dab93041ebc57ec4e93def793fc2d"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/2af03b606aadaaeb386658ef798c79bdcdef87c1"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/e66aced74f0122380603c9910a71d77618b28f0e"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/ea91f05a55b807ead3166546a2c75f4185ca645f"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/3cc6184bd5920c9685d87f4e260568feba08650d"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/aaad136d56d91252517272b68cd533e5714698d5"
+                            }
+                        ],
+                        "title": "RISC-V: KVM: Synchronize hrtimer callback during teardown",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-19T06:42:04.343970"
+        },
+        {
+            "cve_id": "CVE-2026-98799",
+            "category": "Linux Kernel",
+            "summary": "Linux内核的BPF trampoline机制存在竞态：分离程序时仅保证镜像不释放，未保留被分离BPF程序的有效引用，睡眠任务可能醒来后调用已释放的程序，导致UAF和内核崩溃。修复方案是在JIT中为每个prog调用序列前插入可修补nop，分离时将其改写为跳转以跳过已分离程序。",
+            "key_points": [
+                "漏洞位于BPF trampoline镜像生命周期管理：bpf_tramp_image_put()只保证镜像不释放，但没有保证镜像中的BPF程序不会在仍有任务可能调用时被提前释放。",
+                "触发场景：CPU0在镜像I中睡眠于程序S，CPU1 detach程序P并释放其最后一个引用，经过宽限期后P被释放；CPU0从S返回后仍调用P->bpf_func，造成对已释放BPF程序的调用和内核崩溃。",
+                "修复方法：JIT在每个prog调用序列前生成一个可修补的nop，当程序被detach时将该nop修补为跳转，跳过对应调用序列；trampoline维护其所有镜像列表，直到镜像释放。",
+                "RISC-V和LoongArch上任意范围跳转需要多条指令，任务可能被抢占后恢复到半更新序列，因此使用单指令nop并修补为近分支（arch_bpf_trampoline_skip()）。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞是BPF trampoline中的use-after-free。bpf_tramp_image_put()通过宽限期确保镜像本身不会被过早释放，但分离prog时立即调用bpf_prog_put()释放最后一个引用，并依赖ip_after_call处的nop被修补为跳转来跳过分离的fexit程序。对于在可睡眠BPF程序中睡眠的任务，该假设失效：任务已经在调用序列内部，返回后会继续调用已分离并释放的prog。x86上表现为被毒化的bpf_prog_pack内存中的int3崩溃，报告中的调用栈涉及bpf_trampoline和security_bprm_committed_creds等LSM钩子。修复通过为每个prog调用序列生成可修补nop，detach时将其改为跳转，并让trampoline保留镜像列表，确保任务可能所在的所有镜像中的nop都被更新。由于额外nop占用空间，x86和arm64需要降低BPF_MAX_TRAMP_LINKS限制；RISC-V和LoongArch上使用单指令nop补丁为近分支，避免多指令跳转补丁过程中的抢占导致恢复到半更新状态。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-98799",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.370Z",
+                    "datePublished": "2026-10-18T15:48:44.434Z",
+                    "dateUpdated": "2026-10-18T15:48:44.434Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-18T15:48:44.434Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Skip detached progs in trampoline images that are still in use\n\nbpf_tramp_image_put() makes sure a trampoline image is not freed while\na task may still be running in it, but nothing similar is done for the\nprogs called by that image. Detach drops the last prog reference right\naway and the prog is freed after grace periods, on the basis that a\ntask still in the traced function skips the fexit progs once the nop at\nip_after_call is patched to a jump.\n\nThat leaves out a task sleeping in a sleepable prog that runs before\nthe detached one, which no grace period waits for:\n\n  CPU 0                               CPU 1\n  in image I, sleeping in prog S\n                                      detach P from I's trampoline\n                                       -> new image, bpf_tramp_image_put(I)\n                                      bpf_prog_put(P), last ref\n                                      grace periods, P freed\n  back from S\n  __bpf_prog_enter(P)\n  call P->bpf_func\n\nIf S and P are fexit progs the task is already past the patched jump,\nand fentry only images don't have one. On x86 this is an int3 in\npoisoned bpf_prog_pack memory:\n\n  Oops: int3: 0000 [#1] SMP NOPTI\n  CPU: 18 UID: 0 PID: 94573 Comm: x169 Not tainted 6.18.44 #1 PREEMPT(lazy)\n  RIP: 0010:0xffffffffc0601d8d\n  Call Trace:\n   <TASK>\n   ? bpf_trampoline_6442515411+0x1a4/0x21b\n   bpf_lsm_bprm_committed_creds+0x5/0x10\n   security_bprm_committed_creds+0x5f/0x70\n   begin_new_exec+0x2d6/0x410\n   ...\n\nWe hit this in production when progs attached through trampolines got\ndetached while their hooks were busy, and it was independently found\nwith a fuzzer and KASAN.\n\nHave the JITs emit a patchable nop in front of each prog call sequence\nand record it in the image. When a prog is detached, patch its nop to a\njump over the call sequence. Progs that stay attached keep running for\nthe tasks that are in the image, and ip_after_call isn't needed anymore.\n\nThe task can be in any image that isn't freed yet, not only in the\ncurrent one. It sleeps in image I1 that calls S, P and Q, then P is\ndetached and the trampoline moves to image I2, then Q is detached and\nits call is still in I1. So the trampoline keeps a list of its images\nuntil they are freed, and detaching a prog patches its nop in all of\nthem. Images hold a reference on the trampoline for that long.\n\nOn riscv and loongarch a jump of any range takes several instructions,\nand a task preempted in the middle of them could resume into half of the\nnew sequence. The nop is a single instruction there, patched to a near\nbranch through arch_bpf_trampoline_skip().\n\nWith the extra nops, BPF_MAX_TRAMP_LINKS progs no longer fit in a page\non x86 and arm64 (and already didn't on powerpc), so lower the limit\nthere like s390 does."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/arm64/net/bpf_jit_comp.c",
+                                    "arch/loongarch/net/bpf_jit.c",
+                                    "arch/powerpc/net/bpf_jit_comp.c",
+                                    "arch/riscv/net/bpf_jit_comp64.c",
+                                    "arch/s390/net/bpf_jit_comp.c",
+                                    "arch/x86/net/bpf_jit_comp.c",
+                                    "include/linux/bpf.h",
+                                    "kernel/bpf/trampoline.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "e21aa341785c679dd409c8cb71f864c00fe6c463",
+                                        "lessThan": "967566ad325b42150483e81acb09ea9d800c00b8",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e21aa341785c679dd409c8cb71f864c00fe6c463",
+                                        "lessThan": "17637e1a581a22466ac3620a91e099683ff9cc6f",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e21d2b92354b3cd25dd774ebb0f0e52ff04a7861",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "85d177f56e5256e14b74a65940f981f6e3e8bb32",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "5.10.28",
+                                        "lessThan": "5.11",
+                                        "status": "affected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "5.11.11",
+                                        "lessThan": "5.12",
+                                        "status": "affected",
+                                        "versionType": "semver"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/arm64/net/bpf_jit_comp.c",
+                                    "arch/loongarch/net/bpf_jit.c",
+                                    "arch/powerpc/net/bpf_jit_comp.c",
+                                    "arch/riscv/net/bpf_jit_comp64.c",
+                                    "arch/s390/net/bpf_jit_comp.c",
+                                    "arch/x86/net/bpf_jit_comp.c",
+                                    "include/linux/bpf.h",
+                                    "kernel/bpf/trampoline.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.12",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.12",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.10",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc6",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.12",
+                                                "versionEndExcluding": "7.2.10"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.12",
+                                                "versionEndExcluding": "7.3-rc6"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.10.28"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.11.11"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/967566ad325b42150483e81acb09ea9d800c00b8"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/17637e1a581a22466ac3620a91e099683ff9cc6f"
+                            }
+                        ],
+                        "title": "bpf: Skip detached progs in trampoline images that are still in use",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-19T06:42:30.957210"
+        },
+        {
+            "cve_id": "CVE-2026-98465",
+            "category": "Linux Kernel",
+            "summary": "该漏洞位于 Linux 内核 RISC-V KVM 的 IMSIC 属性访问路径中。由于 KVM 设备 ioctl 未与 KVM_RUN 串行化，vCPU 迁移可能并发释放并重新分配 IMSIC VS-file，导致属性 GET/SET 使用过期的 CPU/HGEI 元组访问新所有者的中断文件。补丁通过可杀死的目标 vCPU 互斥锁串行化整个 IMSIC 属性操作。",
+            "key_points": [
+                "kvm_riscv_aia_imsic_rw_attr() 在未持有目标 vCPU 锁的情况下快照物理 CPU 和 HGEI，存在与 vCPU 迁移的竞态。",
+                "并发迁移会释放 VS-file，使 HGEI 被重新分配给其他 vCPU；imsic_vsfile_rw() 随后使用过期元组。",
+                "GET/SET 属性操作可能访问新所有者的中断文件，造成跨 vCPU 或跨 VM 的中断状态泄露或破坏。",
+                "修复通过获取目标 vCPU 互斥锁并采用可杀死等待，使 ioctl 在等待 KVM_RUN 完成时仍可被中断。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "RISC-V AIA IMSIC 的 KVM 实现中，IMSIC VS-file 由物理 CPU 和 HGEI 元组定位。KVM 设备 ioctl 与 KVM_RUN 没有串行化，kvm_riscv_aia_imsic_rw_attr() 会先快照该元组，而并发 vCPU 迁移可能释放 VS-file 并释放 HGEI；该 HGEI 随后可能被分配给另一个 vCPU。当 imsic_vsfile_rw() 使用过期元组执行实际读写时，会定位到新所有者的中断文件，导致跨 vCPU/VM 的读取泄露或写入破坏。补丁将整个 IMSIC 属性操作置于目标 vCPU 互斥锁保护下，并使用 killable 锁获取，从而既防止 VS-file 在访问期间迁移和回收，又保持设备 ioctl 可被信号中断。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-98465",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.350Z",
+                    "datePublished": "2026-10-18T15:15:17.498Z",
+                    "dateUpdated": "2026-10-18T15:15:17.498Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-18T15:15:17.498Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nRISC-V: KVM: Serialize IMSIC attributes with vCPU migration\n\nKVM device ioctls are not serialized against KVM_RUN. As a result,\nkvm_riscv_aia_imsic_rw_attr() can snapshot the physical CPU and HGEI of\nan IMSIC VS-file before a concurrent vCPU migration releases it.\n\nThe HGEI can then be allocated to another vCPU before imsic_vsfile_rw()\nuses the stale tuple. A GET or SET attribute may consequently access the\nnew owner's interrupt file.\n\nSerialize the entire IMSIC attribute operation with the target vCPU\nmutex. This prevents the VS-file from being migrated and recycled until\nthe attribute access completes. Acquire the mutex killably so that the\ndevice ioctl remains interruptible while waiting for KVM_RUN to finish."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kvm/aia_imsic.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "db8b7e97d6137a28b2bfc07e591d54da268f0c36",
+                                        "lessThan": "a29c5d2dd2ef9a8617a9a6d5585696d5f149cd98",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "db8b7e97d6137a28b2bfc07e591d54da268f0c36",
+                                        "lessThan": "c525772c304c971b0d3a1f2898dedbae653efe90",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "db8b7e97d6137a28b2bfc07e591d54da268f0c36",
+                                        "lessThan": "71acbea44e78665ea90e3c310fca6bbdcc0252db",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "db8b7e97d6137a28b2bfc07e591d54da268f0c36",
+                                        "lessThan": "8ae12ccaec6ec74945d8c1ef39f2c1b8df779abc",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kvm/aia_imsic.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.5",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.5",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.112",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.55",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.9",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc5",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.5",
+                                                "versionEndExcluding": "6.12.112"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.5",
+                                                "versionEndExcluding": "6.18.55"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.5",
+                                                "versionEndExcluding": "7.2.9"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.5",
+                                                "versionEndExcluding": "7.3-rc5"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/a29c5d2dd2ef9a8617a9a6d5585696d5f149cd98"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/c525772c304c971b0d3a1f2898dedbae653efe90"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/71acbea44e78665ea90e3c310fca6bbdcc0252db"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/8ae12ccaec6ec74945d8c1ef39f2c1b8df779abc"
+                            }
+                        ],
+                        "title": "RISC-V: KVM: Serialize IMSIC attributes with vCPU migration",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-19T06:43:13.791952"
+        },
+        {
+            "cve_id": "CVE-2026-98639",
+            "category": "Linux Kernel",
+            "summary": "Linux内核KVM RISC-V嵌套加速器（NACL）在更新嵌套HFENCE条目时未按SBI v3.0规范顺序写入，先设置Pending位会导致硬件可能使用上一次遗留的页号和页计数值，造成TLB刷新范围错误。该漏洞已通过先写Page_Number/Page_Count、最后写Config，并使用WRITE_ONCE和smp_wmb修复。",
+            "key_points": [
+                "SBI v3.0规范要求：先找到Config.Pending==0的空闲条目，再更新Page_Number/Page_Count，最后置Config.Pending。",
+                "原实现先写Config字，SBI实现或NACL硬件可能在Pending置位后观察到旧的pnum/pcount值，导致错误的TLB刷新范围。",
+                "修复调整写入顺序，并用WRITE_ONCE防止编译器重排存储、smp_wmb确保参数字先于Pending位全局可见。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在RISC-V SBI v3.0规范第15.1.2节中，嵌套HFENCE条目的更新顺序要求先定位Config.Pending==0的空闲条目，写入Page_Number和Page_Count，最后写入Config并置Pending位。__kvm_riscv_nacl_hfence()原实现先写Config，导致SBI实现或NACL硬件在Pending可见时可能读到上一次使用遗留的pnum/pcount，从而执行错误范围的TLB刷新。修复将pnum/pcount写操作提前，Config写操作最后；同时使用WRITE_ONCE防止编译器重排存储，smp_wmb确保参数字在Pending位可见前对全局观察者可见。此问题影响KVM RISC-V嵌套虚拟化场景中的地址翻译和内存隔离正确性。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-98639",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.361Z",
+                    "datePublished": "2026-10-18T15:20:10.591Z",
+                    "dateUpdated": "2026-10-18T15:20:10.591Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-18T15:20:10.591Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: riscv: Fix NACL hfence entry update order\n\nThe SBI v3.0 specification (section 15.1.2) requires a nested HFENCE\nentry to be populated as follows:\n1) find an unused entry with Config.Pending == 0\n2) update the Page_Number and Page_Count words\n3) update the Config word with Config.Pending set\n\n__kvm_riscv_nacl_hfence() writes the Config word first, so the SBI\nimplementation (or NACL hardware) can observe a pending entry with\npnum/pcount values left over from the previous use of that entry,\nresulting in incorrect TLB flush ranges.\n\nWrite pnum and pcount first and the Config word last. Since the\nconsumer is an external agent on coherent shared memory, use\nWRITE_ONCE() to stop the compiler from reordering the stores and\nsmp_wmb() to make the parameter words globally visible before the\nPending bit is set."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kvm/nacl.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "d466c19cead5904d4d5d92adb2b213b411d3b849",
+                                        "lessThan": "d6de766d8d26d71b714f548192099112def50a9c",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "d466c19cead5904d4d5d92adb2b213b411d3b849",
+                                        "lessThan": "6da466502621381fa88a6684290923d25c559266",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "d466c19cead5904d4d5d92adb2b213b411d3b849",
+                                        "lessThan": "b3d346838ec65fac7fd83f5dbcedd13cadfffddb",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kvm/nacl.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.13",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.13",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.55",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.9",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3-rc5",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "6.18.55"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.2.9"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.3-rc5"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/d6de766d8d26d71b714f548192099112def50a9c"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/6da466502621381fa88a6684290923d25c559266"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/b3d346838ec65fac7fd83f5dbcedd13cadfffddb"
+                            }
+                        ],
+                        "title": "KVM: riscv: Fix NACL hfence entry update order",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-19T06:43:38.232252"
         }
     ]
 }
