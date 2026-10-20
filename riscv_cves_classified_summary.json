@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 165,
-        "classification_date": "2026-10-19T06:43:39.232425",
+        "total_cves": 167,
+        "classification_date": "2026-10-20T06:29:30.900637",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 165,
-        "successful": 165,
+        "total_processed": 167,
+        "successful": 167,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -26,7 +26,7 @@
             "Linux Kernel": 114,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
-            "Device-Specific Firmware & Applications": 6,
+            "Device-Specific Firmware & Applications": 8,
             "Other": 3,
             "RISC-V Software Libraries": 1
         }
@@ -2201,6 +2201,34 @@
             "severity_assessment": "High",
             "technical_details": "在RISC-V SBI v3.0规范第15.1.2节中，嵌套HFENCE条目的更新顺序要求先定位Config.Pending==0的空闲条目，写入Page_Number和Page_Count，最后写入Config并置Pending位。__kvm_riscv_nacl_hfence()原实现先写Config，导致SBI实现或NACL硬件在Pending可见时可能读到上一次使用遗留的pnum/pcount，从而执行错误范围的TLB刷新。修复将pnum/pcount写操作提前，Config写操作最后；同时使用WRITE_ONCE防止编译器重排存储，smp_wmb确保参数字在Pending位可见前对全局观察者可见。此问题影响KVM RISC-V嵌套虚拟化场景中的地址翻译和内存隔离正确性。",
             "classification_timestamp": "2026-10-19T06:43:38.232252"
+        },
+        {
+            "cve_id": "CVE-2026-19595",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "Zephyr RTIO 的 rtio_cqe_get_mempool_buffer() 系统调用验证器对两个纯输出参数 buff 和 buff_len 误用读权限检查，导致内核在仅具备用户读权限的地址上执行写操作。攻击者在获得 RTIO 上下文访问权后，可破坏用户只读内存分区的写保护，或使内核对 .text/.rodata 等只读区写入触发致命错误，造成拒绝服务。修复将这些参数改为 K_SYSCALL_MEMORY_WRITE 校验。",
+            "key_points": [
+                "syscall 验证器对纯输出参数 buff/buff_len 使用 K_SYSCALL_MEMORY_READ，而不是 K_SYSCALL_MEMORY_WRITE，导致读权限被错误地视为写权限。",
+                "需要 CONFIG_USERSPACE 与 CONFIG_RTIO_SYS_MEM_BLOCKS，且攻击者需已获得 RTIO 上下文访问权限，并控制 CQE 的 flags 字段。",
+                "在内核态执行存储时，可写入 K_MEM_PARTITION_P_RW_U_RO 分区中用户只读的内存，或对 flash 中的 .text/.rodata 触发内核 fatal 崩溃/重启。",
+                "修复后使用 K_SYSCALL_MEMORY_WRITE 校验输出参数，无写权限的线程会在实现运行前被 K_OOPS 终止。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "Zephyr 用户态 syscall 验证器 z_vrfy_rtio_cqe_get_mempool_buffer() 位于 subsys/rtio/rtio_syscalls.c，错误地使用 K_SYSCALL_MEMORY_READ() 验证输出参数 buff 和 buff_len。z_impl_rtio_cqe_get_mempool_buffer() 会通过这两个指针分别写入 mempool buffer 地址和长度。在 RISC-V PMP 上，arch_buffer_validate() 对全局 __rom_region/__rodata_region 仅放行读访问；ARM MPU 校验器也仅对 P_RO_U_RO 和 P_RW_U_RO 区域放行读访问。因此，只通过读校验的指针对调用线程不一定可写。攻击者拥有 RTIO 上下文访问权限后，构造 flags 使内核进入存储路径：若目标位于 K_MEM_PARTITION_P_RW_U_RO 分区，则内核态写入成功，绕过该分区的用户只读保护；若目标位于全局只读的 flash 区域，则内核态存储产生 fault，进入 z_fatal_error() 并可能触发设备 halt/reboot，形成可靠 DoS。该漏洞不泄露内核私有数据，但导致内存保护绕过和系统可用性丧失。",
+            "classification_timestamp": "2026-10-20T06:28:53.924619"
+        },
+        {
+            "cve_id": "CVE-2026-76788",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "Zephyr RTOS 的 OSDP 控制面板回复解析器 cp_decode_response() 在处理 REPLY_KEYPPAD 和 REPLY_RAW 时缺少对声明载荷长度的上限校验，攻击者可通过 RS-485 总线发送超长帧造成栈缓冲区溢出。该漏洞可能导致访问控制面板崩溃或控制流劫持，修复为相关 memcpy 增加 OSDP_EVENT_MAX_DATALEN 边界检查。",
+            "key_points": [
+                "漏洞点：subsys/mgmt/osdp/src/osdp_cp.c 的 cp_decode_response()，REPLY_KEYPPAD 和 REPLY_RAW 分支仅检查长度与帧内剩余字节自洽，未限制不超过 OSDP_EVENT_MAX_DATALEN（64 字节）。",
+                "触发条件：需要 CONFIG_OSDP、CONFIG_OSDP_MODE_CP 以及应用事件回调；攻击者需能向 OSDP RS-485 总线发送具有正确 SOM、CRC-16 和 2 位序列号的帧，或使用被恶意控制的读卡器。",
+                "攻击效果：默认 CONFIG_OSDP_UART_BUFFER_LENGTH=256 时约 180 字节可控数据可溢出栈上的 struct osdp_event_keypress/struct osdp_event_cardread，覆盖保存寄存器和返回地址；Zephyr 默认不启用栈 canary。",
+                "修复方案：在 REPLY_KEYPPAD 和 REPLY_RAW 的 memcpy 前增加 > OSDP_EVENT_MAX_DATALEN 的边界检查，将拷贝长度限制为目标数组大小。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于 Zephyr RTOS 的 OSDP 控制面板（CP）回复解析路径。cp_decode_response() 从 OSDP 帧中读取声明长度后，仅通过 osdp_phy_check_packet()/osdp_phy_decode_packet() 验证帧结构、CRC 和序列号，未校验 REPLY_KEYPPAD 与 REPLY_RAW 的 payload 长度是否超过 struct osdp_event 中固定 64 字节的数据成员。攻击者构造长度自洽的超长帧，即可使后续 memcpy() 将约 180 字节数据写入栈上事件对象之后的保存寄存器、返回地址等位置。由于回复 ID 未与未完成命令绑定，攻击者可把超大 REPLY_KEYPPAD/REPLY_RAW 作为常规 CMD_POLL 的响应注入；即使启用 CONFIG_OSDP_SC_ENABLED，一次携带错误 MAC 的未认证帧也可能触发 sc_deactivate()，使明文回复再次被接受。在典型 Cortex-M 和 RISC-V 栈布局下，这可能导致拒绝服务或控制流劫持。",
+            "classification_timestamp": "2026-10-20T06:29:29.900458"
         }
     ]
 }

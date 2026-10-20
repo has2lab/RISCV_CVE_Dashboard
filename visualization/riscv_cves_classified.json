@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 165,
-        "classification_date": "2026-10-19T06:43:39.232425",
+        "total_cves": 167,
+        "classification_date": "2026-10-20T06:29:30.900637",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 165,
-        "successful": 165,
+        "total_processed": 167,
+        "successful": 167,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -26,7 +26,7 @@
             "Linux Kernel": 114,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
-            "Device-Specific Firmware & Applications": 6,
+            "Device-Specific Firmware & Applications": 8,
             "Other": 3,
             "RISC-V Software Libraries": 1
         }
@@ -29351,6 +29351,227 @@
                 }
             },
             "classification_timestamp": "2026-10-19T06:43:38.232252"
+        },
+        {
+            "cve_id": "CVE-2026-19595",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "Zephyr RTIO 的 rtio_cqe_get_mempool_buffer() 系统调用验证器对两个纯输出参数 buff 和 buff_len 误用读权限检查，导致内核在仅具备用户读权限的地址上执行写操作。攻击者在获得 RTIO 上下文访问权后，可破坏用户只读内存分区的写保护，或使内核对 .text/.rodata 等只读区写入触发致命错误，造成拒绝服务。修复将这些参数改为 K_SYSCALL_MEMORY_WRITE 校验。",
+            "key_points": [
+                "syscall 验证器对纯输出参数 buff/buff_len 使用 K_SYSCALL_MEMORY_READ，而不是 K_SYSCALL_MEMORY_WRITE，导致读权限被错误地视为写权限。",
+                "需要 CONFIG_USERSPACE 与 CONFIG_RTIO_SYS_MEM_BLOCKS，且攻击者需已获得 RTIO 上下文访问权限，并控制 CQE 的 flags 字段。",
+                "在内核态执行存储时，可写入 K_MEM_PARTITION_P_RW_U_RO 分区中用户只读的内存，或对 flash 中的 .text/.rodata 触发内核 fatal 崩溃/重启。",
+                "修复后使用 K_SYSCALL_MEMORY_WRITE 校验输出参数，无写权限的线程会在实现运行前被 K_OOPS 终止。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "Zephyr 用户态 syscall 验证器 z_vrfy_rtio_cqe_get_mempool_buffer() 位于 subsys/rtio/rtio_syscalls.c，错误地使用 K_SYSCALL_MEMORY_READ() 验证输出参数 buff 和 buff_len。z_impl_rtio_cqe_get_mempool_buffer() 会通过这两个指针分别写入 mempool buffer 地址和长度。在 RISC-V PMP 上，arch_buffer_validate() 对全局 __rom_region/__rodata_region 仅放行读访问；ARM MPU 校验器也仅对 P_RO_U_RO 和 P_RW_U_RO 区域放行读访问。因此，只通过读校验的指针对调用线程不一定可写。攻击者拥有 RTIO 上下文访问权限后，构造 flags 使内核进入存储路径：若目标位于 K_MEM_PARTITION_P_RW_U_RO 分区，则内核态写入成功，绕过该分区的用户只读保护；若目标位于全局只读的 flash 区域，则内核态存储产生 fault，进入 z_fatal_error() 并可能触发设备 halt/reboot，形成可靠 DoS。该漏洞不泄露内核私有数据，但导致内存保护绕过和系统可用性丧失。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-19595",
+                    "assignerOrgId": "e2e69745-5e70-4e92-8431-deb5529a81ad",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "zephyr",
+                    "dateReserved": "2026-08-12T05:34:36.022Z",
+                    "datePublished": "2026-10-19T22:49:40.334Z",
+                    "dateUpdated": "2026-10-19T22:49:40.334Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "e2e69745-5e70-4e92-8431-deb5529a81ad",
+                            "shortName": "zephyr",
+                            "dateUpdated": "2026-10-19T22:49:40.334Z"
+                        },
+                        "title": "Zephyr RTIO syscall verifier validates output parameters for read instead of write access",
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "The user-mode syscall verifier z_vrfy_rtio_cqe_get_mempool_buffer() in subsys/rtio/rtio_syscalls.c validated its two output parameters, buff and buff_len, with K_SYSCALL_MEMORY_READ() rather than K_SYSCALL_MEMORY_WRITE(). Both are pure out-parameters: z_impl_rtio_cqe_get_mempool_buffer() stores the mempool buffer address and its length through them. The distinction is enforced by every architecture validator — arch_buffer_validate() on RISC-V PMP explicitly accepts the global __rom_region/__rodata_region for reads only, and the ARM MPU validators accept P_RO_U_RO and P_RW_U_RO regions for reads only — so a read-validated pointer is not necessarily writable by the calling thread.\n\nAn unprivileged user-mode thread that has been granted access to an RTIO context (rtio_access_grant()) can invoke the rtio_cqe_get_mempool_buffer() syscall with buff/buff_len pointing at memory it may read but not write, and with a completion-queue entry whose flags field it fully controls (only RTIO_CQE_FLAG_MEMPOOL_BUFFER in flags[7:0] is required; flags[19:8] and flags[31:20] supply the block index and count). The kernel then performs a pointer-sized and a 4-byte store through those addresses while running in supervisor mode. Reaching the store requires CONFIG_USERSPACE together with CONFIG_RTIO_SYS_MEM_BLOCKS, the configuration behind RTIO_DEFINE_WITH_MEMPOOL; without the latter the implementation returns -ENOTSUP and writes nothing.\n\nTwo outcomes follow. If the target lies in a memory-domain partition declared K_MEM_PARTITION_P_RW_U_RO (privileged read-write, user read-only), the kernel-mode store succeeds and deposits partly attacker-chosen values into memory the memory domain had marked read-only for that thread, bypassing the partition's write protection. If the target lies in globally readable but unwritable memory such as .text/.rodata in flash, the store faults in kernel mode; the fault is delivered to z_fatal_error() and the default k_sys_fatal_error_handler() halts or reboots the device, giving an unprivileged thread a reliable full denial of service.\n\nThe read-permission check does bound the damage: the address must still be readable by the calling thread, so kernel-private memory cannot be targeted and no confidential data is disclosed. The fix replaces both checks with K_SYSCALL_MEMORY_WRITE(), so a thread lacking write permission is terminated by K_OOPS before the implementation runs; the cqe argument correctly remains read-validated."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "zephyrproject",
+                                "product": "zephyr",
+                                "collectionURL": "https://github.com/zephyrproject-rtos/zephyr",
+                                "packageName": "zephyr",
+                                "defaultStatus": "unaffected",
+                                "programFiles": [
+                                    "subsys/rtio/rtio_handlers.c",
+                                    "subsys/rtio/rtio_syscalls.c"
+                                ],
+                                "programRoutines": [
+                                    {
+                                        "name": "z_vrfy_rtio_cqe_get_mempool_buffer"
+                                    }
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "3.4.0",
+                                        "status": "affected",
+                                        "versionType": "semver",
+                                        "lessThanOrEqual": "4.4.2"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://github.com/zephyrproject-rtos/zephyr/commit/bea93400138362691403b7f81de1e9048681547d",
+                                "name": "Fix commit",
+                                "tags": [
+                                    "patch"
+                                ]
+                            },
+                            {
+                                "url": "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-7337-mc44-5wjm",
+                                "name": "GHSA-7337-mc44-5wjm"
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "format": "CVSS",
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:H",
+                                    "baseScore": 6.1,
+                                    "baseSeverity": "MEDIUM"
+                                }
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "lang": "en",
+                                        "description": "memory-safety",
+                                        "cweId": "CWE-787",
+                                        "type": "CWE"
+                                    },
+                                    {
+                                        "lang": "en",
+                                        "description": "memory-safety",
+                                        "cweId": "CWE-822",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "x_generator": {
+                            "engine": "cvelib 1.8.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-20T06:28:53.924619"
+        },
+        {
+            "cve_id": "CVE-2026-76788",
+            "category": "Device-Specific Firmware & Applications",
+            "summary": "Zephyr RTOS 的 OSDP 控制面板回复解析器 cp_decode_response() 在处理 REPLY_KEYPPAD 和 REPLY_RAW 时缺少对声明载荷长度的上限校验，攻击者可通过 RS-485 总线发送超长帧造成栈缓冲区溢出。该漏洞可能导致访问控制面板崩溃或控制流劫持，修复为相关 memcpy 增加 OSDP_EVENT_MAX_DATALEN 边界检查。",
+            "key_points": [
+                "漏洞点：subsys/mgmt/osdp/src/osdp_cp.c 的 cp_decode_response()，REPLY_KEYPPAD 和 REPLY_RAW 分支仅检查长度与帧内剩余字节自洽，未限制不超过 OSDP_EVENT_MAX_DATALEN（64 字节）。",
+                "触发条件：需要 CONFIG_OSDP、CONFIG_OSDP_MODE_CP 以及应用事件回调；攻击者需能向 OSDP RS-485 总线发送具有正确 SOM、CRC-16 和 2 位序列号的帧，或使用被恶意控制的读卡器。",
+                "攻击效果：默认 CONFIG_OSDP_UART_BUFFER_LENGTH=256 时约 180 字节可控数据可溢出栈上的 struct osdp_event_keypress/struct osdp_event_cardread，覆盖保存寄存器和返回地址；Zephyr 默认不启用栈 canary。",
+                "修复方案：在 REPLY_KEYPPAD 和 REPLY_RAW 的 memcpy 前增加 > OSDP_EVENT_MAX_DATALEN 的边界检查，将拷贝长度限制为目标数组大小。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于 Zephyr RTOS 的 OSDP 控制面板（CP）回复解析路径。cp_decode_response() 从 OSDP 帧中读取声明长度后，仅通过 osdp_phy_check_packet()/osdp_phy_decode_packet() 验证帧结构、CRC 和序列号，未校验 REPLY_KEYPPAD 与 REPLY_RAW 的 payload 长度是否超过 struct osdp_event 中固定 64 字节的数据成员。攻击者构造长度自洽的超长帧，即可使后续 memcpy() 将约 180 字节数据写入栈上事件对象之后的保存寄存器、返回地址等位置。由于回复 ID 未与未完成命令绑定，攻击者可把超大 REPLY_KEYPPAD/REPLY_RAW 作为常规 CMD_POLL 的响应注入；即使启用 CONFIG_OSDP_SC_ENABLED，一次携带错误 MAC 的未认证帧也可能触发 sc_deactivate()，使明文回复再次被接受。在典型 Cortex-M 和 RISC-V 栈布局下，这可能导致拒绝服务或控制流劫持。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-76788",
+                    "assignerOrgId": "e2e69745-5e70-4e92-8431-deb5529a81ad",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "zephyr",
+                    "dateReserved": "2026-08-19T17:53:26.698Z",
+                    "datePublished": "2026-10-19T20:39:22.074Z",
+                    "dateUpdated": "2026-10-19T20:39:22.074Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "e2e69745-5e70-4e92-8431-deb5529a81ad",
+                            "shortName": "zephyr",
+                            "dateUpdated": "2026-10-19T20:39:22.074Z"
+                        },
+                        "title": "Stack out-of-bounds write in the OSDP Control Panel reply parser",
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "The OSDP Control Panel reply parser cp_decode_response() in subsys/mgmt/osdp/src/osdp_cp.c decodes replies from a Peripheral Device into a stack-allocated struct osdp_event. For the REPLY_KEYPPAD and REPLY_RAW reply types, the payload length is taken from the received frame and the only validation performed is that the declared length is self-consistent with the number of payload bytes present in the frame. Because the attacker controls both the length field and the frame length, that check imposes no bound, and the subsequent memcpy() writes into the fixed 64-byte data arrays of struct osdp_event_keypress / struct osdp_event_cardread (OSDP_EVENT_MAX_DATALEN). The sibling REPLY_FMT handler in the same switch already carried the missing > OSDP_EVENT_MAX_DATALEN bound.\n\nThe defect is reached from cp_process_reply(), which reads bytes from the OSDP RS-485 channel and passes them through osdp_phy_check_packet() and osdp_phy_decode_packet() before dispatching on the reply ID. Triggering it requires CONFIG_OSDP with CONFIG_OSDP_MODE_CP and an application event callback registered (the normal Control Panel integration), plus a frame carrying a correct SOM, a valid CRC-16, and a matching 2-bit sequence number — all of which are computable or observable by anyone on the bus. No check ties the reply ID to the outstanding command, so an oversized REPLY_KEYPPAD or REPLY_RAW is accepted as the answer to a routine CMD_POLL. A malicious or compromised card reader, or anyone with access to the RS-485 wiring, can supply such a frame; CONFIG_OSDP_SC_ENABLED only helps while a secure channel is active, and a single unauthenticated frame carrying a bad MAC causes sc_deactivate(), after which plaintext replies are again accepted.\n\nWith the default CONFIG_OSDP_UART_BUFFER_LENGTH of 256, roughly 180 bytes of fully attacker-chosen data can be written past the end of the stack-allocated event object, over saved registers and the return address on typical Cortex-M and RISC-V frame layouts (Zephyr does not enable stack canaries by default). The impact ranges from a hard crash of the access-control panel to potential control-flow hijack in the context of the OSDP receive thread. The fix adds an OSDP_EVENT_MAX_DATALEN bound to both handlers, capping each memcpy() at the size of its destination."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "zephyrproject",
+                                "product": "zephyr",
+                                "collectionURL": "https://github.com/zephyrproject-rtos/zephyr",
+                                "packageName": "zephyr",
+                                "defaultStatus": "unaffected",
+                                "programFiles": [
+                                    "subsys/mgmt/osdp/src/osdp_cp.c"
+                                ],
+                                "programRoutines": [
+                                    {
+                                        "name": "cp_decode_response"
+                                    }
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "3.3.0",
+                                        "status": "affected",
+                                        "versionType": "semver",
+                                        "lessThanOrEqual": "4.4.2"
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://github.com/zephyrproject-rtos/zephyr/commit/f10d55f47c6970e95d3a7c6ba08e6adec3c79acd",
+                                "name": "Fix commit",
+                                "tags": [
+                                    "patch"
+                                ]
+                            },
+                            {
+                                "url": "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-fgg7-h8p9-9q3w",
+                                "name": "GHSA-fgg7-h8p9-9q3w"
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "format": "CVSS",
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                                    "baseScore": 8.8,
+                                    "baseSeverity": "HIGH"
+                                }
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "lang": "en",
+                                        "description": "bounds",
+                                        "cweId": "CWE-787",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "x_generator": {
+                            "engine": "cvelib 1.8.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-20T06:29:29.900458"
         }
     ]
 }
