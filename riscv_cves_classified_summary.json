@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 167,
-        "classification_date": "2026-10-20T06:29:30.900637",
+        "total_cves": 168,
+        "classification_date": "2026-10-22T06:31:57.154677",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 167,
-        "successful": 167,
+        "total_processed": 168,
+        "successful": 168,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -27,7 +27,7 @@
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
-            "Other": 3,
+            "Other": 4,
             "RISC-V Software Libraries": 1
         }
     },
@@ -2229,6 +2229,20 @@
             "severity_assessment": "High",
             "technical_details": "该漏洞位于 Zephyr RTOS 的 OSDP 控制面板（CP）回复解析路径。cp_decode_response() 从 OSDP 帧中读取声明长度后，仅通过 osdp_phy_check_packet()/osdp_phy_decode_packet() 验证帧结构、CRC 和序列号，未校验 REPLY_KEYPPAD 与 REPLY_RAW 的 payload 长度是否超过 struct osdp_event 中固定 64 字节的数据成员。攻击者构造长度自洽的超长帧，即可使后续 memcpy() 将约 180 字节数据写入栈上事件对象之后的保存寄存器、返回地址等位置。由于回复 ID 未与未完成命令绑定，攻击者可把超大 REPLY_KEYPPAD/REPLY_RAW 作为常规 CMD_POLL 的响应注入；即使启用 CONFIG_OSDP_SC_ENABLED，一次携带错误 MAC 的未认证帧也可能触发 sc_deactivate()，使明文回复再次被接受。在典型 Cortex-M 和 RISC-V 栈布局下，这可能导致拒绝服务或控制流劫持。",
             "classification_timestamp": "2026-10-20T06:29:29.900458"
+        },
+        {
+            "cve_id": "CVE-2026-61916",
+            "category": "Other",
+            "summary": "Apache bRPC 1.18.0 之前在 URL 解析和大小写不敏感头查找中，将 plain char 提升为 int 后直接用作偏移查找表索引；在 plain char 为无符号的平台（如 ARM64）上，0x80-0xFF 字节会变成 128-255，造成越界读取和进程崩溃。远程攻击者可通过未经认证的 URI 或 HPACK 头触发拒绝服务；signed char 平台（如常见的 x86_64，以及默认 signed char 的 RISC-V 工具链）不受影响。",
+            "key_points": [
+                "根因：两个 256 项查找表通过指针偏移 128 使用合法索引 -128..127，但输入字节未先归一化到 signed char 范围。",
+                "受影响条件：plain char 为 unsigned 的 ABI（如 ARM64；RISC-V 若默认 unsigned char 也会受影响），而 x86_64 等 signed char 构建不受影响。",
+                "触发方式：远程未认证请求 URI 中的高位字节，或 HTTP/2 HPACK 路径中的不可信头名可到达该查找；HTTP/1 头名中的高位字节会被解析器提前拒绝。",
+                "修复：升级到 Apache bRPC 1.18.0 及以上，或应用 PR #3376，在访问偏移表前将索引归一化到 signed char 范围。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞是 Apache bRPC 中的越界读取（OOB read）问题，影响 URL 解析和大小写不敏感头部查找。两个查找表实际为 256 项，但为了用负索引访问，代码将指针偏移 128，因此期望索引范围为 -128..127。C/C++ 中 plain char 的有符号性由 ABI/工具链决定：在 ARM64 等平台上 plain char 为 unsigned，char 值为 0x80..0xFF 的字节在整型提升后变为 128..255，而没有先转换为 signed char，导致访问表尾之后最多 127 字节。该问题可由远程攻击者通过构造含高比特位字节的 URI 或 HTTP/2 HPACK 头触发，造成服务进程崩溃（拒绝服务）。常见 x86_64 构建默认 signed char，不受影响；对于 RISC-V，需要看工具链的 plain char 默认有符号性，默认 signed char 的 RISC-V Linux 工具链不受影响，但若某些嵌入式 RISC-V 工具链默认 unsigned char 则可能受影响。修复方法是在查表前将输入字节显式转换为 signed char 或等价地归一化到 -128..127 范围。",
+            "classification_timestamp": "2026-10-22T06:31:56.154499"
         }
     ]
 }

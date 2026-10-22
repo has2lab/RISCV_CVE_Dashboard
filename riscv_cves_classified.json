@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 167,
-        "classification_date": "2026-10-20T06:29:30.900637",
+        "total_cves": 168,
+        "classification_date": "2026-10-22T06:31:57.154677",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,8 +16,8 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 167,
-        "successful": 167,
+        "total_processed": 168,
+        "successful": 168,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -27,7 +27,7 @@
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
-            "Other": 3,
+            "Other": 4,
             "RISC-V Software Libraries": 1
         }
     },
@@ -29572,6 +29572,128 @@
                 }
             },
             "classification_timestamp": "2026-10-20T06:29:29.900458"
+        },
+        {
+            "cve_id": "CVE-2026-61916",
+            "category": "Other",
+            "summary": "Apache bRPC 1.18.0 之前在 URL 解析和大小写不敏感头查找中，将 plain char 提升为 int 后直接用作偏移查找表索引；在 plain char 为无符号的平台（如 ARM64）上，0x80-0xFF 字节会变成 128-255，造成越界读取和进程崩溃。远程攻击者可通过未经认证的 URI 或 HPACK 头触发拒绝服务；signed char 平台（如常见的 x86_64，以及默认 signed char 的 RISC-V 工具链）不受影响。",
+            "key_points": [
+                "根因：两个 256 项查找表通过指针偏移 128 使用合法索引 -128..127，但输入字节未先归一化到 signed char 范围。",
+                "受影响条件：plain char 为 unsigned 的 ABI（如 ARM64；RISC-V 若默认 unsigned char 也会受影响），而 x86_64 等 signed char 构建不受影响。",
+                "触发方式：远程未认证请求 URI 中的高位字节，或 HTTP/2 HPACK 路径中的不可信头名可到达该查找；HTTP/1 头名中的高位字节会被解析器提前拒绝。",
+                "修复：升级到 Apache bRPC 1.18.0 及以上，或应用 PR #3376，在访问偏移表前将索引归一化到 signed char 范围。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞是 Apache bRPC 中的越界读取（OOB read）问题，影响 URL 解析和大小写不敏感头部查找。两个查找表实际为 256 项，但为了用负索引访问，代码将指针偏移 128，因此期望索引范围为 -128..127。C/C++ 中 plain char 的有符号性由 ABI/工具链决定：在 ARM64 等平台上 plain char 为 unsigned，char 值为 0x80..0xFF 的字节在整型提升后变为 128..255，而没有先转换为 signed char，导致访问表尾之后最多 127 字节。该问题可由远程攻击者通过构造含高比特位字节的 URI 或 HTTP/2 HPACK 头触发，造成服务进程崩溃（拒绝服务）。常见 x86_64 构建默认 signed char，不受影响；对于 RISC-V，需要看工具链的 plain char 默认有符号性，默认 signed char 的 RISC-V Linux 工具链不受影响，但若某些嵌入式 RISC-V 工具链默认 unsigned char 则可能受影响。修复方法是在查表前将输入字节显式转换为 signed char 或等价地归一化到 -128..127 范围。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-61916",
+                    "assignerOrgId": "f0158376-9dc2-43b6-827c-5f631a4d8d09",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "apache",
+                    "dateReserved": "2026-07-13T03:51:32.682Z",
+                    "datePublished": "2026-10-21T11:42:46.023Z",
+                    "dateUpdated": "2026-10-21T11:42:46.023Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "f0158376-9dc2-43b6-827c-5f631a4d8d09",
+                            "shortName": "apache",
+                            "dateUpdated": "2026-10-21T11:42:46.023Z"
+                        },
+                        "title": "Apache bRPC: Out-of-bounds Read in URL and Header Lookup Tables on Unsigned-char Platforms",
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "description": "CWE-125 Out-of-bounds Read",
+                                        "lang": "en",
+                                        "cweId": "CWE-125",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "source": {
+                            "discovery": "EXTERNAL"
+                        },
+                        "affected": [
+                            {
+                                "vendor": "Apache Software Foundation",
+                                "product": "Apache bRPC",
+                                "platforms": [
+                                    "ARM64",
+                                    "RISC-V",
+                                    "other platforms where plain char is unsigned"
+                                ],
+                                "packageURL": "pkg:github/apache/brpc",
+                                "versions": [
+                                    {
+                                        "status": "affected",
+                                        "version": "0",
+                                        "lessThan": "1.18.0",
+                                        "versionType": "semver"
+                                    }
+                                ],
+                                "defaultStatus": "unaffected",
+                                "collectionURL": "https://github.com",
+                                "packageName": "apache/brpc"
+                            }
+                        ],
+                        "descriptions": [
+                            {
+                                "value": "Out-of-bounds reads in URL parsing and case-insensitive header lookup in Apache bRPC before version 1.18.0 on platforms where plain char is unsigned, such as ARM64, allow remote attackers to cause a process crash and denial of service by sending crafted input containing bytes with the high bit set.\n\nRoot Cause:\nTwo 256-entry lookup tables are accessed through pointers biased by 128 so that valid indices are in the range -128 to 127. Input bytes are promoted from plain char to int without first normalizing them to the signed-char range. On affected platforms, bytes in the range 0x80 to 0xFF therefore become indices 128 to 255 and read up to 127 bytes beyond the end of the underlying tables.\n\nAffected Scenarios:\nA remotely accessible bRPC HTTP server on an affected platform can reach the vulnerable URL lookup through an unauthenticated request URI containing a high-bit byte. The case-insensitive lookup is also reachable when untrusted header names are processed through APIs such as the HTTP/2 HPACK path. HTTP/1 header names containing high-bit bytes are rejected by the HTTP/1 parser before reaching the vulnerable lookup. Builds where plain char is signed, which commonly include x86_64 builds, are not affected by this issue.\n\nHow to Fix:\nChoose one of the following options:\n1. Upgrade Apache bRPC to version 1.18.0 or later.\n2. Apply the patch from  https://github.com/apache/brpc/pull/3376 .\n\nThe fix normalizes lookup-table indices to the signed-char range before accessing the biased tables.",
+                                "lang": "en",
+                                "supportingMedia": [
+                                    {
+                                        "type": "text/html",
+                                        "base64": false,
+                                        "value": "Out-of-bounds reads in URL parsing and case-insensitive header lookup in Apache bRPC before version 1.18.0 on platforms where plain <code>char</code> is unsigned, such as ARM64, allow remote attackers to cause a process crash and denial of service by sending crafted input containing bytes with the high bit set.<br><br><strong>Root Cause:</strong><br>Two 256-entry lookup tables are accessed through pointers biased by 128 so that valid indices are in the range -128 to 127. Input bytes are promoted from plain <code>char</code> to <code>int</code> without first normalizing them to the signed-char range. On affected platforms, bytes in the range 0x80 to 0xFF therefore become indices 128 to 255 and read up to 127 bytes beyond the end of the underlying tables.<br><br><strong>Affected Scenarios:</strong><br>A remotely accessible bRPC HTTP server on an affected platform can reach the vulnerable URL lookup through an unauthenticated request URI containing a high-bit byte. The case-insensitive lookup is also reachable when untrusted header names are processed through APIs such as the HTTP/2 HPACK path. HTTP/1 header names containing high-bit bytes are rejected by the HTTP/1 parser before reaching the vulnerable lookup. Builds where plain <code>char</code> is signed, which commonly include x86_64 builds, are not affected by this issue.<br><br><strong>How to Fix:</strong><br>Choose one of the following options:<br>1. Upgrade Apache bRPC to version 1.18.0 or later.<br>2. Apply the patch from <a target=\"_blank\" rel=\"nofollow\" href=\"https://github.com/apache/brpc/pull/3376\">https://github.com/apache/brpc/pull/3376</a>.<br><br>The fix normalizes lookup-table indices to the signed-char range before accessing the biased tables."
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://lists.apache.org/thread/2pf15ojj0vr7rtx95677kgtl1mx3gdgb",
+                                "tags": [
+                                    "vendor-advisory"
+                                ]
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "other": {
+                                    "type": "Textual description of severity",
+                                    "content": {
+                                        "text": "moderate"
+                                    }
+                                },
+                                "scenarios": [
+                                    {
+                                        "lang": "en",
+                                        "value": "GENERAL"
+                                    }
+                                ]
+                            }
+                        ],
+                        "credits": [
+                            {
+                                "lang": "en",
+                                "value": "Ubeddulla Khan",
+                                "type": "finder"
+                            }
+                        ],
+                        "x_generator": {
+                            "engine": "Vulnogram 0.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-22T06:31:56.154499"
         }
     ]
 }
