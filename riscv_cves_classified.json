@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 168,
-        "classification_date": "2026-10-22T06:31:57.154677",
+        "total_cves": 172,
+        "classification_date": "2026-10-24T06:22:35.850947",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 168,
-        "successful": 168,
+        "total_processed": 172,
+        "successful": 172,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 114,
+            "Linux Kernel": 118,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
@@ -29694,6 +29694,651 @@
                 }
             },
             "classification_timestamp": "2026-10-22T06:31:56.154499"
+        },
+        {
+            "cve_id": "CVE-2026-99016",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V futex实现中，access_ok()验证的是去除标签后的用户指针，但后续原子操作使用了原始带标签地址。当启用标签地址ABI时，攻击者可利用标签位构造指向内核地址的指针绕过检查，对任意内核地址执行原子读写。",
+            "key_points": [
+                "漏洞成因：access_ok()使用untagged_addr()检查用户指针，但futex原子操作直接使用原始带标签的uaddr，二者不一致。",
+                "利用条件：需启用CONFIG_RISCV_ISA_SUPM并通过prctl设置PMLEN，且内核未设置menvcfg.PMM导致硬件不为内核访问自动去除标签；在Sv57且PMLEN=16时标签位与规范地址位重叠，可构造指向内核线性映射的恶意指针。",
+                "影响：非特权进程可通过FUTEX_WAKE_OP对任意内核地址执行原子读-修改-写，并利用FUTEX_OP_CMP_*结果作为读取预言机，造成内存破坏和信息泄露。"
+            ],
+            "severity_assessment": "Critical",
+            "technical_details": "漏洞位于Linux内核RISC-V架构的futex辅助函数arch_futex_atomic_op_inuser()和futex_atomic_cmpxchg_inatomic()中。这些函数将用户传入的原始uaddr直接作为内联汇编的'+m'(*uaddr)操作数，用于amoswap、amoadd、lr.w/sc.w等原子指令。access_ok()在检查用户地址合法性前会通过untagged_addr()去除标签位，但实际执行原子访问时未做相同处理。当启用RISC-V标签地址ABI（CONFIG_RISCV_ISA_SUPM，用户通过prctl PR_SET_TAGGED_ADDR_CTRL设置PMLEN≠0）后，用户指针的高PMLEN位可携带标签。由于内核未设置menvcfg.PMM，处理器在内核模式下不会自动屏蔽这些标签位，因此内核实际访问的是带标签的原始地址。在Sv57虚拟地址配置下，PMLEN=16时标签位与规范地址高位重叠，攻击者可构造一个未被去除标签时指向内核线性映射区、去除标签后为合法用户地址的指针，从而绕过access_ok()检查并使futex原子操作作用于任意内核地址。修复方式是在access_ok()检查后对uaddr进行untag，与get_user()/put_user()/raw_copy_{to,from}_user()的处理保持一致，确保原子操作作用于经过验证的地址。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-99016",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.386Z",
+                    "datePublished": "2026-10-23T12:20:47.859Z",
+                    "dateUpdated": "2026-10-23T12:20:47.859Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-23T12:20:47.859Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: futex: untag the user pointer before the atomic access\n\naccess_ok() checks untagged_addr(uaddr), but arch_futex_atomic_op_inuser()\nand futex_atomic_cmpxchg_inatomic() hand the raw uaddr to the inline asm\namoswap/amoadd/.../lr.w+sc.w through the \"+m\" (*uaddr) operand.  When the\ntagged address ABI is enabled (CONFIG_RISCV_ISA_SUPM, prctl\nPR_SET_TAGGED_ADDR_CTRL with PMLEN != 0), those two addresses differ: a\nuser pointer whose top PMLEN bits hold a tag passes access_ok() after\nuntagging, but the atomic is then performed on the still-tagged raw\naddress.\n\nSupervisor-mode data accesses are not subject to the U-mode pointer\nmasking (that is governed by menvcfg.PMM, which the kernel does not set),\nso hardware does not strip the tag for the kernel's own access.  With\nSv57 and PMLEN=16 the tag bits overlap the canonical-address bits, so a\ntagged pointer can name a canonical kernel virtual address (e.g. in the\nlinear map) whose untagged form is a valid user address.  An unprivileged\nprocess can thus make FUTEX_WAKE_OP perform an atomic read-modify-write on\nan arbitrary kernel address, with the matching FUTEX_OP_CMP_* result\nserving as a read oracle.\n\nget_user()/put_user()/raw_copy_{to,from}_user() already untag the pointer\nafter the access_ok() check; do the same in the futex helpers so the\natomic operates on the address that was actually validated."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/include/asm/futex.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "2e1743085887ba3f553c2bb472a75a3ff744b242",
+                                        "lessThan": "2e5c80bbc062a8dda33e687ebf7be8f074ee4f7d",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "2e1743085887ba3f553c2bb472a75a3ff744b242",
+                                        "lessThan": "8e48d8d51ab37b7decfbff3e2844e027a52ad6ea",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "2e1743085887ba3f553c2bb472a75a3ff744b242",
+                                        "lessThan": "405290be962b32eec842776fbe3bdf81f15b1676",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/include/asm/futex.h"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.13",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.13",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.57",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.11",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "6.18.57"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.2.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.13",
+                                                "versionEndExcluding": "7.3"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/2e5c80bbc062a8dda33e687ebf7be8f074ee4f7d"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/8e48d8d51ab37b7decfbff3e2844e027a52ad6ea"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/405290be962b32eec842776fbe3bdf81f15b1676"
+                            }
+                        ],
+                        "title": "riscv: futex: untag the user pointer before the atomic access",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-24T06:21:16.975730"
+        },
+        {
+            "cve_id": "CVE-2026-99017",
+            "category": "Linux Kernel",
+            "summary": "该漏洞是Linux内核RISC-V T-Head GhostWrite勘误配置依赖缺陷：当只启用ERRATA_THEAD_GHOSTWRITE而未启用ERRATA_THEAD_MAE时，EARLY替代阶段不会执行，导致幽灵写漏洞检测与缓解静默失效，sysfs错误报告“Not affected”。修复通过从ERRATA_THEAD_GHOSTWRITE选择RISCV_ALTERNATIVE_EARLY，确保在T-Head C9xx等受影响CPU上应用默认缓解。",
+            "key_points": [
+                "errata_probe_ghostwrite()只有在RISCV_ALTERNATIVES_EARLY_BOOT阶段调用时才会将CPU标记为VULNERABLE。",
+                "CONFIG_RISCV_ALTERNATIVE_EARLY之前仅由ERRATA_THEAD_MAE选择；若只启用ERRATA_THEAD_GHOSTWRITE，早期替代不会运行。",
+                "ghostwrite_state未设置为VULNERABLE，ghostwrite_enable_mitigation()返回false，xtheadvector保持启用，sysfs在受影响CPU上错误显示“Not affected”。",
+                "修复在ERRATA_THEAD_GHOSTWRITE上选择RISCV_ALTERNATIVE_EARLY，使漏洞在早期启动阶段被检测并应用默认缓解。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在内核配置中启用ERRATA_THEAD_GHOSTWRITE=y但ERRATA_THEAD_MAE=n时，早期备选方案（RISCV_ALTERNATIVE_EARLY）未启用，导致ghostwrite探测函数无法在early boot阶段运行。GhostWrite是T-Head C9xx向量扩展中的一个严重硬件漏洞，Linux默认缓解需要禁用xtheadvector；若探测未记录vulnerable状态，缓解函数会直接返回false，系统在物理上易受攻击的CPU上仍启用向量单元并报告“Not affected”，造成错误的安全状态。补丁将RISCV_ALTERNATIVE_EARLY作为ERRATA_THEAD_GHOSTWRITE的依赖选项启用，修复了配置依赖遗漏。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-99017",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.386Z",
+                    "datePublished": "2026-10-23T12:20:53.518Z",
+                    "dateUpdated": "2026-10-23T12:20:53.518Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-23T12:20:53.518Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: errata: select RISCV_ALTERNATIVE_EARLY for THEAD GHOSTWRITE\n\nerrata_probe_ghostwrite() only marks the CPU as vulnerable when it is\ncalled at the RISCV_ALTERNATIVES_EARLY_BOOT stage, and the mitigation\nin ghostwrite_enable_mitigation() only takes effect if the vulnerable\nstate was recorded before the boot alternatives are patched.\n\nThe early boot stage is only executed when CONFIG_RISCV_ALTERNATIVE_EARLY\nis enabled, which currently is only selected by ERRATA_THEAD_MAE. In a\nkernel built with ERRATA_THEAD_GHOSTWRITE=y but ERRATA_THEAD_MAE=n, the\nearly alternatives never run, so ghostwrite_state is never set to\nVULNERABLE: ghostwrite_enable_mitigation() returns false, xtheadvector\nremains enabled, and sysfs reports \"Not affected\" on a vulnerable\nT-Head C9xx CPU.\n\nSelect RISCV_ALTERNATIVE_EARLY from ERRATA_THEAD_GHOSTWRITE so that the\nvulnerability is detected in the early boot stage and the default\nmitigation is applied."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/Kconfig.errata"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "4bf97069239bcfca9840936313c7ac35a6e04488",
+                                        "lessThan": "fa465a7819ecbe5801b78c088d3cadaf2664b8ca",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "4bf97069239bcfca9840936313c7ac35a6e04488",
+                                        "lessThan": "7fee577a2fa78b9a76da015beec1ccf978746ebb",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "4bf97069239bcfca9840936313c7ac35a6e04488",
+                                        "lessThan": "298510bbc7c3017c0faf481c6ea66f1065b657b4",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/Kconfig.errata"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.14",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.14",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.57",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.11",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.14",
+                                                "versionEndExcluding": "6.18.57"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.14",
+                                                "versionEndExcluding": "7.2.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.14",
+                                                "versionEndExcluding": "7.3"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/fa465a7819ecbe5801b78c088d3cadaf2664b8ca"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/7fee577a2fa78b9a76da015beec1ccf978746ebb"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/298510bbc7c3017c0faf481c6ea66f1065b657b4"
+                            }
+                        ],
+                        "title": "riscv: errata: select RISCV_ALTERNATIVE_EARLY for THEAD GHOSTWRITE",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-24T06:21:39.863035"
+        },
+        {
+            "cve_id": "CVE-2026-98951",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V架构ptrace代码中，PTRACE_SETREGSET在处理短iov_len时未清零内核栈上的regset缓冲区，导致未初始化数据被用于设置目标进程向量状态或影子栈指针。补丁在copyin前对两个缓冲区进行零初始化，与get路径保持一致。",
+            "key_points": [
+                "user_regset_copyin()只复制用户提供的count字节，短iov_len会令内核栈缓冲区剩余部分未初始化。",
+                "riscv_vr_set()可能将未初始化垃圾数据校验后写入目标vstate，riscv_cfi_set()可能将其存为影子栈指针。",
+                "修复方式是在copyin之前对riscv_vr_set和riscv_cfi_set使用的缓冲区清零，与get路径一致。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于arch/riscv内核ptrace寄存器集处理路径。PTRACE_SETREGSET请求的iov_len小于寄存器集大小时，内核缓冲区仅前count字节被从用户空间复制，剩余部分为内核栈残留数据。该残留可能包含先前内核操作留下的敏感信息。在riscv_vr_set()中，残留数据可能通过合法性检查并被复制到被跟踪进程的矢量寄存器状态；在riscv_cfi_set()中，残留值可能作为影子栈指针保存。攻击者随后可通过PTRACE_GETREGSET读取被污染的状态，造成内核栈信息泄露，并可能影响控制流完整性机制。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-98951",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.382Z",
+                    "datePublished": "2026-10-23T12:19:10.747Z",
+                    "dateUpdated": "2026-10-23T12:19:10.747Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-23T12:19:10.747Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: ptrace: Zero-initialize regset buffers before copyin\n\nuser_regset_copyin() only copies `count` bytes, so a PTRACE_SETREGSET\nrequest with a short iov_len leaves the rest of the stack buffer\nuninitialized. In riscv_vr_set() that garbage is validated and copied\ninto the target's vstate, and in riscv_cfi_set() it can be stored as\nthe target's shadow stack pointer. Zero both buffers, as the get path\nalready does."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kernel/ptrace.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "9300f00439743c4a34d735e1a27118eb68a1504e",
+                                        "lessThan": "89fc70d73f4ac8781f9e15edd1dbc6b6088453b3",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "9300f00439743c4a34d735e1a27118eb68a1504e",
+                                        "lessThan": "59052a88ba5fe4a7bb34b3a0a42aa5d453d3bb97",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "f2a9cd050901c4734bc175294c3bd6a40a1a9e99",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "6.5.3",
+                                        "lessThan": "6.6",
+                                        "status": "affected",
+                                        "versionType": "semver"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/kernel/ptrace.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.6",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.6",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.11",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "7.2.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.6",
+                                                "versionEndExcluding": "7.3"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.5.3"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/89fc70d73f4ac8781f9e15edd1dbc6b6088453b3"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/59052a88ba5fe4a7bb34b3a0a42aa5d453d3bb97"
+                            }
+                        ],
+                        "title": "riscv: ptrace: Zero-initialize regset buffers before copyin",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-24T06:22:12.394960"
+        },
+        {
+            "cve_id": "CVE-2026-99018",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V异常入口在启用CONFIG_SHADOW_CALL_STACK时，错误地使用用户可写的tp寄存器判断异常是否来自用户态。攻击者可将tp设置为自身task_struct的线性映射地址，使内核跳过影子调用栈指针gp的重载，从而以用户控制的gp执行影子栈读写，形成内核任意写入和控制流劫持。修复改为使用硬件写死的sstatus.SPP位判断来源，SPP无法从U模式伪造。",
+            "key_points": [
+                "arch/riscv/kernel/entry.S中的handle_exception()通过scs_load_current_if_task_changed比较陷阱时tp与当前tp，相等则跳过scs_load_current。",
+                "tp是用户可写寄存器，用户可将其设置为当前task_struct的线性映射地址；在KASLR开启下仍可通过爆破实现。",
+                "CONFIG_SHADOW_CALL_STACK下gp作为影子调用栈指针，且load_global_pointer为空操作；编译器生成的sd/ld指令基于gp，攻击者控制gp即可造成内核任意写入并劫持返回地址。",
+                "被污染的gp返回时保存到task_struct.scs_sp，导致后续每次异常入口都跳过重载，持久化绕过。",
+                "修复使用硬件在陷阱入口写入的sstatus.SPP位（此处已在s1中）判断来源：SPP=0表示来自用户态则重载，SPP=1表示嵌套内核态则跳过。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于Linux内核RISC-V异常入口处理。启用CONFIG_SHADOW_CALL_STACK时，handle_exception()原先通过scs_load_current_if_task_changed比较陷阱时保存的tp（从sscratch读回至s5）与当前tp，若相等则跳过重载影子调用栈指针gp。由于tp是用户可写寄存器，用户态程序可在陷入内核前将tp设置为自身task_struct的线性映射地址，使比较成立。此时gp保持用户态遗留值；在CONFIG_SHADOW_CALL_STACK下gp被编译器用作影子调用栈指针，非叶子函数中的sd ra, -8(gp)和ld ra, -8(gp)会写入并返回攻击者控制的地址，造成未授权内核任意写入和控制流劫持。返回时被污染的gp保存到task_struct.scs_sp，后续每次进入异常都会继续跳过重载。修复改为依据硬件sstatus.SPP位判断异常来源，该位由硬件在陷阱入口设置，用户模式无法伪造，从而保证用户态入口重载影子调用栈，嵌套内核入口跳过。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-99018",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-09-25T10:25:14.386Z",
+                    "datePublished": "2026-10-23T12:20:54.888Z",
+                    "dateUpdated": "2026-10-23T12:20:54.888Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-23T12:20:54.888Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: entry: gate shadow call stack reload on sstatus.SPP, not tp\n\nUnder CONFIG_SHADOW_CALL_STACK, handle_exception() reloads the kernel\nshadow call stack pointer (gp) only when the trap came from userspace.\nIt made that decision with scs_load_current_if_task_changed, which\ncompares the trap-time tp (read back from sscratch into s5) against the\ncurrent tp:\n\n\tbeq\t\\prev, tp, _skip_scs\n\tscs_load_current\n_skip_scs:\n\ntp is a user-writable register.  A user task that sets tp to the\nlinear-map address of its own task_struct (&current) before trapping\nmakes the comparison succeed (can achieve by brute force with KASLR\nenable under our test), so the kernel skips scs_load_current and\nkeeps running with the gp that userspace left in place.  Under\nCONFIG_SHADOW_CALL_STACK gp is the shadow call stack pointer and\nload_global_pointer is a no-op, so the compiler-emitted\n\"sd ra, -8(gp)\" / \"ld ra, -8(gp)\" in every non-leaf function then write\nto, and return through, an attacker-controlled address -- an\nunprivileged kernel arbitrary-write and control-flow-hijack primitive.\nThe poisoned gp is saved to task_struct.scs_sp on return, so the reload\nis skipped on every subsequent entry as well.\n\nDecide \"came from userspace\" from the hardware sstatus.SPP bit (already\nin s1 at this point) instead of from tp, mirroring the check that\nret_from_exception already uses a few instructions later.  SPP is\nwritten by hardware on trap entry and cannot be forged from U-mode.\nLegitimate behaviour is unchanged: user entries (SPP=0) reload the task\nshadow call stack, nested kernel entries (SPP=1) skip it."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/include/asm/scs.h",
+                                    "arch/riscv/kernel/entry.S"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "d1584d791a297aa8ed93503382a682a6ecfc4218",
+                                        "lessThan": "6639735367a7d491977e9e5e7afc50b489d81d83",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "d1584d791a297aa8ed93503382a682a6ecfc4218",
+                                        "lessThan": "7d1367a53137e379498eb8791295e58854378636",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "d1584d791a297aa8ed93503382a682a6ecfc4218",
+                                        "lessThan": "37b4401ee6fa06046446d55e97e8d11784080843",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "d1584d791a297aa8ed93503382a682a6ecfc4218",
+                                        "lessThan": "4d0697f192975dab5985e921989be1d85cf580e9",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "arch/riscv/include/asm/scs.h",
+                                    "arch/riscv/kernel/entry.S"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "6.7",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "6.7",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.113",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.57",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.2.11",
+                                        "lessThanOrEqual": "7.2.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.3",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.7",
+                                                "versionEndExcluding": "6.12.113"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.7",
+                                                "versionEndExcluding": "6.18.57"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.7",
+                                                "versionEndExcluding": "7.2.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "6.7",
+                                                "versionEndExcluding": "7.3"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/6639735367a7d491977e9e5e7afc50b489d81d83"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/7d1367a53137e379498eb8791295e58854378636"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/37b4401ee6fa06046446d55e97e8d11784080843"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/4d0697f192975dab5985e921989be1d85cf580e9"
+                            }
+                        ],
+                        "title": "riscv: entry: gate shadow call stack reload on sstatus.SPP, not tp",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-24T06:22:34.850787"
         }
     ]
 }

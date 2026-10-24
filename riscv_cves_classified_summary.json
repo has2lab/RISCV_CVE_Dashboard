@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 168,
-        "classification_date": "2026-10-22T06:31:57.154677",
+        "total_cves": 172,
+        "classification_date": "2026-10-24T06:22:35.850947",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 168,
-        "successful": 168,
+        "total_processed": 172,
+        "successful": 172,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 114,
+            "Linux Kernel": 118,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
@@ -2243,6 +2243,61 @@
             "severity_assessment": "High",
             "technical_details": "该漏洞是 Apache bRPC 中的越界读取（OOB read）问题，影响 URL 解析和大小写不敏感头部查找。两个查找表实际为 256 项，但为了用负索引访问，代码将指针偏移 128，因此期望索引范围为 -128..127。C/C++ 中 plain char 的有符号性由 ABI/工具链决定：在 ARM64 等平台上 plain char 为 unsigned，char 值为 0x80..0xFF 的字节在整型提升后变为 128..255，而没有先转换为 signed char，导致访问表尾之后最多 127 字节。该问题可由远程攻击者通过构造含高比特位字节的 URI 或 HTTP/2 HPACK 头触发，造成服务进程崩溃（拒绝服务）。常见 x86_64 构建默认 signed char，不受影响；对于 RISC-V，需要看工具链的 plain char 默认有符号性，默认 signed char 的 RISC-V Linux 工具链不受影响，但若某些嵌入式 RISC-V 工具链默认 unsigned char 则可能受影响。修复方法是在查表前将输入字节显式转换为 signed char 或等价地归一化到 -128..127 范围。",
             "classification_timestamp": "2026-10-22T06:31:56.154499"
+        },
+        {
+            "cve_id": "CVE-2026-99016",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V futex实现中，access_ok()验证的是去除标签后的用户指针，但后续原子操作使用了原始带标签地址。当启用标签地址ABI时，攻击者可利用标签位构造指向内核地址的指针绕过检查，对任意内核地址执行原子读写。",
+            "key_points": [
+                "漏洞成因：access_ok()使用untagged_addr()检查用户指针，但futex原子操作直接使用原始带标签的uaddr，二者不一致。",
+                "利用条件：需启用CONFIG_RISCV_ISA_SUPM并通过prctl设置PMLEN，且内核未设置menvcfg.PMM导致硬件不为内核访问自动去除标签；在Sv57且PMLEN=16时标签位与规范地址位重叠，可构造指向内核线性映射的恶意指针。",
+                "影响：非特权进程可通过FUTEX_WAKE_OP对任意内核地址执行原子读-修改-写，并利用FUTEX_OP_CMP_*结果作为读取预言机，造成内存破坏和信息泄露。"
+            ],
+            "severity_assessment": "Critical",
+            "technical_details": "漏洞位于Linux内核RISC-V架构的futex辅助函数arch_futex_atomic_op_inuser()和futex_atomic_cmpxchg_inatomic()中。这些函数将用户传入的原始uaddr直接作为内联汇编的'+m'(*uaddr)操作数，用于amoswap、amoadd、lr.w/sc.w等原子指令。access_ok()在检查用户地址合法性前会通过untagged_addr()去除标签位，但实际执行原子访问时未做相同处理。当启用RISC-V标签地址ABI（CONFIG_RISCV_ISA_SUPM，用户通过prctl PR_SET_TAGGED_ADDR_CTRL设置PMLEN≠0）后，用户指针的高PMLEN位可携带标签。由于内核未设置menvcfg.PMM，处理器在内核模式下不会自动屏蔽这些标签位，因此内核实际访问的是带标签的原始地址。在Sv57虚拟地址配置下，PMLEN=16时标签位与规范地址高位重叠，攻击者可构造一个未被去除标签时指向内核线性映射区、去除标签后为合法用户地址的指针，从而绕过access_ok()检查并使futex原子操作作用于任意内核地址。修复方式是在access_ok()检查后对uaddr进行untag，与get_user()/put_user()/raw_copy_{to,from}_user()的处理保持一致，确保原子操作作用于经过验证的地址。",
+            "classification_timestamp": "2026-10-24T06:21:16.975730"
+        },
+        {
+            "cve_id": "CVE-2026-99017",
+            "category": "Linux Kernel",
+            "summary": "该漏洞是Linux内核RISC-V T-Head GhostWrite勘误配置依赖缺陷：当只启用ERRATA_THEAD_GHOSTWRITE而未启用ERRATA_THEAD_MAE时，EARLY替代阶段不会执行，导致幽灵写漏洞检测与缓解静默失效，sysfs错误报告“Not affected”。修复通过从ERRATA_THEAD_GHOSTWRITE选择RISCV_ALTERNATIVE_EARLY，确保在T-Head C9xx等受影响CPU上应用默认缓解。",
+            "key_points": [
+                "errata_probe_ghostwrite()只有在RISCV_ALTERNATIVES_EARLY_BOOT阶段调用时才会将CPU标记为VULNERABLE。",
+                "CONFIG_RISCV_ALTERNATIVE_EARLY之前仅由ERRATA_THEAD_MAE选择；若只启用ERRATA_THEAD_GHOSTWRITE，早期替代不会运行。",
+                "ghostwrite_state未设置为VULNERABLE，ghostwrite_enable_mitigation()返回false，xtheadvector保持启用，sysfs在受影响CPU上错误显示“Not affected”。",
+                "修复在ERRATA_THEAD_GHOSTWRITE上选择RISCV_ALTERNATIVE_EARLY，使漏洞在早期启动阶段被检测并应用默认缓解。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在内核配置中启用ERRATA_THEAD_GHOSTWRITE=y但ERRATA_THEAD_MAE=n时，早期备选方案（RISCV_ALTERNATIVE_EARLY）未启用，导致ghostwrite探测函数无法在early boot阶段运行。GhostWrite是T-Head C9xx向量扩展中的一个严重硬件漏洞，Linux默认缓解需要禁用xtheadvector；若探测未记录vulnerable状态，缓解函数会直接返回false，系统在物理上易受攻击的CPU上仍启用向量单元并报告“Not affected”，造成错误的安全状态。补丁将RISCV_ALTERNATIVE_EARLY作为ERRATA_THEAD_GHOSTWRITE的依赖选项启用，修复了配置依赖遗漏。",
+            "classification_timestamp": "2026-10-24T06:21:39.863035"
+        },
+        {
+            "cve_id": "CVE-2026-98951",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V架构ptrace代码中，PTRACE_SETREGSET在处理短iov_len时未清零内核栈上的regset缓冲区，导致未初始化数据被用于设置目标进程向量状态或影子栈指针。补丁在copyin前对两个缓冲区进行零初始化，与get路径保持一致。",
+            "key_points": [
+                "user_regset_copyin()只复制用户提供的count字节，短iov_len会令内核栈缓冲区剩余部分未初始化。",
+                "riscv_vr_set()可能将未初始化垃圾数据校验后写入目标vstate，riscv_cfi_set()可能将其存为影子栈指针。",
+                "修复方式是在copyin之前对riscv_vr_set和riscv_cfi_set使用的缓冲区清零，与get路径一致。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "漏洞位于arch/riscv内核ptrace寄存器集处理路径。PTRACE_SETREGSET请求的iov_len小于寄存器集大小时，内核缓冲区仅前count字节被从用户空间复制，剩余部分为内核栈残留数据。该残留可能包含先前内核操作留下的敏感信息。在riscv_vr_set()中，残留数据可能通过合法性检查并被复制到被跟踪进程的矢量寄存器状态；在riscv_cfi_set()中，残留值可能作为影子栈指针保存。攻击者随后可通过PTRACE_GETREGSET读取被污染的状态，造成内核栈信息泄露，并可能影响控制流完整性机制。",
+            "classification_timestamp": "2026-10-24T06:22:12.394960"
+        },
+        {
+            "cve_id": "CVE-2026-99018",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V异常入口在启用CONFIG_SHADOW_CALL_STACK时，错误地使用用户可写的tp寄存器判断异常是否来自用户态。攻击者可将tp设置为自身task_struct的线性映射地址，使内核跳过影子调用栈指针gp的重载，从而以用户控制的gp执行影子栈读写，形成内核任意写入和控制流劫持。修复改为使用硬件写死的sstatus.SPP位判断来源，SPP无法从U模式伪造。",
+            "key_points": [
+                "arch/riscv/kernel/entry.S中的handle_exception()通过scs_load_current_if_task_changed比较陷阱时tp与当前tp，相等则跳过scs_load_current。",
+                "tp是用户可写寄存器，用户可将其设置为当前task_struct的线性映射地址；在KASLR开启下仍可通过爆破实现。",
+                "CONFIG_SHADOW_CALL_STACK下gp作为影子调用栈指针，且load_global_pointer为空操作；编译器生成的sd/ld指令基于gp，攻击者控制gp即可造成内核任意写入并劫持返回地址。",
+                "被污染的gp返回时保存到task_struct.scs_sp，导致后续每次异常入口都跳过重载，持久化绕过。",
+                "修复使用硬件在陷阱入口写入的sstatus.SPP位（此处已在s1中）判断来源：SPP=0表示来自用户态则重载，SPP=1表示嵌套内核态则跳过。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该漏洞位于Linux内核RISC-V异常入口处理。启用CONFIG_SHADOW_CALL_STACK时，handle_exception()原先通过scs_load_current_if_task_changed比较陷阱时保存的tp（从sscratch读回至s5）与当前tp，若相等则跳过重载影子调用栈指针gp。由于tp是用户可写寄存器，用户态程序可在陷入内核前将tp设置为自身task_struct的线性映射地址，使比较成立。此时gp保持用户态遗留值；在CONFIG_SHADOW_CALL_STACK下gp被编译器用作影子调用栈指针，非叶子函数中的sd ra, -8(gp)和ld ra, -8(gp)会写入并返回攻击者控制的地址，造成未授权内核任意写入和控制流劫持。返回时被污染的gp保存到task_struct.scs_sp，后续每次进入异常都会继续跳过重载。修复改为依据硬件sstatus.SPP位判断异常来源，该位由硬件在陷阱入口设置，用户模式无法伪造，从而保证用户态入口重载影子调用栈，嵌套内核入口跳过。",
+            "classification_timestamp": "2026-10-24T06:22:34.850787"
         }
     ]
 }
