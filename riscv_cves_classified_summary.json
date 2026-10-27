@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 172,
-        "classification_date": "2026-10-24T06:22:35.850947",
+        "total_cves": 173,
+        "classification_date": "2026-10-27T06:45:38.582408",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,14 +16,14 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 172,
-        "successful": 172,
+        "total_processed": 173,
+        "successful": 173,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 118,
+            "Linux Kernel": 119,
             "Simulator": 7,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
@@ -2298,6 +2298,20 @@
             "severity_assessment": "High",
             "technical_details": "该漏洞位于Linux内核RISC-V异常入口处理。启用CONFIG_SHADOW_CALL_STACK时，handle_exception()原先通过scs_load_current_if_task_changed比较陷阱时保存的tp（从sscratch读回至s5）与当前tp，若相等则跳过重载影子调用栈指针gp。由于tp是用户可写寄存器，用户态程序可在陷入内核前将tp设置为自身task_struct的线性映射地址，使比较成立。此时gp保持用户态遗留值；在CONFIG_SHADOW_CALL_STACK下gp被编译器用作影子调用栈指针，非叶子函数中的sd ra, -8(gp)和ld ra, -8(gp)会写入并返回攻击者控制的地址，造成未授权内核任意写入和控制流劫持。返回时被污染的gp保存到task_struct.scs_sp，后续每次进入异常都会继续跳过重载。修复改为依据硬件sstatus.SPP位判断异常来源，该位由硬件在陷阱入口设置，用户模式无法伪造，从而保证用户态入口重载影子调用栈，嵌套内核入口跳过。",
             "classification_timestamp": "2026-10-24T06:22:34.850787"
+        },
+        {
+            "cve_id": "CVE-2026-99092",
+            "category": "Linux Kernel",
+            "summary": "Linux内核RISC-V补丁机制在处理BPF JIT可执行内存地址时存在缺陷：当CONFIG_STRICT_MODULE_RWX关闭时，patch_map()错误地直接返回只读地址，导致BPF程序JIT编译失败。修复改用CONFIG_EXECMEM判断是否需要为vmalloc区域的可执行内存创建临时可写别名。",
+            "key_points": [
+                "patch_map()的vmalloc分支在CONFIG_STRICT_MODULE_RWX=n时未创建临时可写fixmap映射，假设目标地址可直接写。",
+                "bpf_prog_pack_alloc()中的alloc_new_pack()无条件调用set_memory_rox()，使BPF JIT代码在vmalloc区域只读，即使CONFIG_STRICT_MODULE_RWX=n。",
+                "补丁写入时copy_to_kernel_nofault()发生缺页并返回-EFAULT，最终导致bpf_int_jit_compile()中的WARN_ON并让BPF程序保持未JIT状态。",
+                "修复采用与arm64相同的方案：以CONFIG_EXECMEM为准判断是否需要临时可写别名，CONFIG_BPF_JIT/KPROBES/MODULES都会选中该选项。"
+            ],
+            "severity_assessment": "Medium",
+            "technical_details": "在RISC-V上，patch_map()用于临时映射目标地址以便写入指令补丁。此前其vmalloc分支仅在CONFIG_STRICT_MODULE_RWX开启时创建可写fixmap别名，否则直接返回原地址。但BPF JIT的bpf_prog_pack_alloc()通过alloc_new_pack()无条件调用set_memory_rox()将代码包设为只读，因此即使关闭CONFIG_STRICT_MODULE_RWX，vmalloc中的BPF代码仍不可写。直接写入只读地址会触发copy_to_kernel_nofault()缺页返回-EFAULT，bpf_arch_text_copy()将其转为-EINVAL，经bpf_jit_binary_pack_finalize()传播到bpf_int_jit_compile()的WARN_ON，导致BPF程序无法完成JIT。由于RISC-V选择CONFIG_ARCH_OPTIONAL_KERNEL_RWX，CONFIG_STRICT_MODULE_RWX可在CONFIG_MODULES=y时被关闭，因此该问题不限于CONFIG_MODULES=n。修复将vmalloc分支的判断条件改为CONFIG_EXECMEM，以正确识别可执行内存需要临时别名的情况。非MMU构建不受影响。",
+            "classification_timestamp": "2026-10-27T06:45:37.582245"
         }
     ]
 }
