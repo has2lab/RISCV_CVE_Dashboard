@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 173,
-        "classification_date": "2026-10-27T06:45:38.582408",
+        "total_cves": 175,
+        "classification_date": "2026-10-31T07:27:35.076456",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,15 +16,15 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 173,
-        "successful": 173,
+        "total_processed": 175,
+        "successful": 175,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 119,
-            "Simulator": 7,
+            "Linux Kernel": 120,
+            "Simulator": 8,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
             "Other": 4,
@@ -2312,6 +2312,32 @@
             "severity_assessment": "Medium",
             "technical_details": "在RISC-V上，patch_map()用于临时映射目标地址以便写入指令补丁。此前其vmalloc分支仅在CONFIG_STRICT_MODULE_RWX开启时创建可写fixmap别名，否则直接返回原地址。但BPF JIT的bpf_prog_pack_alloc()通过alloc_new_pack()无条件调用set_memory_rox()将代码包设为只读，因此即使关闭CONFIG_STRICT_MODULE_RWX，vmalloc中的BPF代码仍不可写。直接写入只读地址会触发copy_to_kernel_nofault()缺页返回-EFAULT，bpf_arch_text_copy()将其转为-EINVAL，经bpf_jit_binary_pack_finalize()传播到bpf_int_jit_compile()的WARN_ON，导致BPF程序无法完成JIT。由于RISC-V选择CONFIG_ARCH_OPTIONAL_KERNEL_RWX，CONFIG_STRICT_MODULE_RWX可在CONFIG_MODULES=y时被关闭，因此该问题不限于CONFIG_MODULES=n。修复将vmalloc分支的判断条件改为CONFIG_EXECMEM，以正确识别可执行内存需要临时别名的情况。非MMU构建不受影响。",
             "classification_timestamp": "2026-10-27T06:45:37.582245"
+        },
+        {
+            "cve_id": "CVE-2026-64163",
+            "category": "Linux Kernel",
+            "summary": "Linux内核kprobes KUnit自测代码在RISC-V环境下复现了一个清理缺陷：重复运行kprobes_test会使register_kprobe返回-22并最终触发内核页错误崩溃。根因是静态定义的kprobe/kretprobe变量在测试运行间残留上次注册数据，未清除address和flags。",
+            "key_points": [
+                "重复运行kprobes_test时，静态kprobe/kretprobe变量保留前次运行的残留数据，导致register_kprobe失败并引发内核崩溃。",
+                "register_kprobe/unregister_kprobe后，kprobe中的address和flags必须被清除；symbol_name仍可用于指定探针位置。",
+                "现有清理只覆盖单个测试之间的部分探针，未覆盖两次测试运行之间；修复将清理统一放入kprobes_test_init，在每次测试前执行。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "在lib/tests/test_kprobes.c中，多个kprobe和kretprobe定义为静态变量；注册并注销后会有残留数据。若不清除address和flags，下一次register_kprobe会返回-EINVAL(-22)，随后测试触发'Unable to handle kernel paging request'。修复将所有探针的清理移入kprobes_test_init，确保每个测试（包括一次运行中的第一个测试）开始前完成重置，消除两次测试运行间的状态污染。",
+            "classification_timestamp": "2026-10-31T07:27:20.259368"
+        },
+        {
+            "cve_id": "CVE-2026-62958",
+            "category": "Simulator",
+            "summary": "libriscv 1.18 之前存在 ELF 加载缺陷：对节头中的 sh_offset/sh_size 缺乏边界检查，恶意构造的 ELF 可使宿主机模拟器发生越界读取或崩溃，甚至可能将部分宿主堆内存暴露给客户机。该问题已在 1.18 版本修复。",
+            "key_points": [
+                "Memory<W>::serialize_execute_segment 定位 .text 时直接信任节头的 sh_offset/sh_size，未验证其是否位于 m_binary.size() 范围内。",
+                "Memory<W>::lookup() 对 .symtab 等节表存在类似的越界访问问题，可绕过 PT_LOAD 程序头检查。",
+                "恶意偏移可导致宿主机 SIGSEGV；在特定内存布局或整数溢出下，create_execute_segment() 可能映射宿主堆内存到 guest，构成潜在信息泄露。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "libriscv 的二进制加载器在解析 ELF 时，程序头 PT_LOAD 有边界检查，但随后 serialize_execute_segment 和 lookup 使用节头 sh_offset/sh_size 定位 .text/.symtab 时未检查文件范围。攻击者构造 sh_offset 指向二进制缓冲区外部，绕过 PT_LOAD 校验，引发宿主越界读或崩溃。若通过堆布局或整数溢出使越界区域落入受控宿主堆内存，create_execute_segment() 可能将宿主内存映射进 guest 地址空间，造成宿主内存泄露。修复版本 1.18 增加了相应边界验证。",
+            "classification_timestamp": "2026-10-31T07:27:34.076270"
         }
     ]
 }

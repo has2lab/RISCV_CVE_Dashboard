@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 173,
-        "classification_date": "2026-10-27T06:45:38.582408",
+        "total_cves": 175,
+        "classification_date": "2026-10-31T07:27:35.076456",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -16,15 +16,15 @@
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 173,
-        "successful": 173,
+        "total_processed": 175,
+        "successful": 175,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 119,
-            "Simulator": 7,
+            "Linux Kernel": 120,
+            "Simulator": 8,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
             "Other": 4,
@@ -30517,6 +30517,353 @@
                 }
             },
             "classification_timestamp": "2026-10-27T06:45:37.582245"
+        },
+        {
+            "cve_id": "CVE-2026-64163",
+            "category": "Linux Kernel",
+            "summary": "Linux内核kprobes KUnit自测代码在RISC-V环境下复现了一个清理缺陷：重复运行kprobes_test会使register_kprobe返回-22并最终触发内核页错误崩溃。根因是静态定义的kprobe/kretprobe变量在测试运行间残留上次注册数据，未清除address和flags。",
+            "key_points": [
+                "重复运行kprobes_test时，静态kprobe/kretprobe变量保留前次运行的残留数据，导致register_kprobe失败并引发内核崩溃。",
+                "register_kprobe/unregister_kprobe后，kprobe中的address和flags必须被清除；symbol_name仍可用于指定探针位置。",
+                "现有清理只覆盖单个测试之间的部分探针，未覆盖两次测试运行之间；修复将清理统一放入kprobes_test_init，在每次测试前执行。"
+            ],
+            "severity_assessment": "Low",
+            "technical_details": "在lib/tests/test_kprobes.c中，多个kprobe和kretprobe定义为静态变量；注册并注销后会有残留数据。若不清除address和flags，下一次register_kprobe会返回-EINVAL(-22)，随后测试触发'Unable to handle kernel paging request'。修复将所有探针的清理移入kprobes_test_init，确保每个测试（包括一次运行中的第一个测试）开始前完成重置，消除两次测试运行间的状态污染。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-64163",
+                    "assignerOrgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "Linux",
+                    "dateReserved": "2026-07-19T07:54:57.038Z",
+                    "datePublished": "2026-07-19T15:40:49.172Z",
+                    "dateUpdated": "2026-10-30T12:27:39.441Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "416baaa9-dc9f-4396-8d5f-8c081fb06d67",
+                            "shortName": "Linux",
+                            "dateUpdated": "2026-10-30T12:27:39.441Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "In the Linux kernel, the following vulnerability has been resolved:\n\ntest_kprobes: clear kprobes between test runs\n\nRunning the kprobes sanity tests twice makes all tests fail and\neventually crashes the kernel.\n\n[root@martin-riscv-1 ~]# echo 1 > /sys/kernel/debug/kunit/kprobes_test/run\n...\n   # Totals: pass:5 fail:0 skip:0 total:5\n   ok 1 kprobes_test\n[root@martin-riscv-1 ~]# echo 1 > /sys/kernel/debug/kunit/kprobes_test/run\n...\n  # test_kprobe: EXPECTATION FAILED at lib/tests/test_kprobes.c:64\n  Expected 0 == register_kprobe(&kp), but\n      register_kprobe(&kp) == -22 (0xffffffffffffffea)\n...\n  Unable to handle kernel paging request ...\n\nThe testsuite defines several kprobes and kretprobes as static variables\nthat are preserved across test runs.\n\nAfter register_kprobe and unregister_kprobe, a kprobe contains some\nleftover data that must be cleared before the kprobe can be registered\nagain. The tests are setting symbol_name to define the probe location.\nAddress and flags must be cleared.\n\nThe existing code clears some of the probes between subsequent tests, but\nnot between two test runs. The leftover data from a previous test run\nmakes the registrations fail in the next run.\n\nMove the cleanups for all kprobes into kprobes_test_init, this function\nis called before each single test (including the first test of a test\nrun)."
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "unaffected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "lib/tests/test_kprobes.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "e44e81c5b90f698025eadceb7eef8661eda117d5",
+                                        "lessThan": "29ec976006dfab171a7e007976e38af56ce286e4",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e44e81c5b90f698025eadceb7eef8661eda117d5",
+                                        "lessThan": "08d355936fcf70c81c94f9fe7310450b65c53399",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e44e81c5b90f698025eadceb7eef8661eda117d5",
+                                        "lessThan": "accc0004c501a9918313142282b094d408af06fb",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e44e81c5b90f698025eadceb7eef8661eda117d5",
+                                        "lessThan": "1c24cf1fd67f6702c719ab73499392cb7af956ae",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e44e81c5b90f698025eadceb7eef8661eda117d5",
+                                        "lessThan": "96515819d79f356f40da5540968d838ea570fab9",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    },
+                                    {
+                                        "version": "e44e81c5b90f698025eadceb7eef8661eda117d5",
+                                        "lessThan": "ef5581bb30efb939cc2bf093475c6cc85258e5cd",
+                                        "status": "affected",
+                                        "versionType": "git"
+                                    }
+                                ]
+                            },
+                            {
+                                "product": "Linux",
+                                "vendor": "Linux",
+                                "defaultStatus": "affected",
+                                "repo": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+                                "programFiles": [
+                                    "lib/tests/test_kprobes.c"
+                                ],
+                                "versions": [
+                                    {
+                                        "version": "5.16",
+                                        "status": "affected"
+                                    },
+                                    {
+                                        "version": "0",
+                                        "lessThan": "5.16",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.1.191",
+                                        "lessThanOrEqual": "6.1.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.6.142",
+                                        "lessThanOrEqual": "6.6.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.12.92",
+                                        "lessThanOrEqual": "6.12.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "6.18.34",
+                                        "lessThanOrEqual": "6.18.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.0.11",
+                                        "lessThanOrEqual": "7.0.*",
+                                        "status": "unaffected",
+                                        "versionType": "semver"
+                                    },
+                                    {
+                                        "version": "7.1",
+                                        "lessThanOrEqual": "*",
+                                        "status": "unaffected",
+                                        "versionType": "original_commit_for_fix"
+                                    }
+                                ]
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.1.191"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.6.142"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.12.92"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "6.18.34"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "7.0.11"
+                                            },
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "5.16",
+                                                "versionEndExcluding": "7.1"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://git.kernel.org/stable/c/29ec976006dfab171a7e007976e38af56ce286e4"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/08d355936fcf70c81c94f9fe7310450b65c53399"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/accc0004c501a9918313142282b094d408af06fb"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/1c24cf1fd67f6702c719ab73499392cb7af956ae"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/96515819d79f356f40da5540968d838ea570fab9"
+                            },
+                            {
+                                "url": "https://git.kernel.org/stable/c/ef5581bb30efb939cc2bf093475c6cc85258e5cd"
+                            }
+                        ],
+                        "title": "test_kprobes: clear kprobes between test runs",
+                        "x_generator": {
+                            "engine": "bippy-1.2.0"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-31T07:27:20.259368"
+        },
+        {
+            "cve_id": "CVE-2026-62958",
+            "category": "Simulator",
+            "summary": "libriscv 1.18 之前存在 ELF 加载缺陷：对节头中的 sh_offset/sh_size 缺乏边界检查，恶意构造的 ELF 可使宿主机模拟器发生越界读取或崩溃，甚至可能将部分宿主堆内存暴露给客户机。该问题已在 1.18 版本修复。",
+            "key_points": [
+                "Memory<W>::serialize_execute_segment 定位 .text 时直接信任节头的 sh_offset/sh_size，未验证其是否位于 m_binary.size() 范围内。",
+                "Memory<W>::lookup() 对 .symtab 等节表存在类似的越界访问问题，可绕过 PT_LOAD 程序头检查。",
+                "恶意偏移可导致宿主机 SIGSEGV；在特定内存布局或整数溢出下，create_execute_segment() 可能映射宿主堆内存到 guest，构成潜在信息泄露。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "libriscv 的二进制加载器在解析 ELF 时，程序头 PT_LOAD 有边界检查，但随后 serialize_execute_segment 和 lookup 使用节头 sh_offset/sh_size 定位 .text/.symtab 时未检查文件范围。攻击者构造 sh_offset 指向二进制缓冲区外部，绕过 PT_LOAD 校验，引发宿主越界读或崩溃。若通过堆布局或整数溢出使越界区域落入受控宿主堆内存，create_execute_segment() 可能将宿主内存映射进 guest 地址空间，造成宿主内存泄露。修复版本 1.18 增加了相应边界验证。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-62958",
+                    "assignerOrgId": "a0819718-46f1-4df5-94e2-005712e83aaa",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "GitHub_M",
+                    "dateReserved": "2026-07-14T22:32:17.732Z",
+                    "datePublished": "2026-10-30T20:44:21.663Z",
+                    "dateUpdated": "2026-10-30T20:44:21.663Z"
+                },
+                "containers": {
+                    "cna": {
+                        "title": "libriscv: Out of bounds read vuln in the ELF parser (Denial of service)",
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-20",
+                                        "lang": "en",
+                                        "description": "CWE-20: Improper Input Validation",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            },
+                            {
+                                "descriptions": [
+                                    {
+                                        "cweId": "CWE-125",
+                                        "lang": "en",
+                                        "description": "CWE-125: Out-of-bounds Read",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "cvssV3_1": {
+                                    "attackComplexity": "LOW",
+                                    "attackVector": "LOCAL",
+                                    "availabilityImpact": "HIGH",
+                                    "baseScore": 7.9,
+                                    "baseSeverity": "HIGH",
+                                    "confidentialityImpact": "LOW",
+                                    "integrityImpact": "NONE",
+                                    "privilegesRequired": "NONE",
+                                    "scope": "CHANGED",
+                                    "userInteraction": "NONE",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:L/I:N/A:H",
+                                    "version": "3.1"
+                                }
+                            }
+                        ],
+                        "references": [
+                            {
+                                "name": "https://github.com/libriscv/libriscv/security/advisories/GHSA-gm4g-6c78-gr3w",
+                                "tags": [
+                                    "x_refsource_CONFIRM"
+                                ],
+                                "url": "https://github.com/libriscv/libriscv/security/advisories/GHSA-gm4g-6c78-gr3w"
+                            },
+                            {
+                                "name": "https://github.com/libriscv/libriscv/commit/61ef9ca82c8876dd80b33780893ba512af780e93",
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/libriscv/libriscv/commit/61ef9ca82c8876dd80b33780893ba512af780e93"
+                            },
+                            {
+                                "name": "https://github.com/libriscv/libriscv/commit/7bd1c189f9f9d54368cde096b07b194ad680f9fa",
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/libriscv/libriscv/commit/7bd1c189f9f9d54368cde096b07b194ad680f9fa"
+                            },
+                            {
+                                "name": "https://github.com/libriscv/libriscv/releases/tag/v1.18",
+                                "tags": [
+                                    "x_refsource_MISC"
+                                ],
+                                "url": "https://github.com/libriscv/libriscv/releases/tag/v1.18"
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "libriscv",
+                                "product": "libriscv",
+                                "versions": [
+                                    {
+                                        "version": "< 1.18",
+                                        "status": "affected"
+                                    }
+                                ]
+                            }
+                        ],
+                        "providerMetadata": {
+                            "orgId": "a0819718-46f1-4df5-94e2-005712e83aaa",
+                            "shortName": "GitHub_M",
+                            "dateUpdated": "2026-10-30T20:44:21.663Z"
+                        },
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "libriscv is a RISC-V sandbox and emulator. Prior to 1.18, a crafted ELF binary can cause out-of-bounds reads in the host emulator. `Memory<W>::binary_loader` checks `PT_LOAD` program-header bounds, but `Memory<W>::serialize_execute_segment` trusts section-header `sh_offset` and `sh_size` when locating `.text` without verifying the file range against `m_binary.size()`; `Memory<W>::lookup()` has a similar section-table problem. Malformed `.text` or `.symtab` offsets can therefore bypass the program-header checks and point outside the binary buffer, crashing rvlinux. With suitable memory layout or integer overflow, out-of-buffer host heap memory may instead be mapped into the guest by `create_execute_segment()`, potentially exposing host memory. The reported reproducer demonstrates a host SIGSEGV, while memory disclosure through grooming is described as possible rather than demonstrated. This issue is fixed in version 1.18."
+                            }
+                        ],
+                        "source": {
+                            "advisory": "GHSA-gm4g-6c78-gr3w",
+                            "discovery": "UNKNOWN"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-10-31T07:27:34.076270"
         }
     ]
 }
