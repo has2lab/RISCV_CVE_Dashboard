@@ -1,0 +1,688 @@
+/* ====================== */
+/* 分类分析 - 简洁版样式 */
+/* ====================== */
+
+/* 单一分类详情页 */
+.category-detail-simple {
+  padding: 0;
+}
+
+/* 分类标题区 */
+.category-title-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 32px;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+}
+
+.category-icon-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.category-info {
+  flex: 1;
+}
+
+.category-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: var(--text-primary);
+}
+
+.category-desc {
+  margin: 0 0 16px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.category-meta {
+  display: flex;
+  gap: 24px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.meta-item i {
+  color: var(--primary-color);
+}
+
+.meta-item strong {
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+/* 统计卡片行 */
+.stats-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+}
+
+.stat-icon.red {
+  background: #EF4444;
+}
+
+.stat-icon.blue {
+  background: #3B82F6;
+}
+
+.stat-icon.green {
+  background: #10B981;
+}
+
+.stat-icon.purple {
+  background: #8B5CF6;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+/* 容纳 CVE ID / 年份区间等较长文本 */
+.stat-number.stat-number-sm {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 内容网格 */
+.category-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.content-section {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.content-section.full-width {
+  grid-column: 1 / -1;
+}
+
+.section-header-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.section-header-simple h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header-simple i {
+  color: var(--primary-color);
+}
+
+.view-all-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.view-all-link:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* 简单条形图 */
+.year-chart-area,
+.severity-chart-area {
+  min-height: 200px;
+}
+
+.simple-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bar-item {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.bar-track {
+  height: 28px;
+  background: var(--bg-tertiary);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 12px;
+  min-width: 40px;
+  transition: width 0.6s ease;
+}
+
+.bar-value {
+  font-weight: 600;
+  color: white;
+  font-size: 12px;
+}
+
+/* 严重程度图表 */
+.simple-severity-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.severity-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.severity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.severity-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.severity-count {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.severity-bar-track {
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.severity-bar-fill {
+  height: 100%;
+  border-radius: 12px;
+  transition: width 0.6s ease;
+}
+
+/* CVE列表 */
+.cve-list-simple {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.cve-item-simple {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cve-item-simple:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.cve-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cve-id {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.cve-severity-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cve-description {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.cve-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cve-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.cve-action {
+  font-size: 12px;
+  color: var(--primary-color);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 分类对比页面 */
+.categories-comparison-simple {
+  padding: 0;
+}
+
+.comparison-header-simple {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.comparison-header-simple h2 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.comparison-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.comparison-grid-simple {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.category-compare-card {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 24px;
+  border: 2px solid transparent;
+  border-top-width: 4px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.category-compare-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: currentColor;
+}
+
+.category-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.category-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+
+.category-card-title {
+  flex: 1;
+}
+
+.category-card-title h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.category-rank-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.category-card-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 16px;
+}
+
+.category-card-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.category-card-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.category-card-percent {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.category-card-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-insight-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.category-insight-item i {
+  width: 16px;
+  text-align: center;
+}
+
+.category-card-action {
+  margin-top: 16px;
+  padding: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-color);
+  transition: all 0.2s;
+}
+
+.category-compare-card:hover .category-card-action {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* 分类 Tab 按钮 */
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.category-tab:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.category-tab.active {
+  background: var(--primary-color, #3B82F6);
+  color: #fff;
+  border-color: var(--primary-color, #3B82F6);
+}
+
+.category-tab .tab-count {
+  display: inline-block;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.category-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* 年份 × 严重程度 堆叠图容器 */
+.year-severity-chart-wrapper {
+  position: relative;
+  height: 320px;
+  padding: 16px 8px 8px;
+}
+
+/* 核心关键词 */
+.top-keywords-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  align-items: center;
+  padding: 16px 8px;
+}
+
+.keyword-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-weight: 600;
+  transition: transform 0.1s, border-color 0.15s;
+  cursor: default;
+}
+
+.keyword-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary-color, #3B82F6);
+}
+
+.keyword-chip .keyword-count {
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--text-secondary);
+}
+
+/* CVE item 关键要点预览 */
+.cve-keypoint {
+  margin: 6px 0 2px;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--primary-color, #3B82F6);
+  border-radius: 4px;
+}
+
+.cve-keypoint i {
+  margin-right: 4px;
+  color: #F59E0B;
+}
+
+.empty-hint {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .category-title-section {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .category-meta {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .stats-cards-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .category-content-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cve-list-simple {
+    grid-template-columns: 1fr;
+  }
+  
+  .comparison-grid-simple {
+    grid-template-columns: 1fr;
+  }
+
+  .year-severity-chart-wrapper {
+    height: 260px;
+  }
+
+  .category-tab {
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+}
