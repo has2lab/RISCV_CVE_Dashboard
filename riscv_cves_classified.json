@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 175,
-        "classification_date": "2026-10-31T07:27:35.076456",
+        "total_cves": 176,
+        "classification_date": "2026-11-10T08:47:06.788456",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -11,13 +11,14 @@
             "RISC-V Development Tools",
             "Device-Specific Firmware & Applications",
             "RISC-V Instruction Set Manual",
-            "Other"
+            "Other",
+            "RISC-V Optimized Application Software"
         ],
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 175,
-        "successful": 175,
+        "total_processed": 176,
+        "successful": 176,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
@@ -28,7 +29,8 @@
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
             "Other": 4,
-            "RISC-V Software Libraries": 1
+            "RISC-V Software Libraries": 1,
+            "RISC-V Optimized Application Software": 1
         }
     },
     "classified_cves": [
@@ -30864,6 +30866,185 @@
                 }
             },
             "classification_timestamp": "2026-10-31T07:27:34.076270"
+        },
+        {
+            "cve_id": "CVE-2026-125256",
+            "category": "RISC-V Optimized Application Software",
+            "summary": "FFmpeg 9.0.2及之前版本在启用RVV的RISC-V构建中，Huffyuv编码器的 ff_llvidenc_diff_bytes_rvv() 存在堆缓冲区溢出漏洞。攻击者可通过提供宽度小于8或16像素的RGB视频触发负长度值，导致越界写入临时缓冲区并破坏堆内存。",
+            "key_points": [
+                "漏洞位于 FFmpeg 的 RISC-V 向量扩展（RVV）优化函数 ff_llvidenc_diff_bytes_rvv() 中。",
+                "当输入 RGB 视频宽度小于 8 或 16 像素时，Huffyuv 编码器可能计算出负的长度值，导致堆缓冲区越界写入。",
+                "该漏洞影响启用 RVV 的 RISC-V 构建，其他架构（如 x86/ARM）不受此特定向量代码影响。",
+                "攻击者可通过构造恶意视频进行 huffyuv 转码，破坏堆内存，存在潜在代码执行风险。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "该函数使用 RISC-V 向量指令处理 Huffyuv 编码中的差值计算。由于未充分校验视频宽度与向量处理长度之间的关系，当视频宽度小于 8 或 16 像素时，长度计算可能为负，导致后续向量存储操作越界写入编码器的临时缓冲区。该漏洞仅影响启用了 RISC-V 向量扩展的 FFmpeg 构建。",
+            "original_data": {
+                "dataType": "CVE_RECORD",
+                "dataVersion": "5.2",
+                "cveMetadata": {
+                    "cveId": "CVE-2026-125256",
+                    "assignerOrgId": "83251b91-4cc7-4094-a5c7-464a1b83ea10",
+                    "state": "PUBLISHED",
+                    "assignerShortName": "VulnCheck",
+                    "dateReserved": "2026-11-09T18:15:32.104Z",
+                    "datePublished": "2026-11-09T19:12:00.407Z",
+                    "dateUpdated": "2026-11-09T19:12:00.407Z"
+                },
+                "containers": {
+                    "cna": {
+                        "providerMetadata": {
+                            "orgId": "83251b91-4cc7-4094-a5c7-464a1b83ea10",
+                            "shortName": "VulnCheck",
+                            "dateUpdated": "2026-11-09T19:12:00.407Z"
+                        },
+                        "datePublic": "2026-10-29T00:00:00.000Z",
+                        "title": "FFmpeg through 9.0.2 Heap Buffer Overflow via RISC-V Vector diff_bytes Routine",
+                        "descriptions": [
+                            {
+                                "lang": "en",
+                                "value": "FFmpeg through 9.0.2 contains a heap buffer overflow vulnerability in ff_llvidenc_diff_bytes_rvv() that allows attackers to corrupt heap memory by triggering negative length values in the Huffyuv encoder. Attackers can supply RGB video narrower than 8 or 16 pixels for huffyuv transcoding on RVV-enabled RISC-V builds, causing writes past the encoder's temp buffer."
+                            }
+                        ],
+                        "problemTypes": [
+                            {
+                                "descriptions": [
+                                    {
+                                        "lang": "en",
+                                        "description": "Out-of-bounds Write",
+                                        "cweId": "CWE-787",
+                                        "type": "CWE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "affected": [
+                            {
+                                "vendor": "FFmpeg",
+                                "product": "FFmpeg",
+                                "defaultStatus": "unaffected",
+                                "versions": [
+                                    {
+                                        "version": "7.0",
+                                        "lessThanOrEqual": "9.0.2",
+                                        "status": "affected",
+                                        "versionType": "custom"
+                                    }
+                                ],
+                                "packageURL": "pkg:github/ffmpeg/ffmpeg",
+                                "repo": "https://code.ffmpeg.org/FFmpeg/FFmpeg"
+                            }
+                        ],
+                        "cpeApplicability": [
+                            {
+                                "nodes": [
+                                    {
+                                        "operator": "OR",
+                                        "negate": false,
+                                        "cpeMatch": [
+                                            {
+                                                "vulnerable": true,
+                                                "criteria": "cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*",
+                                                "versionStartIncluding": "7.0",
+                                                "versionEndIncluding": "9.0.2"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "format": "CVSS",
+                                "cvssV4_0": {
+                                    "version": "4.0",
+                                    "vectorString": "CVSS:4.0/AV:L/AC:H/AT:P/PR:N/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+                                    "attackVector": "LOCAL",
+                                    "attackComplexity": "HIGH",
+                                    "attackRequirements": "PRESENT",
+                                    "privilegesRequired": "NONE",
+                                    "userInteraction": "PASSIVE",
+                                    "vulnConfidentialityImpact": "HIGH",
+                                    "vulnIntegrityImpact": "HIGH",
+                                    "vulnAvailabilityImpact": "HIGH",
+                                    "subConfidentialityImpact": "NONE",
+                                    "subIntegrityImpact": "NONE",
+                                    "subAvailabilityImpact": "NONE",
+                                    "baseScore": 7.3,
+                                    "baseSeverity": "HIGH"
+                                }
+                            },
+                            {
+                                "format": "CVSS",
+                                "cvssV3_1": {
+                                    "version": "3.1",
+                                    "vectorString": "CVSS:3.1/AV:L/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
+                                    "attackVector": "LOCAL",
+                                    "attackComplexity": "HIGH",
+                                    "privilegesRequired": "NONE",
+                                    "userInteraction": "REQUIRED",
+                                    "scope": "UNCHANGED",
+                                    "confidentialityImpact": "HIGH",
+                                    "integrityImpact": "HIGH",
+                                    "availabilityImpact": "HIGH",
+                                    "baseScore": 7,
+                                    "baseSeverity": "HIGH"
+                                }
+                            }
+                        ],
+                        "references": [
+                            {
+                                "url": "https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/25573",
+                                "tags": [
+                                    "issue-tracking"
+                                ]
+                            },
+                            {
+                                "url": "https://github.com/FFmpeg/FFmpeg/commit/1f7bdea654a8a9a1761759e22d83943371cff21f",
+                                "tags": [
+                                    "patch"
+                                ],
+                                "name": "Patch Commit"
+                            },
+                            {
+                                "url": "https://github.com/FFmpeg/FFmpeg/blob/n9.0.2/libavcodec/riscv/llvidencdsp_rvv.S#L26",
+                                "tags": [
+                                    "technical-description"
+                                ]
+                            },
+                            {
+                                "url": "https://github.com/FFmpeg/FFmpeg",
+                                "tags": [
+                                    "product"
+                                ]
+                            },
+                            {
+                                "name": "VulnCheck Advisory: FFmpeg through 9.0.2 Heap Buffer Overflow via RISC-V Vector diff_bytes Routine",
+                                "tags": [
+                                    "third-party-advisory"
+                                ],
+                                "url": "https://www.vulncheck.com/advisories/ffmpeg-through-9.0.2-heap-buffer-overflow-via-risc-v-vector-diff-bytes-routine"
+                            }
+                        ],
+                        "credits": [
+                            {
+                                "lang": "en",
+                                "value": "Joshua Rogers (AISLE Research)",
+                                "type": "finder"
+                            },
+                            {
+                                "lang": "en",
+                                "value": "Michael Niedermayer",
+                                "type": "remediation developer"
+                            }
+                        ],
+                        "x_generator": {
+                            "engine": "vulncheck-endgame"
+                        }
+                    }
+                }
+            },
+            "classification_timestamp": "2026-11-10T08:47:05.788242"
         }
     ]
 }
