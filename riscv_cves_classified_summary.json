@@ -1,7 +1,7 @@
 {
     "metadata": {
-        "total_cves": 176,
-        "classification_date": "2026-11-10T08:47:06.788456",
+        "total_cves": 177,
+        "classification_date": "2026-11-20T09:04:16.911031",
         "model_used": "deepseek-v3.2",
         "provider": "openai",
         "categories": [
@@ -11,20 +11,19 @@
             "RISC-V Development Tools",
             "Device-Specific Firmware & Applications",
             "RISC-V Instruction Set Manual",
-            "Other",
-            "RISC-V Optimized Application Software"
+            "Other"
         ],
         "config_file": "llm_config.json"
     },
     "statistics": {
-        "total_processed": 176,
-        "successful": 176,
+        "total_processed": 177,
+        "successful": 177,
         "failed": 0,
         "new_categories_created": 0,
         "by_category": {
             "RISC-V CPU/SoC": 27,
             "RISC-V Instruction Set Manual": 1,
-            "Linux Kernel": 120,
+            "Linux Kernel": 121,
             "Simulator": 8,
             "RISC-V Development Tools": 6,
             "Device-Specific Firmware & Applications": 8,
@@ -2354,6 +2353,21 @@
             "severity_assessment": "High",
             "technical_details": "该函数使用 RISC-V 向量指令处理 Huffyuv 编码中的差值计算。由于未充分校验视频宽度与向量处理长度之间的关系，当视频宽度小于 8 或 16 像素时，长度计算可能为负，导致后续向量存储操作越界写入编码器的临时缓冲区。该漏洞仅影响启用了 RISC-V 向量扩展的 FFmpeg 构建。",
             "classification_timestamp": "2026-11-10T08:47:05.788242"
+        },
+        {
+            "cve_id": "CVE-2026-99463",
+            "category": "Linux Kernel",
+            "summary": "Linux内核 mm/rmap 中，在PMD级别丢弃lazyfree THP时会在未持有mmap锁的情况下临时清空PMD，导致与 munmap/mremap 竞争，产生匿名页反向映射不一致和use-after-free。修复方案为避免在PMD级别丢弃，改为拆分PMD后在PTE级别丢弃。",
+            "key_points": [
+                "Linux内核在PMD级别丢弃lazyfree THP时，先临时清空PMD，仅持有PMD锁和anon_vma读锁，未持有mmap锁，造成竞态窗口。",
+                "并发的munmap()/mremap()在PMD锁路径上会跳过临时none PMD，导致PMD恢复后页表遍历缺失，产生stale mapcount、anon_vma未链接或数据丢失。",
+                "非特权用户可通过lazyfree reclaim与MREMAP_DONTUNMAP竞争，触发folio_lock_anon_vma_read()中的KASAN use-after-free。",
+                "修复方法是停止在PMD级别丢弃lazyfree THP，改为在try_to_unmap_one()中拆分PMD后在PTE级别丢弃；invalidated PMD方案留待后续架构修复。",
+                "RISC-V被提及为GUP-fast仍会跟随invalidated PMD的架构之一，因此当前未采用invalidated PMD方案。"
+            ],
+            "severity_assessment": "High",
+            "technical_details": "在 try_to_unmap_one() 中，__discard_anon_folio_pmd_locked() 在判断 folio 是否可丢弃前先清空 PMD；若 folio dirty 或有额外引用则恢复。由于没有 mmap 锁，临时 none PMD 与 munmap/mremap 并发。zap_pmd_range() 和 move_page_tables() 看到 none PMD 后不加 PMD 锁并跳过该 PMD。后续若 munmap，free_pmd_range() 会把恢复的 PMD 当作 bad 释放而未移除 rmap，导致 folio mapcount 滞留；若 whole-VMA MREMAP_DONTUNMAP，源 VMA 从 anon_vma 断开但恢复的 PMD 仍映射 folio；若 plain mremap，THP 不会被移动而只是被 unmap，数据丢失。前两种情况中 folio 仍被映射，但映射它的 VMA 不再链接到 anon_vma，anon_vma 释放后仍可通过 rmap 访问，形成 UAF。修复通过禁用 PMD 级 lazyfree THP 丢弃，改为 PTE 级拆分丢弃，避免临时 none PMD 窗口。若未来改用 invalidated PMD，需要先修复 RISC-V、LoongArch、s390 的 GUP-fast 以及 sparc64 的 thp_pte_count 计数。",
+            "classification_timestamp": "2026-11-20T09:04:15.910873"
         }
     ]
 }
